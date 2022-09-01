@@ -1,10 +1,9 @@
-from fileinput import filename
 import xml.etree.ElementTree as ET
 from anytree import AnyNode, LevelOrderIter
 from anytree import RenderTree
 import numpy as np
 import pprint
-import pandas as pd
+from pandas import DataFrame
 
 class Robotlink:
     def __init__(self):
@@ -14,8 +13,16 @@ class Robotlink:
         self.inertia = np.zeros((3, 3))
         self.mesh_fileName = ''
         self.linkname = ''
-        self.abs_tf = np.eye(4)
-        self.rel_tf = np.eye(4)
+        self.abs_tf = np.eye(4) # absolute tranformation matrix from link to world
+        self.rel_tf = np.eye(4) # tranfromation matrix from this link to last link
+    
+    @property
+    def linkPos(self):
+        return self.abs_tf[0:3, 3]
+    
+    @property
+    def linkRotation(self):
+        return self.abs_tf[0:3, 0:3]
     
     def log_link_info(self):
         print("link {0}: mass {1}, com {2}, rpy {3}".format(self.linkname, self.mass, self.com, self.rpy))
@@ -26,8 +33,8 @@ class Robotjoint:
         self.axis = np.zeros(3)
         self.xyz = np.zeros(3)
         self.rpy = np.zeros(3)
-        self.parent_link = None
-        self.child_link = None
+        self.parent_link = ''   # name of parent link
+        self.child_link = ''    # name of child link
     
     def log_joint_info(self):
         print("joint {0}: axis {1}, xyz {2}, rpy {3}".format(self.jointname, self.axis, self.xyz, self.rpy))
@@ -162,25 +169,10 @@ class Robot:
         print("joints info:")
         for joint in self.robotjoints.values():
             joint.log_joint_info()
-    
-    def calculate_tfs_in_world_frame(self):
-        for node in LevelOrderIter(self.root_link_node):
-            if node.type == 'link' and node.parent != None:
-                parent_tf_world = self.robotlinks[node.parent.parent.id].abs_tf
-                xyz = self.robotjoints[node.parent.id].xyz
-                rpy = self.robotjoints[node.parent.id].rpy
-                tf = np.eye(4)
-                tf[0:3, 0:3] = get_extrinsic_rotation(rpy)
-                tf[0:3, 3] = xyz
-                self.robotlinks[node.id].rel_tf = tf
-
-                abs_tf = np.eye(4)
-                abs_tf = np.matmul(parent_tf_world, tf)
-                self.robotlinks[node.id].abs_tf = abs_tf
 
     def calculate_modified_dh_params(self, log=True):
         if log:
-            print("calculate_dh_params...\n")
+            print("\ncalculate_dh_params...\n")
         point_list= []
         zaxis_list = []
         for node in LevelOrderIter(self.root_link_node):
@@ -195,13 +187,28 @@ class Robot:
 
 
 
-        pd_frame = pd.DataFrame(robot_dh_params, columns=['alpha', 'd', 'theta', 'r'])
+        pd_frame = DataFrame(robot_dh_params, columns=['alpha', 'd', 'theta', 'r'])
         # print("\nModified DH Parameters: (csv)")
         # print(pd_frame.to_csv())
         print("\nModified DH Parameters: (markdown)")
         print(pd_frame.to_markdown())
 
     """The followings are utility functions"""
+    def calculate_tfs_in_world_frame(self):
+        for node in LevelOrderIter(self.root_link_node):
+            if node.type == 'link' and node.parent != None:
+                parent_tf_world = self.robotlinks[node.parent.parent.id].abs_tf
+                xyz = self.robotjoints[node.parent.id].xyz
+                rpy = self.robotjoints[node.parent.id].rpy
+                tf = np.eye(4)
+                tf[0:3, 0:3] = get_extrinsic_rotation(rpy)
+                tf[0:3, 3] = xyz
+                self.robotlinks[node.id].rel_tf = tf
+
+                abs_tf = np.eye(4)
+                abs_tf = np.matmul(parent_tf_world, tf)
+                self.robotlinks[node.id].abs_tf = abs_tf
+    
     def parse_urdf(self):
         urdf_root = self.get_urdf_root()
         # deal with link node
