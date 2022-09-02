@@ -1,9 +1,13 @@
 import numpy as np
-from pyrr import matrix44, euler
+from pyrr import matrix33, matrix44, euler
 
 def get_extrinsic_rotation(rpy):
-    angle = euler.create(roll=rpy[0], pitch=rpy[1], yaw=rpy[2])
-    return matrix44.create_from_eulers(angle)
+    x_rot = matrix33.create_from_x_rotation(rpy[0])
+    y_rot = matrix33.create_from_y_rotation(rpy[1])
+    z_rot = matrix33.create_from_z_rotation(rpy[2])
+    result = np.eye(4)
+    result[:3, :3] = np.matmul(z_rot, np.matmul(y_rot, x_rot))
+    return result
 
 def inv_tf(tf):
     """Get the inverse of a homogeneous transform"""

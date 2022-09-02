@@ -24,7 +24,7 @@ def urdf_show(path):
     robot = Robot(path)
 
     # add joint angle
-    robot.set_joint_angle([0, 0, 1.57])
+    # robot.set_joint_angle([0, 0, 1.57])
 
     
     meshes = []
@@ -34,6 +34,7 @@ def urdf_show(path):
 
     for robotlink in robot.robotlinks.values():
         mesh_filename = robotlink.mesh_fileName
+
         mesh = Mesh.from_file(mesh_filename, color=(0.89804, 0.91765, 0.92941, 0.2))
         
         mesh.affine_transform(R=robotlink.abs_tf[:3, :3].T, t=robotlink.abs_tf[:3, 3])

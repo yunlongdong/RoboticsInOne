@@ -48,7 +48,7 @@ class Robotjoint:
         print("joint {0}: axis {1}, xyz {2}, rpy {3}".format(self.jointname, self.axis, self.xyz, self.rpy))
 
 class Robot:
-    def __init__(self, fileName='../urdf_examples/exo/exo.urdf'):
+    def __init__(self, fileName='../urdf_examples/estun/estun.urdf'):
         self.urdf_file = fileName
         self.root_link_node = None
         self.urdf_tree_nodes = []
@@ -114,6 +114,7 @@ class Robot:
                 abs_tf = np.matmul(parent_tf_world, tf)
                 
                 self.robotlinks[node.id].abs_tf = abs_tf
+                # print("joint ", self.robotjoints[node.parent.id].jointname, abs_tf)
     
     def parse_urdf(self):
         urdf_root = self.get_urdf_root()
@@ -199,7 +200,7 @@ class Robot:
 
 
 if __name__ == "__main__":
-    robot = Robot(fileName='../urdf_examples/half_exo/half_exo.urdf')
+    robot = Robot(fileName='../urdf_examples/estun/estun.urdf')
     robot.log_urdf_info()
     robot.calculate_modified_dh_params()
     

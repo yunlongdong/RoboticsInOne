@@ -26,7 +26,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="./meshes/base_link.STL" />
+          filename="meshes/base_link.STL" />
       </geometry>
       <material
         name="">
@@ -40,7 +40,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="./meshes/base_link.STL" />
+          filename="meshes/base_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -66,7 +66,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="./meshes/1_Link.STL" />
+          filename="meshes/1_Link.STL" />
       </geometry>
       <material
         name="">
@@ -80,7 +80,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="./meshes/1_Link.STL" />
+          filename="meshes/1_Link.STL" />
       </geometry>
     </collision>
   </link>
@@ -121,7 +121,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="./meshes/2_Link.STL" />
+          filename="meshes/2_Link.STL" />
       </geometry>
       <material
         name="">
@@ -135,7 +135,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="./meshes/2_Link.STL" />
+          filename="meshes/2_Link.STL" />
       </geometry>
     </collision>
   </link>
@@ -176,7 +176,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="./meshes/3_Link.STL" />
+          filename="meshes/3_Link.STL" />
       </geometry>
       <material
         name="">
@@ -190,7 +190,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="./meshes/3_Link.STL" />
+          filename="meshes/3_Link.STL" />
       </geometry>
     </collision>
   </link>
@@ -231,7 +231,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="./meshes/4_Link.STL" />
+          filename="meshes/4_Link.STL" />
       </geometry>
       <material
         name="">
@@ -245,7 +245,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="./meshes/4_Link.STL" />
+          filename="meshes/4_Link.STL" />
       </geometry>
     </collision>
   </link>
@@ -286,7 +286,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="./meshes/5_Link.STL" />
+          filename="meshes/5_Link.STL" />
       </geometry>
       <material
         name="">
@@ -300,7 +300,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="./meshes/5_Link.STL" />
+          filename="meshes/5_Link.STL" />
       </geometry>
     </collision>
   </link>
@@ -341,7 +341,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="./meshes/6_Link.STL" />
+          filename="meshes/6_Link.STL" />
       </geometry>
       <material
         name="">
@@ -355,7 +355,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="./meshes/6_Link.STL" />
+          filename="meshes/6_Link.STL" />
       </geometry>
     </collision>
   </link>
