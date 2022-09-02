@@ -3,6 +3,7 @@ from anytree import AnyNode, LevelOrderIter
 from anytree import RenderTree
 import numpy as np
 import pprint
+import os.path as osp
 from pandas import DataFrame
 
 class Robotlink:
@@ -15,7 +16,14 @@ class Robotlink:
         self.linkname = ''
         self.abs_tf = np.eye(4) # absolute tranformation matrix from link to world
         self.rel_tf = np.eye(4) # tranfromation matrix from this link to last link
-    
+
+    @property
+    def linkRPY(self):
+        yaw = np.arctan2(self.abs_tf[1, 0],self.abs_tf[0, 0])
+        pitch = np.arctan2(-self.abs_tf[2, 0], np.sqrt(self.abs_tf[2, 1]**2 + self.abs_tf[2, 2]**2))
+        roll = np.arctan2(self.abs_tf[2, 1], self.abs_tf[2, 2])
+        return np.array([roll, pitch, yaw])
+
     @property
     def linkPos(self):
         return self.abs_tf[0:3, 3]
@@ -147,9 +155,8 @@ def get_modified_dh_params(point_list, zaxis_list, epsilon=1e-5, log=False):
     return modified_dh_params_list
 
 
-
 class Robot:
-    def __init__(self, fileName='half_exo.urdf'):
+    def __init__(self, fileName='../urdf_example/exo/exo.urdf'):
         self.urdf_file = fileName
         self.root_link_node = None
         self.urdf_tree_nodes = []
@@ -204,10 +211,10 @@ class Robot:
                 tf[0:3, 0:3] = get_extrinsic_rotation(rpy)
                 tf[0:3, 3] = xyz
                 self.robotlinks[node.id].rel_tf = tf
-
-                abs_tf = np.eye(4)
+                
                 abs_tf = np.matmul(parent_tf_world, tf)
                 self.robotlinks[node.id].abs_tf = abs_tf
+                print("joint ", self.robotjoints[node.parent.id].jointname, abs_tf)
     
     def parse_urdf(self):
         urdf_root = self.get_urdf_root()
@@ -224,6 +231,7 @@ class Robot:
         num_nodes_no_parent = 0
         for node in self.urdf_tree_nodes:
             if node.parent == None:
+                print("no parent: ", node.id)
                 num_nodes_no_parent += 1
                 self.root_link_node = node
         if num_nodes_no_parent != 1:
@@ -240,7 +248,7 @@ class Robot:
     def process_link(self, link):
         robotlink = Robotlink()
         robotlink.linkname = link.get('name')
-        robotlink.mesh_fileName = link.find("visual").find("geometry").find("mesh").get("filename")
+        robotlink.mesh_fileName =  osp.join(osp.dirname(self.urdf_file), link.find("visual").find("geometry").find("mesh").get("filename")).replace('\\', '/')
 
         for child in link:
             if child.tag == 'inertial':
@@ -281,14 +289,14 @@ class Robot:
         # Find parent and child link
         for node in self.urdf_tree_nodes:
             if node.id == robotjoint.parent_link:
-                node.parent = jointnode
-            if node.id == robotjoint.child_link:
                 jointnode.parent = node
+            if node.id == robotjoint.child_link:
+                node.parent = jointnode
         return robotjoint
 
 
 if __name__ == "__main__":
-    robot = Robot(fileName='estun.urdf')
+    robot = Robot(fileName='../urdf_example/half_exo/half_exo.urdf')
     robot.log_urdf_info()
     robot.calculate_modified_dh_params()
     

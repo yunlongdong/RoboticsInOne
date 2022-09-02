@@ -1,11 +1,15 @@
 import wx
 from wx import html, richtext
+import numpy as np
 import os.path as osp
 
+from .urdf_render import urdf_show
+
+dir_abs_path = osp.dirname(osp.abspath(__file__))
 
 class MainFrame ( wx.Frame ):
-
-    def __init__( self, parent ):
+    def __init__(self, parent):
+        
         wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Robotics In One", pos = wx.DefaultPosition, size = wx.Size( 800,600 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 
         self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
@@ -18,6 +22,8 @@ class MainFrame ( wx.Frame ):
         self.m_panel_start = wx.Panel( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
         bSizer1.Add( self.m_panel_start, 4, wx.EXPAND |wx.ALL, 5 )
 
+        # self.m_button1 = wx.Button( self, wx.ID_ANY, u"MyButton", wx.DefaultPosition, wx.DefaultSize, 0 )
+        # bSizer1.Add( self.m_button1, 0, wx.ALL, 5 )
 
         self.SetSizer( bSizer1 )
         self.Layout()
@@ -56,21 +62,39 @@ class MainFrame ( wx.Frame ):
         self.Centre( wx.BOTH )
 
         self.load()
-
+ 
     def load(self):
         icon = wx.Icon()
-        icon.CopyFromBitmap(wx.Bitmap("icons/ico.bmp", wx.BITMAP_TYPE_ANY))
+        icon.CopyFromBitmap(wx.Bitmap(osp.join(dir_abs_path, "../icons/ico.bmp"), wx.BITMAP_TYPE_ANY))
         # icon.LoadFile("icons/sm.ico", wx.BITMAP_TYPE_ANY)
         self.SetIcon(icon)
 
-    def __del__( self ):
+        # start doc
+        self.m_html_start_doc.LoadFile(osp.join(dir_abs_path, "../docs/start.html"))
+
+        # bind event
+        self.bind_all()
+
+    def __del__(self):
         pass
 
-if __name__ == "__main__":
-    app = wx.App()
+    def bind_all(self):
+        self.Bind(wx.EVT_MENU, self.OnOpenURDF, self.m_menuItem_open_urdf)
 
-    frame = MainFrame(None)
-    frame.m_html_start_doc.LoadFile("./doc/start.html")
-    frame.Show()
+    def OnOpenURDF(self, evt):
+        print('Open URDF...')
+        with wx.FileDialog(self, "Open URDF file", wildcard="URDF files (*.urdf)|*.urdf",
+                       style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
 
-    app.MainLoop()
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return    
+
+            # Proceed loading the file chosen by the user
+            pathname = fileDialog.GetPath()
+            print(pathname)
+            self.pop_3d_viewer(pathname)
+
+    def pop_3d_viewer(self, urdf_path):
+        urdf_show(urdf_path)
+ 
+
