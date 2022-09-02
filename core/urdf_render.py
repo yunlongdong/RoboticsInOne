@@ -8,9 +8,16 @@ import sys
 sys.path.append('../')
 from simple_3dviz.window import show
 from simple_3dviz import Mesh, Lines
+from simple_3dviz.behaviours.misc import LightToCamera
 from urdf_parser.robot_from_urdf import Robot
+from simple_3dviz.behaviours import SceneInit
 
-
+def scene_init(camera_position, camera_target):
+    def inner(scene):
+        scene.camera_position = camera_position
+        scene.camera_target = camera_target
+        scene.light = scene.camera_position
+    return inner
 
 def urdf_show(path):
     file_name = osp.basename(path)
@@ -27,7 +34,6 @@ def urdf_show(path):
 
     for robotlink in robot.robotlinks.values():
         mesh_filename = robotlink.mesh_fileName
-
         mesh = Mesh.from_file(mesh_filename, color=(0.89804, 0.91765, 0.92941, 0.2))
         
         mesh.affine_transform(R=robotlink.abs_tf[:3, :3].T, t=robotlink.abs_tf[:3, 3])
@@ -37,7 +43,7 @@ def urdf_show(path):
         axes.append(axis)
 
     # make renderables
-    meshes = axes + meshes
+    # meshes = axes + meshes
 
     # auto adjust camera
     bbox_min = reduce(
@@ -65,4 +71,4 @@ def urdf_show(path):
         for m in meshes:
             m.scale(s)
 
-    show(meshes, title=file_name, camera_position=camera_position, camera_target=camera_target)
+    show(meshes, axes, size=(800, 770), title=file_name, camera_position=camera_position, camera_target=camera_target, behaviours=[SceneInit(scene_init(camera_position, camera_target)), LightToCamera()])
