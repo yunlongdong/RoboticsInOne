@@ -13,10 +13,13 @@ from urdf_parser.robot_from_urdf import Robot
 
 
 def urdf_show(path):
-    name = osp.basename(path)
-    dir_name = osp.dirname(path)
-
+    file_name = osp.basename(path)
     robot = Robot(path)
+
+    # add joint angle
+    robot.set_joint_angle([0, 0, 1.57])
+
+    
     meshes = []
 
     # origin axes
@@ -25,7 +28,7 @@ def urdf_show(path):
     for robotlink in robot.robotlinks.values():
         mesh_filename = robotlink.mesh_fileName
 
-        mesh = Mesh.from_file(osp.join(dir_name, mesh_filename), color=(0.89804, 0.91765, 0.92941, 0.2))
+        mesh = Mesh.from_file(mesh_filename, color=(0.89804, 0.91765, 0.92941, 0.2))
         
         mesh.affine_transform(R=robotlink.abs_tf[:3, :3].T, t=robotlink.abs_tf[:3, 3])
         meshes.append(mesh)
@@ -62,4 +65,4 @@ def urdf_show(path):
         for m in meshes:
             m.scale(s)
 
-    show(meshes, title=name, camera_position=camera_position, camera_target=camera_target)
+    show(meshes, title=file_name, camera_position=camera_position, camera_target=camera_target)

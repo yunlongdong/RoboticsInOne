@@ -3,7 +3,7 @@ from wx import html, richtext
 import numpy as np
 import os.path as osp
 
-from .urdf_render import urdf_show
+from urdf_render import urdf_show
 
 dir_abs_path = osp.dirname(osp.abspath(__file__))
 
@@ -98,3 +98,9 @@ class MainFrame ( wx.Frame ):
         urdf_show(urdf_path)
  
 
+if __name__ == "__main__":
+    app = wx.App()
+    frame = MainFrame(None)
+    frame.Show()
+    app.MainLoop()
+   
