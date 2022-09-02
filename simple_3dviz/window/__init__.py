@@ -30,7 +30,7 @@ def simple_window(init, size=(512, 512)):
     return w
 
 
-def show(renderables, size=(512, 512), background=(1,)*4, title="Scene",
+def show(meshes, axes, size=(512, 580), background=(0.7, 0.7, 0.7, 1), title="Scene",
          camera_position=(-2, -2, -2), camera_target=(0, 0, 0),
          up_vector=(0, 0, 1), light=None, behaviours=[]):
     """Creates a simple window that displays the renderables.
@@ -47,16 +47,12 @@ def show(renderables, size=(512, 512), background=(1,)*4, title="Scene",
         up_vector: (x, y, z) defines the floor and sky
         light: (x, y, z) defines the position of the light source
     """
-    if not isinstance(renderables, (list, tuple)):
-        renderables = [renderables]
-    if not all(isinstance(r, Renderable) for r in renderables):
-        raise ValueError(("show() expects one or more renderables as "
-                          "parameters not {}").format(renderables))
+    
 
     def init(scene):
         # scene.add(Lines.axes(size=0.06, width=0.006, origin=[0, 0, 0.245]))
         # scene.add(Lines.axes(size=0.06, width=0.006, origin=[0, 0, 0.245+0.195]))
-        for r in renderables:
+        for r in axes+meshes:
             scene.add(r)
         scene.background = background
         scene.camera_position = camera_position

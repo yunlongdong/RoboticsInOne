@@ -2,11 +2,13 @@ import moderngl
 import numpy as np
 import wx
 import wx.glcanvas
+from wx import html, stc
 import os.path as osp
 
 from ..behaviours import Behaviour
 from ..scenes import Scene
 from .base import BaseWindow
+from ..renderables import Mesh, Lines
 
 dir_abs_path = osp.dirname(osp.abspath(__file__))
 
@@ -14,6 +16,7 @@ class Window(BaseWindow):
     _FRAME_STYLE = wx.DEFAULT_FRAME_STYLE & ~(
         wx.RESIZE_BORDER | wx.MAXIMIZE_BOX
     )
+
 
     class _Frame(wx.Frame):
         """A simple frame for our wxWidgets app."""
@@ -33,6 +36,72 @@ class Window(BaseWindow):
             icon.CopyFromBitmap(wx.Bitmap(osp.join(dir_abs_path, "../../icons/ico.bmp"), wx.BITMAP_TYPE_ANY))
             # icon.LoadFile("icons/sm.ico", wx.BITMAP_TYPE_ANY)
             self.SetIcon(icon)
+            self.SetBackgroundColour( wx.Colour( 255, 255, 255 ) )
+
+            bSizer1 = wx.BoxSizer( wx.VERTICAL )
+
+            
+            bSizer1.Add( self.view, 5, wx.EXPAND |wx.ALL, 0 )
+
+            bSizer2 = wx.BoxSizer( wx.HORIZONTAL )
+
+            self.m_staticText1 = wx.StaticText( self, wx.ID_ANY, u"Color", wx.DefaultPosition, wx.DefaultSize, 0 )
+            self.m_staticText1.Wrap( -1 )
+
+            bSizer2.Add( self.m_staticText1, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+
+            self.m_colourPicker2 = wx.ColourPickerCtrl( self, wx.ID_ANY, '#708090', wx.DefaultPosition, wx.DefaultSize, wx.CLRP_DEFAULT_STYLE )
+            self.m_colourPicker2.SetColour('#708090')
+            bSizer2.Add( self.m_colourPicker2, 0, wx.ALL, 5 )
+
+            self.m_staticText2 = wx.StaticText( self, wx.ID_ANY, u"Alpha", wx.DefaultPosition, wx.DefaultSize, 0 )
+            self.m_staticText2.Wrap( -1 )
+
+            bSizer2.Add( self.m_staticText2, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+
+            self.m_slider2 = wx.Slider( self, wx.ID_ANY, 20, 0, 100, wx.DefaultPosition, wx.DefaultSize, wx.SL_HORIZONTAL )
+            bSizer2.Add( self.m_slider2, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+
+            self.m_checkBox1 = wx.CheckBox( self, wx.ID_ANY, u"CoM", wx.DefaultPosition, wx.DefaultSize, 0 )
+            self.m_checkBox1.SetValue(True)
+            bSizer2.Add( self.m_checkBox1, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+
+
+            bSizer1.Add( bSizer2, 0, wx.EXPAND, 0 )
+
+
+            self.SetSizer( bSizer1 )
+            self.Layout()
+
+            self.Centre( wx.BOTH )
+
+            self.Bind(wx.EVT_COLOURPICKER_CHANGED, self.OnColor, self.m_colourPicker2)
+            self.Bind(wx.EVT_SCROLL, self.OnSlider, self.m_slider2)
+            self.Bind(wx.EVT_CHECKBOX, self.OnCheker, self.m_checkBox1)
+
+
+        def OnColor(self, e):
+            color = self.m_colourPicker2.GetColour()[:3]
+            color = [ c/255.0 for c in color]
+            for render in self._window._scene._renderables:
+                if isinstance(render, Mesh):
+                    render.colors = color + [self.m_slider2.GetValue()/100.0]
+            
+            self.view._on_paint(None)
+
+        def OnSlider(self, e):
+            color = self.m_colourPicker2.GetColour()[:3]
+            print(color)
+            color = [ c/255.0 for c in color]
+            print(color)
+            for render in self._window._scene._renderables:
+                if isinstance(render, Mesh):
+                    render.colors = color + [self.m_slider2.GetValue()/100.0]
+            self.view._on_paint(None)
+
+        def OnCheker(self, e):
+            return
+
 
         def _on_close(self, event):
             # If close was called before then close
