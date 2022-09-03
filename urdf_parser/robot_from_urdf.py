@@ -104,13 +104,31 @@ class Robot:
         self.calculate_tfs_in_world_frame()
 
     def invert_joint_z(self, jointname):
-        m = np.matmul(get_extrinsic_rotation(self.robotjoints[jointname].rpy)[:3, :3], matrix33.create_from_x_rotation(np.pi))
-        self.robotjoints[jointname].rpy = get_rpy_from_rotation(m)
-        # update urdf tree
-        a = self.urdf_tree.findall("./*[@name='{0}']/origin".format(jointname))
-        assert len(a) == 1
-        a[0].set('rpy', str(self.robotjoints[jointname].rpy).replace("[", "").replace("]", ""))
-        # update tf
+        last2old = get_extrinsic_tf(self.robotjoints[jointname].rpy, self.robotjoints[jointname].xyz)
+        old2new = np.eye(4)
+        old2new[:3, :3] = matrix33.create_from_x_rotation(np.pi)
+        last2new = np.matmul(last2old, old2new)
+        last2new_rpy = get_rpy_from_rotation(last2new)
+        self.set_joint_rpy_xyz(jointname, last2new_rpy, last2new[:3, 3])
+        self.robotjoints[jointname].angle *= -1 # invert current joint angle
+        # change joint pos
+        for robotjoint in self.robotjoints.values():
+            if robotjoint.parent_link == self.robotjoints[jointname].child_link:
+                old2next = get_extrinsic_tf(robotjoint.rpy, robotjoint.xyz)
+                last2next = np.matmul(last2old, old2next)
+                new2next = np.matmul(inv_tf(last2new), last2next)
+                new2next_rpy = get_rpy_from_rotation(new2next)
+                self.set_joint_rpy_xyz(robotjoint.jointname, new2next_rpy, new2next[:3, 3])
+        # change link pos
+        linkname = self.robotjoints[jointname].child_link
+        link = self.robotlinks[self.robotjoints[jointname].child_link]
+        old2link = get_extrinsic_tf(robotjoint.rpy, np.zeros(3))
+        link_rpy = get_rpy_from_rotation(np.matmul(inv_tf(old2new), old2link))
+        link_com = tf_coordinate(inv_tf(old2new), link.com)
+        print("inv_tf(old2new)=", inv_tf(old2new))
+        print("link_com=", link_com)
+        print("original link_com=", link.com)
+        self.set_link_rpy_com(linkname, link_rpy, link_com)
         self.calculate_tfs_in_world_frame()
         pass
     
@@ -125,8 +143,7 @@ class Robot:
                 parent_tf_world = self.robotlinks[node.parent.parent.id].abs_tf
                 xyz = self.robotjoints[node.parent.id].xyz
                 rpy = self.robotjoints[node.parent.id].rpy
-                tf = get_extrinsic_rotation(rpy)
-                tf[0:3, 3] = xyz
+                tf = get_extrinsic_tf(rpy, xyz)
                 angle = self.robotjoints[node.parent.id].angle
                 tf = np.matmul(tf, matrix44.create_from_z_rotation(angle))
                 self.robotlinks[node.id].rel_tf = tf
@@ -139,6 +156,24 @@ class Robot:
                 abs_com = np.matmul(abs_tf, local_com)
                 self.robotlinks[node.id].abs_com = abs_com[:3]
     
+    def set_joint_rpy_xyz(self, jointname, rpy, xyz):
+        self.robotjoints[jointname].rpy = rpy
+        self.robotjoints[jointname].xyz = xyz
+        # update urdf tree
+        a = self.urdf_tree.findall("./*[@name='{0}']/origin".format(jointname))
+        assert len(a) == 1
+        a[0].set('rpy', str(self.robotjoints[jointname].rpy).replace("[", "").replace("]", ""))
+        a[0].set('xyz', str(self.robotjoints[jointname].xyz).replace("[", "").replace("]", ""))
+
+    def set_link_rpy_com(self, linkname, rpy, com):
+        self.robotlinks[linkname].rpy = rpy
+        self.robotlinks[linkname].com = com
+        # update urdf tree
+        a = self.urdf_tree.findall("./*[@name='{0}']/inertial/origin".format(linkname))
+        assert len(a) == 1
+        a[0].set('rpy', str(self.robotlinks[linkname].rpy).replace("[", "").replace("]", ""))
+        a[0].set('xyz', str(self.robotlinks[linkname].com).replace("[", "").replace("]", ""))
+
     def parse_urdf(self):
         urdf_root = self.get_urdf_root()
         # deal with link node

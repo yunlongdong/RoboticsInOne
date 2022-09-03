@@ -2,9 +2,10 @@ import numpy as np
 from pyrr import matrix33, matrix44, euler
 
 def get_rpy_from_rotation(T):
-    yaw = np.arctan2(T[1, 0],T[0, 0])
-    pitch = np.arctan2(-T[2, 0], np.sqrt(T[2, 1]**2 + T[2, 2]**2))
-    roll = np.arctan2(T[2, 1], T[2, 2])
+    rot_matrix = T[:3, :3]
+    yaw = np.arctan2(rot_matrix[1, 0],rot_matrix[0, 0])
+    pitch = np.arctan2(-rot_matrix[2, 0], np.sqrt(rot_matrix[2, 1]**2 + rot_matrix[2, 2]**2))
+    roll = np.arctan2(rot_matrix[2, 1], rot_matrix[2, 2])
     return np.array([roll, pitch, yaw])
 
 def get_extrinsic_rotation(rpy):
@@ -14,6 +15,15 @@ def get_extrinsic_rotation(rpy):
     result = np.eye(4)
     result[:3, :3] = np.matmul(z_rot, np.matmul(y_rot, x_rot))
     return result
+
+def get_extrinsic_tf(rpy, xyz):
+    tf = np.eye(4)
+    tf[:3, :3] = get_extrinsic_rotation(rpy)[:3, :3]
+    tf[:3, 3] = xyz
+    return tf
+
+def tf_coordinate(tf, xyz):
+    return np.matmul(tf, np.append(xyz, 1.))[:3]
 
 def inv_tf(tf):
     """Get the inverse of a homogeneous transform"""
