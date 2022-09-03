@@ -1,6 +1,12 @@
 import numpy as np
 from pyrr import matrix33, matrix44, euler
 
+def get_rpy_from_rotation(T):
+    yaw = np.arctan2(T[1, 0],T[0, 0])
+    pitch = np.arctan2(-T[2, 0], np.sqrt(T[2, 1]**2 + T[2, 2]**2))
+    roll = np.arctan2(T[2, 1], T[2, 2])
+    return np.array([roll, pitch, yaw])
+
 def get_extrinsic_rotation(rpy):
     x_rot = matrix33.create_from_x_rotation(rpy[0])
     y_rot = matrix33.create_from_y_rotation(rpy[1])

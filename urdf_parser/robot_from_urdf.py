@@ -19,10 +19,7 @@ class Robotlink:
 
     @property
     def linkRPY(self):
-        yaw = np.arctan2(self.abs_tf[1, 0],self.abs_tf[0, 0])
-        pitch = np.arctan2(-self.abs_tf[2, 0], np.sqrt(self.abs_tf[2, 1]**2 + self.abs_tf[2, 2]**2))
-        roll = np.arctan2(self.abs_tf[2, 1], self.abs_tf[2, 2])
-        return np.array([roll, pitch, yaw])
+        return get_rpy_from_rotation(self.abs_tf)
 
     @property
     def linkPos(self):
@@ -104,6 +101,16 @@ class Robot:
             robotjoint.angle = jointangles[index]
         # update
         self.calculate_tfs_in_world_frame()
+
+    def invert_joint_z(self, jointname):
+        m = np.matmul(get_extrinsic_rotation(self.robotjoints[jointname].rpy)[:3, :3], matrix33.create_from_x_rotation(np.pi))
+        self.robotjoints[jointname].rpy = get_rpy_from_rotation(m)
+        # update
+        self.calculate_tfs_in_world_frame()
+        pass
+    
+    def export_to_urdf(self):
+        pass
 
     """The followings are utility functions"""
     def calculate_tfs_in_world_frame(self):
