@@ -48,6 +48,7 @@ class Robotjoint:
 class Robot:
     def __init__(self, fileName='../urdf_examples/estun/estun.urdf'):
         self.urdf_file = fileName
+        self.urdf_tree = None
         self.root_link_node = None
         self.urdf_tree_nodes = []
         self.robotlinks = {}
@@ -105,11 +106,16 @@ class Robot:
     def invert_joint_z(self, jointname):
         m = np.matmul(get_extrinsic_rotation(self.robotjoints[jointname].rpy)[:3, :3], matrix33.create_from_x_rotation(np.pi))
         self.robotjoints[jointname].rpy = get_rpy_from_rotation(m)
-        # update
+        # update urdf tree
+        a = self.urdf_tree.findall("./*[@name='{0}']/origin".format(jointname))
+        assert len(a) == 1
+        a[0].set('rpy', str(self.robotjoints[jointname].rpy).replace("[", "").replace("]", ""))
+        # update tf
         self.calculate_tfs_in_world_frame()
         pass
     
     def export_to_urdf(self):
+        self.urdf_tree.write(osp.join(osp.dirname(self.urdf_file), "generate_" + osp.basename(self.urdf_file)))
         pass
 
     """The followings are utility functions"""
@@ -160,6 +166,7 @@ class Robot:
     def get_urdf_root(self):
         try:
             tree = ET.parse(self.urdf_file)
+            self.urdf_tree = tree
         except ET.ParseError:
             print('ERROR: Could not parse urdf file.')
 

@@ -20,8 +20,6 @@ def scene_init(camera_position, camera_target):
     return inner
 
 def get_all_from_robot(robot):
-    # robot.set_joint_angle([1.57, 1.57, -0., 0., 0, 0, 0])
-
     meshes = []
     mesh_names = []
     # axes list, such as link frame, CoM, remember CoM shound be appended at the last
