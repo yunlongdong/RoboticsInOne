@@ -16,10 +16,13 @@ class Lines(Renderable):
         colors: array-like, per line-segment color as (r,g,b,a)
         width: float indicating the width of the line
     """
-    def __init__(self, points, colors=(0.3, 0.3, 0.3, 1.0), width=0.4):
+    def __init__(self, points, colors=(0.3, 0.3, 0.3, 1.0), width=0.4, name='', origin=np.eye(4)):
         self._points = np.asarray(points)
         self._colors = np.asarray(colors)
         self._width = width
+        self.name = name
+
+        self.affine_transform_no_update(origin[:3, :3].T, origin[:3, 3])
 
         N = len(self._points)
         if len(self._colors.shape) == 1:
@@ -122,6 +125,40 @@ class Lines(Renderable):
             self._vbo,
             "in_vertex", "in_color"
         )
+
+
+    def affine_transform(self, R=np.eye(3), t=np.zeros(3)):
+        """Rotate and translate the vertices and then update the gpu buffer.
+
+        Given the vertices v \in R^{Nx3} this function implements
+
+            v' = v @ R + t
+
+        Arguments
+        ---------
+            R: array (3, 3), the 3x3 rotation matrix
+            t: array (3,), the translation vector
+        """
+        self.R = R
+        self.t = t
+        self._points = self._points.dot(R) + t
+        self._update_vbo()
+
+    def affine_transform_no_update(self, R=np.eye(3), t=np.zeros(3)):
+        """Rotate and translate the vertices and then update the gpu buffer.
+
+        Given the vertices v \in R^{Nx3} this function implements
+
+            v' = v @ R + t
+
+        Arguments
+        ---------
+            R: array (3, 3), the 3x3 rotation matrix
+            t: array (3,), the translation vector
+        """
+        self.R = R
+        self.t = t
+        self._points = self._points.dot(R) + t
 
     def release(self):
         self._prog.release()
@@ -228,7 +265,7 @@ class Lines(Renderable):
                                    width=width)
 
     @classmethod
-    def axes(cls, origin=np.eye(4), size=1.0, colors=None, width=0.01):
+    def axes(cls, origin=np.eye(4), size=1.0, colors=None, width=0.01, name=''):
         """Create the three axes to be used as a reference.
 
         Arguments
@@ -273,7 +310,7 @@ class Lines(Renderable):
                          [0, 0, 0],
                          [0, 0, 1.]]) * size
                          
-        axes = axes.dot(origin[:3, :3].T) + origin[:3, 3]
+        # axes = axes.dot(origin[:3, :3].T) + origin[:3, 3]
 
 
-        return cls(axes, colors, width=width)
+        return cls(axes, colors, width=width, origin=origin)

@@ -11,6 +11,7 @@ from simple_3dviz import Mesh, Lines, Spherecloud
 from simple_3dviz.behaviours.misc import LightToCamera
 from urdf_parser.robot_from_urdf import Robot
 from simple_3dviz.behaviours import SceneInit
+from urdf_parser.utils import inv_tf
 
 def scene_init(camera_position, camera_target):
     def inner(scene):
@@ -19,6 +20,39 @@ def scene_init(camera_position, camera_target):
         scene.light = scene.camera_position
     return inner
 
+def get_all_from_robot(robot):
+    # robot.set_joint_angle([1.57, 1.57, -0., 0., 0, 0, 0])
+
+    meshes = []
+    mesh_names = []
+    # axes list, such as link frame, CoM, remember CoM shound be appended at the last
+    # axes = [Lines.axes(size=0.2, width=0.008, name='origin')]
+    axes = []
+    for robotlink in robot.robotlinks.values():
+        mesh_filename = robotlink.mesh_fileName
+
+        mesh = Mesh.from_file(mesh_filename, color=(0.89804, 0.91765, 0.92941, 0.2), name=robotlink.linkname)
+        mesh_names.append(robotlink.linkname)
+
+        m = np.eye(4)
+        m[:3, :3] = robotlink.abs_tf[:3, :3]
+        m[:3, 3] = robotlink.abs_tf[:3, 3]
+
+        m_inv = inv_tf(m)
+
+        mesh.affine_transform(R=m[:3, :3].T, t=m[:3, 3])  
+        # mesh.affine_transform(R=m_inv[:3, :3].T, t=m_inv[:3, 3])  
+
+        meshes.append(mesh)
+        # axis
+        axis = Lines.axes(size=0.06, width=0.006, origin=robotlink.abs_tf, name=robotlink.linkname)
+        axes.append(axis)
+
+    # CoM to the last 
+    axes.append(Spherecloud([[0, 0, 0.1]], [0, 0, 0, 0]))
+
+    return meshes, axes, mesh_names
+
 def urdf_show(path):
     file_name = osp.basename(path)
     robot = Robot(path)
@@ -26,27 +60,7 @@ def urdf_show(path):
     # add joint angle
     # robot.set_joint_angle([0, 0, 1.57])
 
-    
-    meshes = []
-
-    mesh_names = []
-
-    # axes list, such as link frame, CoM, remember CoM shound be appended at the last
-    axes = [Lines.axes(size=0.2, width=0.008)]
-
-    for robotlink in robot.robotlinks.values():
-        mesh_filename = robotlink.mesh_fileName
-
-        mesh = Mesh.from_file(mesh_filename, color=(0.89804, 0.91765, 0.92941, 0.2), name=robotlink.linkname)
-        mesh_names.append(robotlink.linkname)
-        mesh.affine_transform(R=robotlink.abs_tf[:3, :3].T, t=robotlink.abs_tf[:3, 3])
-        meshes.append(mesh)
-        # axis
-        axis = Lines.axes(size=0.06, width=0.006, origin=robotlink.abs_tf)
-        axes.append(axis)
-
-    # CoM to the last 
-    axes.append(Spherecloud([[0, 0, 0.1]], [0, 0, 0, 0]))
+    meshes, axes, mesh_names = get_all_from_robot(robot)
 
     # auto adjust camera
     bbox_min = reduce(
@@ -74,6 +88,6 @@ def urdf_show(path):
         for m in meshes:
             m.scale(s)
 
-    show(meshes, axes, size=(800, 770), title=file_name, camera_position=camera_position, camera_target=camera_target, 
+    show(meshes, axes, mesh_names, robot, size=(800, 770), title=file_name, camera_position=camera_position, camera_target=camera_target, 
             behaviours=[SceneInit(scene_init(camera_position, camera_target)), LightToCamera()],
-            info=mesh_names)
+            )
