@@ -19,28 +19,42 @@ def scene_init(camera_position, camera_target):
         scene.light = scene.camera_position
     return inner
 
-def urdf_show(path):
-    file_name = osp.basename(path)
-    robot = Robot(path)
-    
-    # meshes list
+def get_all_from_robot(robot):
+    # robot.set_joint_angle([1.57, 1.57, -0., 0., 0, 0, 0])
+
     meshes = []
     mesh_names = []
     # axes list, such as link frame, CoM, remember CoM shound be appended at the last
-    axes = [Lines.axes(size=0.2, width=0.008)]
-
+    # axes = [Lines.axes(size=0.2, width=0.008, name='origin')]
+    axes = []
     for robotlink in robot.robotlinks.values():
         mesh_filename = robotlink.mesh_fileName
 
         mesh = Mesh.from_file(mesh_filename, color=(0.89804, 0.91765, 0.92941, 0.2), name=robotlink.linkname)
         mesh_names.append(robotlink.linkname)
-        mesh.affine_transform(R=robotlink.abs_tf[:3, :3].T, t=robotlink.abs_tf[:3, 3])
+
+        m = np.eye(4)
+        m[:3, :3] = robotlink.abs_tf[:3, :3]
+        m[:3, 3] = robotlink.abs_tf[:3, 3]
+
+        mesh.affine_transform(R=m[:3, :3].T, t=m[:3, 3])
         meshes.append(mesh)
         # axis
-        axis = Lines.axes(size=0.06, width=0.006, origin=robotlink.abs_tf)
+        axis = Lines.axes(size=0.06, width=0.006, origin=robotlink.abs_tf, name=robotlink.linkname)
         axes.append(axis)
-        # com
-        axes.append(Spherecloud([robotlink.abs_com], [0, 0, 0, 0]))
+        # CoM to the last
+        axes.append(Spherecloud(name=robotlink.linkname, centers=[robotlink.abs_com], colors=[0, 0, 0, 0]))
+
+    return meshes, axes, mesh_names
+
+def urdf_show(path):
+    file_name = osp.basename(path)
+    robot = Robot(path)
+
+    # add joint angle
+    # robot.set_joint_angle([0, 0, 1.57])
+
+    meshes, axes, mesh_names = get_all_from_robot(robot)
 
     # auto adjust camera
     bbox_min = reduce(
@@ -68,6 +82,6 @@ def urdf_show(path):
         for m in meshes:
             m.scale(s)
 
-    show(meshes, axes, size=(800, 770), title=file_name, camera_position=camera_position, camera_target=camera_target, 
+    show(meshes, axes, mesh_names, robot, size=(800, 770), title=file_name, camera_position=camera_position, camera_target=camera_target, 
             behaviours=[SceneInit(scene_init(camera_position, camera_target)), LightToCamera()],
-            info=mesh_names)
+            )

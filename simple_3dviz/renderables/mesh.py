@@ -118,8 +118,24 @@ class MeshBase(Renderable):
             R: array (3, 3), the 3x3 rotation matrix
             t: array (3,), the translation vector
         """
+        self.R = R
+        self.t = t
         self._vertices = self._vertices.dot(R) + t
         self._update_vbo()
+
+    def affine_transform_no_update(self, R=np.eye(3), t=np.zeros(3)):
+        """Rotate and translate the vertices and then update the gpu buffer.
+
+        Given the vertices v \in R^{Nx3} this function implements
+
+            v' = v @ R + t
+
+        Arguments
+        ---------
+            R: array (3, 3), the 3x3 rotation matrix
+            t: array (3,), the translation vector
+        """
+        self._vertices = self._vertices.dot(R) + t
 
     def translate(self, t):
         """Translate all the vertices with a vector t."""

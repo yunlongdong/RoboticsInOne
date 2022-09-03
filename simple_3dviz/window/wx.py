@@ -4,11 +4,13 @@ import wx
 import wx.glcanvas
 from wx import html, stc
 import os.path as osp
-
+import sys
+sys.path.append('../../')
 from ..behaviours import Behaviour
 from ..scenes import Scene
 from .base import BaseWindow
 from ..renderables import Mesh, Lines, Spherecloud
+from urdf_parser.utils import inv_tf
 
 dir_abs_path = osp.dirname(osp.abspath(__file__))
 
@@ -40,14 +42,23 @@ class Window(BaseWindow):
 
             bSizer1 = wx.BoxSizer( wx.VERTICAL )
             bSizer2 = wx.BoxSizer( wx.HORIZONTAL )
+            bSizer2_1 = wx.BoxSizer( wx.VERTICAL )
             bSizer3 = wx.BoxSizer( wx.HORIZONTAL )
 
-            self.link_names = self._window.info or []
-            self.m_checklist_link = wx.CheckListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, self.link_names, 0 )
-            
+            self.robot = self._window.robot or []
+            self.m_checklist_link = wx.CheckListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, list(self.robot.robotlinks.keys()), 0 )
+            bSizer2_1.Add( self.m_checklist_link , 1,  wx.EXPAND|wx.ALL, 0)
+
+            self.link_rotate_z_sliders = []
+            for i in list(self.robot.robotjoints.keys()):
+                text = wx.StaticText( self, wx.ID_ANY, i, wx.DefaultPosition, wx.DefaultSize, 0 )
+                slider = wx.Slider( self, wx.ID_ANY, 0, -100, 100, wx.DefaultPosition, wx.DefaultSize, wx.SL_HORIZONTAL )
+                self.link_rotate_z_sliders.append(slider)
+                bSizer2_1.Add( text ,  -1, wx.ALIGN_CENTER|wx.ALL, 0)
+                bSizer2_1.Add( slider ,  -1, wx.ALIGN_CENTER|wx.ALL, 0)
                 
             bSizer2.Add( self.view, 5, wx.EXPAND |wx.ALL, 0 )
-            bSizer2.Add( self.m_checklist_link, 1, wx.ALL|wx.EXPAND, 0 )
+            bSizer2.Add( bSizer2_1, -1, wx.EXPAND|wx.ALL, 0 )
             
 
             self.m_staticText1 = wx.StaticText( self, wx.ID_ANY, u"Color", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -89,10 +100,13 @@ class Window(BaseWindow):
             self.Bind(wx.EVT_CHECKBOX, self.OnCheckerAxis, self.m_checkBoxAxis)
             self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckerLink, self.m_checklist_link)
 
+            for i in self.link_rotate_z_sliders:
+                self.Bind(wx.EVT_COMMAND_SCROLL, self.OnSliderControl, i)
+
             self.show_all_link()
 
         def show_all_link(self):
-            for i in range(len(self.link_names)):
+            for i in range(len(self.robot.robotlinks.keys())):
                 self.m_checklist_link.Check(i)
 
         def OnColor(self, e):
@@ -104,6 +118,7 @@ class Window(BaseWindow):
                     render.colors = color + [self.m_slider2.GetValue()/100.0]
             
             self.view._on_paint(None)
+            return 
 
         def OnSlider(self, e):
             self.show_all_link()
@@ -113,6 +128,25 @@ class Window(BaseWindow):
                     colors[:, -1] = self.m_slider2.GetValue()/100.0 
                     render.colors = colors
             self.view._on_paint(None)
+            return 
+
+        def OnSliderControl(self, e):
+            q = [ i.GetValue()/20.0 for i in self.link_rotate_z_sliders]
+            robot = self._window.robot
+            robot.set_joint_angle(q)
+            for render in self._window._scene._renderables:
+                if isinstance(render, Mesh) or isinstance(render, Lines):
+                    robotlink = robot.robotlinks[render.name]
+                    abs_tf = robotlink.abs_tf
+                    m = np.eye(4)
+                    m[:3, :3] = render.R.T
+                    m[:3, 3] = render.t
+                    m_inv = inv_tf(m)
+                    render.affine_transform_no_update(R=m_inv[:3, :3].T, t=m_inv[:3, 3])
+                    render.affine_transform(R=abs_tf[:3, :3].T, t=abs_tf[:3, 3])
+                            
+            self.view._on_paint(None)
+            return 
 
         def OnCheckerCoM(self, e):
             if self.m_checkBoxCoM.IsChecked():
@@ -265,9 +299,10 @@ class Window(BaseWindow):
                 )
                 self._window._keyboard.keys_down.difference_update(keys)
 
-    def __init__(self, size=(512, 512), info=None):
+    def __init__(self, info, robot, size=(512, 512)):
         super(Window, self).__init__(size)
         self.info = info
+        self.robot = robot
         self._scene = None
         self._mouse = Behaviour.Mouse(None, None, None, None)
         self._keyboard = Behaviour.Keyboard([], [])

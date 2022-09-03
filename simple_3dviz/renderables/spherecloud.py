@@ -5,10 +5,11 @@ from .base import Renderable
 from ..utils import normalize_colors
 
 class Spherecloud(Renderable):
-    def __init__(self, centers, colors=(0.3, 0.3, 0.3), sizes=(0.02)):
+    def __init__(self, name, centers, colors=(0.3, 0.3, 0.3), sizes=(0.02)):
         self._centers = np.asarray(centers)
         self._colors = np.asarray(colors)
         self._sizes = np.asarray(sizes)
+        self.name = name
 
         N = len(self._centers)
         if len(self._colors.shape) == 1:
