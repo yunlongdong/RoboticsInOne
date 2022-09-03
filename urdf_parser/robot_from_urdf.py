@@ -15,6 +15,7 @@ class Robotlink:
         self.linkname = ''
         self.abs_tf = np.eye(4) # absolute tranformation matrix from link to world
         self.rel_tf = np.eye(4) # tranfromation matrix from this link to last link
+        self.abs_com = np.zeros(3)
 
     @property
     def linkRPY(self):
@@ -54,6 +55,8 @@ class Robot:
         self.urdf_tree_nodes = []
         self.robotlinks = {}
         self.robotjoints = {}
+        self.num_robotjoints = 0
+        self.num_robotlinks = 0
         # load link and joint info from urdf file
         self.parse_urdf()
         self.calculate_tfs_in_world_frame()
@@ -93,6 +96,10 @@ class Robot:
         print(pd_frame.to_markdown())
 
     def set_joint_angle(self, jointangles):
+        try:
+            assert len(jointangles)==self.num_robotjoints
+        except:
+            print("Number of joints mismatched with joint angles...")
         for index, robotjoint in enumerate(self.robotjoints.values()):
             robotjoint.angle = jointangles[index]
         # update
@@ -115,6 +122,9 @@ class Robot:
                 
                 self.robotlinks[node.id].abs_tf = abs_tf
                 # print("joint ", self.robotjoints[node.parent.id].jointname, abs_tf)
+                local_com = np.append(self.robotlinks[node.id].com, 1)
+                abs_com = np.matmul(abs_tf, local_com)
+                self.robotlinks[node.id].abs_com = abs_com[:3]
     
     def parse_urdf(self):
         urdf_root = self.get_urdf_root()
@@ -135,6 +145,10 @@ class Robot:
                 self.root_link_node = node
         if num_nodes_no_parent != 1:
             print("Error: Should only be one root link!!!")
+        
+        # num of joints and links
+        self.num_robotjoints = len(self.robotjoints)
+        self.num_robotlinks = len(self.robotlinks)
     
     def get_urdf_root(self):
         try:
@@ -171,6 +185,11 @@ class Robot:
     def process_joint(self, joint):
         robotjoint = Robotjoint()
         robotjoint.jointname = joint.get('name')
+        jointtype = joint.get('type')
+        try:
+            assert jointtype=='revolute'
+        except:
+            print("Can only deal with revolute joints now!!! The urdf contains {0} joints.".format(jointtype))
 
         for child in joint:
             if child.tag == 'axis':

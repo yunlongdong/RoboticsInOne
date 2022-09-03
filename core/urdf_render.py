@@ -22,15 +22,10 @@ def scene_init(camera_position, camera_target):
 def urdf_show(path):
     file_name = osp.basename(path)
     robot = Robot(path)
-
-    # add joint angle
-    # robot.set_joint_angle([0, 0, 1.57])
-
     
+    # meshes list
     meshes = []
-
     mesh_names = []
-
     # axes list, such as link frame, CoM, remember CoM shound be appended at the last
     axes = [Lines.axes(size=0.2, width=0.008)]
 
@@ -44,9 +39,8 @@ def urdf_show(path):
         # axis
         axis = Lines.axes(size=0.06, width=0.006, origin=robotlink.abs_tf)
         axes.append(axis)
-
-    # CoM to the last 
-    axes.append(Spherecloud([[0, 0, 0.1]], [0, 0, 0, 0]))
+        # com
+        axes.append(Spherecloud([robotlink.abs_com], [0, 0, 0, 0]))
 
     # auto adjust camera
     bbox_min = reduce(
