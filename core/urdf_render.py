@@ -12,6 +12,8 @@ from simple_3dviz.behaviours.misc import LightToCamera
 from urdf_parser.robot_from_urdf import Robot
 from simple_3dviz.behaviours import SceneInit
 
+from pyrr import matrix33
+
 def scene_init(camera_position, camera_target):
     def inner(scene):
         scene.camera_position = camera_position
@@ -20,8 +22,8 @@ def scene_init(camera_position, camera_target):
     return inner
 
 def get_all_from_robot(robot):
-    test = list(robot.robotjoints.keys())[1]
-    print("test=", test)
+    # test = list(robot.robotjoints.keys())[1]
+    # print("test=", test)
     # robot.invert_joint_z(test)
     # robot.export_to_urdf()
 
@@ -37,8 +39,8 @@ def get_all_from_robot(robot):
         mesh_names.append(robotlink.linkname)
 
         m = np.eye(4)
-        m[:3, :3] = robotlink.abs_tf[:3, :3]
-        m[:3, 3] = robotlink.abs_tf[:3, 3]
+        m[:3, :3] = robotlink.abs_tf_reverse[:3, :3]
+        m[:3, 3] = robotlink.abs_tf_reverse[:3, 3]
 
         mesh.affine_transform(R=m[:3, :3].T, t=m[:3, 3])
         meshes.append(mesh)
@@ -53,10 +55,6 @@ def get_all_from_robot(robot):
 def urdf_show(path):
     file_name = osp.basename(path)
     robot = Robot(path)
-
-    # robot.invert_joint_z('3')
-    # add joint angle
-    # robot.set_joint_angle([0, 0, 1.57])
 
     meshes, axes, mesh_names = get_all_from_robot(robot)
 

@@ -16,6 +16,8 @@ class Robotlink:
         self.abs_tf = np.eye(4) # absolute tranformation matrix from link to world
         self.rel_tf = np.eye(4) # tranfromation matrix from this link to last link
         self.abs_com = np.zeros(3)
+        self.abs_tf_reverse = np.eye(4)
+
 
     @property
     def linkRPY(self):
@@ -41,6 +43,7 @@ class Robotjoint:
         self.rpy = np.zeros(3)
         self.parent_link = ''   # name of parent link
         self.child_link = ''    # name of child link
+        self.reverse = False
     
     def log_joint_info(self):
         print("joint {0}: axis {1}, xyz {2}, rpy {3}".format(self.jointname, self.axis, self.xyz, self.rpy))
@@ -104,13 +107,14 @@ class Robot:
         self.calculate_tfs_in_world_frame()
 
     def invert_joint_z(self, jointname):
+        self.robotjoints[jointname].reverse = not self.robotjoints[jointname].reverse
+        self.robotjoints[jointname].angle *= -1.
         last2old = get_extrinsic_tf(self.robotjoints[jointname].rpy, self.robotjoints[jointname].xyz)
         old2new = np.eye(4)
         old2new[:3, :3] = matrix33.create_from_x_rotation(np.pi)
         last2new = np.matmul(last2old, old2new)
         last2new_rpy = get_rpy_from_rotation(last2new)
         self.set_joint_rpy_xyz(jointname, last2new_rpy, last2new[:3, 3])
-        self.robotjoints[jointname].angle *= -1 # invert current joint angle
         # change joint pos
         for robotjoint in self.robotjoints.values():
             if robotjoint.parent_link == self.robotjoints[jointname].child_link:
@@ -125,9 +129,9 @@ class Robot:
         old2link = get_extrinsic_tf(robotjoint.rpy, np.zeros(3))
         link_rpy = get_rpy_from_rotation(np.matmul(inv_tf(old2new), old2link))
         link_com = tf_coordinate(inv_tf(old2new), link.com)
-        print("inv_tf(old2new)=", inv_tf(old2new))
-        print("link_com=", link_com)
-        print("original link_com=", link.com)
+        # print("inv_tf(old2new)=", inv_tf(old2new))
+        # print("link_com=", link_com)
+        # print("original link_com=", link.com)
         self.set_link_rpy_com(linkname, link_rpy, link_com)
         self.calculate_tfs_in_world_frame()
         pass
@@ -145,16 +149,24 @@ class Robot:
                 rpy = self.robotjoints[node.parent.id].rpy
                 tf = get_extrinsic_tf(rpy, xyz)
                 angle = self.robotjoints[node.parent.id].angle
+                tf_reverse = tf.copy()
+                # tf for joint
                 tf = np.matmul(tf, matrix44.create_from_z_rotation(angle))
+                # tf for link
+                if self.robotjoints[node.parent.id].reverse:
+                    old2new = np.eye(4)
+                    old2new[:3, :3] = matrix33.create_from_x_rotation(np.pi)
+                    tf_reverse = np.matmul(tf_reverse, matrix44.create_from_z_rotation(angle))
+                    tf_reverse = np.matmul(tf_reverse, old2new)
+                else:
+                    tf_reverse = tf
+                
                 self.robotlinks[node.id].rel_tf = tf
-                
                 abs_tf = np.matmul(parent_tf_world, tf)
-                
                 self.robotlinks[node.id].abs_tf = abs_tf
+                self.robotlinks[node.id].abs_tf_reverse = np.matmul(parent_tf_world, tf_reverse)
                 # print("joint ", self.robotjoints[node.parent.id].jointname, abs_tf)
-                local_com = np.append(self.robotlinks[node.id].com, 1)
-                abs_com = np.matmul(abs_tf, local_com)
-                self.robotlinks[node.id].abs_com = abs_com[:3]
+                self.robotlinks[node.id].abs_com = tf_coordinate(abs_tf, self.robotlinks[node.id].com)
     
     def set_joint_rpy_xyz(self, jointname, rpy, xyz):
         self.robotjoints[jointname].rpy = rpy
