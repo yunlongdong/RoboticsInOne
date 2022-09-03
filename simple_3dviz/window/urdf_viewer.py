@@ -102,7 +102,7 @@ class Window(BaseWindow):
 
 
             bSizer1.Add( bSizer2, 6, wx.ALL|wx.EXPAND, 0 )
-            bSizer1.Add( bSizer3, -1, wx.ALL|wx.EXPAND, 0 )
+            bSizer1.Add( bSizer3, 0, wx.ALL|wx.EXPAND, 0 )
 
 
             self.SetSizer( bSizer1 )

@@ -1,9 +1,11 @@
 import wx
+import wx.lib.scrolledpanel
 
-class JointController(wx.Panel):
+class JointController(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, joint_names):
-        wx.Panel.__init__(self, parent)
-
+        wx.ScrolledWindow.__init__(self, parent)
+        # self.SetScrollbars(1, 1, 1, 1)
+        self.SetupScrolling(scroll_x=False)
         bSizer = wx.BoxSizer(wx.VERTICAL)
 
         self.joint_controller_sliders = []
@@ -27,7 +29,7 @@ class JointController(wx.Panel):
 if __name__ == "__main__":
     App = wx.App()
     frame = wx.Frame(None, size=(512, 512))
-    jc = JointController(frame, ['j1', 'j2', 'j3'])
+    jc = JointController(frame, ['j1', 'j2', 'j3']*10)
 
     frame.Show()
     App.MainLoop()
