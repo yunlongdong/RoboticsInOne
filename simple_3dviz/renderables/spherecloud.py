@@ -2,7 +2,7 @@
 import numpy as np
 
 from .base import Renderable
-
+from ..utils import normalize_colors
 
 class Spherecloud(Renderable):
     def __init__(self, centers, colors=(0.3, 0.3, 0.3), sizes=(0.02)):
@@ -24,6 +24,23 @@ class Spherecloud(Renderable):
         self._prog = None
         self._vbo = None
         self._vao = None
+
+    @property
+    def colors(self):
+        """Return the color per vertex."""
+        return self._colors.copy()
+
+    @colors.setter
+    def colors(self, c):
+        c = normalize_colors(c, len(self._centers))
+        self._colors = c
+        self._update_vbo()
+
+    def _update_vbo(self):
+        """Write in the vertex buffer object the vertices, normals and
+        colors."""
+        if self._vbo is not None:
+            self._vbo.write(self.packed_parameters.tobytes())
 
     @property
     def packed_parameters(self):
@@ -151,6 +168,8 @@ class Spherecloud(Renderable):
         for k, v in uniforms:
             if k in ["light", "mvp", "vm"]:
                 self._prog[k].write(v.tobytes())
+    
+
 
     @property
     def bbox(self):

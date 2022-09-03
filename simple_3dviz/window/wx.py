@@ -8,7 +8,7 @@ import os.path as osp
 from ..behaviours import Behaviour
 from ..scenes import Scene
 from .base import BaseWindow
-from ..renderables import Mesh, Lines
+from ..renderables import Mesh, Lines, Spherecloud
 
 dir_abs_path = osp.dirname(osp.abspath(__file__))
 
@@ -39,35 +39,43 @@ class Window(BaseWindow):
             self.SetBackgroundColour( wx.Colour( 255, 255, 255 ) )
 
             bSizer1 = wx.BoxSizer( wx.VERTICAL )
-
-            
-            bSizer1.Add( self.view, 5, wx.EXPAND |wx.ALL, 0 )
-
             bSizer2 = wx.BoxSizer( wx.HORIZONTAL )
+            bSizer3 = wx.BoxSizer( wx.HORIZONTAL )
+
+            self.link_names = self._window.info or []
+            self.m_checklist_link = wx.CheckListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, self.link_names, 0 )
+            
+                
+            bSizer2.Add( self.view, 5, wx.EXPAND |wx.ALL, 0 )
+            bSizer2.Add( self.m_checklist_link, 1, wx.ALL|wx.EXPAND, 0 )
+            
 
             self.m_staticText1 = wx.StaticText( self, wx.ID_ANY, u"Color", wx.DefaultPosition, wx.DefaultSize, 0 )
             self.m_staticText1.Wrap( -1 )
-
-            bSizer2.Add( self.m_staticText1, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
-
+            bSizer3.Add( self.m_staticText1, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
             self.m_colourPicker2 = wx.ColourPickerCtrl( self, wx.ID_ANY, '#708090', wx.DefaultPosition, wx.DefaultSize, wx.CLRP_DEFAULT_STYLE )
             self.m_colourPicker2.SetColour('#708090')
-            bSizer2.Add( self.m_colourPicker2, 0, wx.ALL, 5 )
+            bSizer3.Add( self.m_colourPicker2, 0, wx.ALL, 5 )
 
             self.m_staticText2 = wx.StaticText( self, wx.ID_ANY, u"Alpha", wx.DefaultPosition, wx.DefaultSize, 0 )
             self.m_staticText2.Wrap( -1 )
 
-            bSizer2.Add( self.m_staticText2, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+            bSizer3.Add( self.m_staticText2, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
 
             self.m_slider2 = wx.Slider( self, wx.ID_ANY, 20, 0, 100, wx.DefaultPosition, wx.DefaultSize, wx.SL_HORIZONTAL )
-            bSizer2.Add( self.m_slider2, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+            bSizer3.Add( self.m_slider2, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
 
-            self.m_checkBox1 = wx.CheckBox( self, wx.ID_ANY, u"CoM", wx.DefaultPosition, wx.DefaultSize, 0 )
-            self.m_checkBox1.SetValue(True)
-            bSizer2.Add( self.m_checkBox1, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+            self.m_checkBoxCoM = wx.CheckBox( self, wx.ID_ANY, u"CoM", wx.DefaultPosition, wx.DefaultSize, 0 )
+            # self.m_checkBox1.SetValue(True)
+            bSizer3.Add( self.m_checkBoxCoM, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+
+            self.m_checkBoxAxis = wx.CheckBox( self, wx.ID_ANY, u"Axis", wx.DefaultPosition, wx.DefaultSize, 0 )
+            self.m_checkBoxAxis.SetValue(True)
+            bSizer3.Add( self.m_checkBoxAxis, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
 
 
-            bSizer1.Add( bSizer2, 0, wx.EXPAND, 0 )
+            bSizer1.Add( bSizer2, 6, wx.ALL|wx.EXPAND, 0 )
+            bSizer1.Add( bSizer3, -1, wx.ALL|wx.EXPAND, 0 )
 
 
             self.SetSizer( bSizer1 )
@@ -77,10 +85,18 @@ class Window(BaseWindow):
 
             self.Bind(wx.EVT_COLOURPICKER_CHANGED, self.OnColor, self.m_colourPicker2)
             self.Bind(wx.EVT_SCROLL, self.OnSlider, self.m_slider2)
-            self.Bind(wx.EVT_CHECKBOX, self.OnCheker, self.m_checkBox1)
+            self.Bind(wx.EVT_CHECKBOX, self.OnCheckerCoM, self.m_checkBoxCoM)
+            self.Bind(wx.EVT_CHECKBOX, self.OnCheckerAxis, self.m_checkBoxAxis)
+            self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckerLink, self.m_checklist_link)
 
+            self.show_all_link()
+
+        def show_all_link(self):
+            for i in range(len(self.link_names)):
+                self.m_checklist_link.Check(i)
 
         def OnColor(self, e):
+            self.show_all_link()
             color = self.m_colourPicker2.GetColour()[:3]
             color = [ c/255.0 for c in color]
             for render in self._window._scene._renderables:
@@ -90,16 +106,56 @@ class Window(BaseWindow):
             self.view._on_paint(None)
 
         def OnSlider(self, e):
-            color = self.m_colourPicker2.GetColour()[:3]
-            color = [ c/255.0 for c in color]
+            self.show_all_link()
             for render in self._window._scene._renderables:
                 if isinstance(render, Mesh):
-                    render.colors = color + [self.m_slider2.GetValue()/100.0]
+                    colors = render.colors                 
+                    colors[:, -1] = self.m_slider2.GetValue()/100.0 
+                    render.colors = colors
             self.view._on_paint(None)
 
-        def OnCheker(self, e):
+        def OnCheckerCoM(self, e):
+            if self.m_checkBoxCoM.IsChecked():
+                for render in self._window._scene._renderables:
+                    if isinstance(render, Spherecloud):
+                        render.colors = [1.0, 0, 0, 1.0]
+            else:
+                for render in self._window._scene._renderables:
+                    if isinstance(render, Spherecloud):
+                        render.colors = [1.0, 0, 0, 0.0]
+            self.view._on_paint(None)
             return
 
+        def OnCheckerAxis(self, e):
+            if self.m_checkBoxAxis.IsChecked():
+                for render in self._window._scene._renderables:
+                    if isinstance(render, Lines):
+                        colors = render.colors
+                        colors[:, -1] = 1.0
+                        render.colors = colors
+            else:
+                for render in self._window._scene._renderables:
+                    if isinstance(render, Lines):
+                        colors = render.colors                   
+                        colors[:, -1] = 0.0
+                        render.colors = colors
+            self.view._on_paint(None)
+            return
+
+        def OnCheckerLink(self, e):
+            for render in self._window._scene._renderables:
+                if isinstance(render, Mesh):
+                    name = render.name
+                    if not name in self.m_checklist_link.GetCheckedStrings():
+                        colors = render.colors                   
+                        colors[:, -1] = 0.0
+                        render.colors = colors
+                    else:
+                        colors = render.colors                   
+                        colors[:, -1] = self.m_slider2.GetValue()/100.0
+                        render.colors = colors
+            self.view._on_paint(None)
+            return
 
         def _on_close(self, event):
             # If close was called before then close
@@ -146,6 +202,7 @@ class Window(BaseWindow):
             self.Unbind(wx.EVT_TIMER)
 
         def _on_paint(self, event):
+            
             self.SetCurrent(self._context)
             if self._window._scene is None:
                 self._mgl_context = moderngl.create_context()
@@ -208,8 +265,9 @@ class Window(BaseWindow):
                 )
                 self._window._keyboard.keys_down.difference_update(keys)
 
-    def __init__(self, size=(512, 512)):
+    def __init__(self, size=(512, 512), info=None):
         super(Window, self).__init__(size)
+        self.info = info
         self._scene = None
         self._mouse = Behaviour.Mouse(None, None, None, None)
         self._keyboard = Behaviour.Keyboard([], [])

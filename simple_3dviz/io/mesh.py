@@ -144,7 +144,8 @@ class ObjMeshReader(MeshReader):
             return int(face.split("/")[2])-1
 
         def extract_uv(face):
-            return int(face.split("/")[1])-1
+            # print(face)
+            return int(face.split("//")[1])-1
 
         try:
             f = get_file(filename)

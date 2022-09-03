@@ -183,9 +183,9 @@ class Mesh(MeshBase):
         max_depth: The maximum depth map value when rendering depth maps
     """
     def __init__(self, vertices, normals, colors, offset=[0, 0, 0.],
-                 mode="shading", max_depth=3.0):
+                 mode="shading", max_depth=3.0, name=''):
         super(Mesh, self).__init__(vertices, normals, offset)
-
+        self.name = name
         self._colors = np.asarray(colors)
 
         N = len(self._vertices)
@@ -293,7 +293,7 @@ class Mesh(MeshBase):
     @property
     def colors(self):
         """Return the color per vertex."""
-        return self._colors.clone()
+        return self._colors.copy()
 
     @colors.setter
     def colors(self, c):
@@ -360,7 +360,7 @@ class Mesh(MeshBase):
         self._update_vbo()
 
     @classmethod
-    def from_file(cls, filepath, color=(0.3, 0.3, 0.3), ext=None):
+    def from_file(cls, filepath, color=(0.3, 0.3, 0.3), ext=None, name=''):
         """Read the mesh from a file.
 
         Arguments
@@ -389,7 +389,7 @@ class Mesh(MeshBase):
         except NotImplementedError:
             colors = np.ones((len(vertices), 1)) * color
 
-        return cls(vertices, normals, colors)
+        return cls(vertices, normals, colors, name=name)
 
     @classmethod
     def from_xyz(cls, X, Y, Z, colormap=None):

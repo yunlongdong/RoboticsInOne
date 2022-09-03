@@ -12,7 +12,7 @@ from ..behaviours.mouse import MouseRotate, MouseZoom, MousePan
 from ..behaviours.keyboard import CameraReport, SortTriangles
 
 
-def simple_window(init, size=(512, 512)):
+def simple_window(init, size=(512, 512), info=[]):
     """Return a window with the expected behaviours added.
 
     Arguments
@@ -24,7 +24,7 @@ def simple_window(init, size=(512, 512)):
     -------
         Window instance
     """
-    w = Window(size)
+    w = Window(size, info=info)
     w.add_behaviours([SceneInit(init), MouseRotate(), MouseZoom(),
                       MousePan(), CameraReport(), SortTriangles()])
     return w
@@ -32,7 +32,7 @@ def simple_window(init, size=(512, 512)):
 
 def show(meshes, axes, size=(512, 580), background=(0.7, 0.7, 0.7, 1), title="Scene",
          camera_position=(-2, -2, -2), camera_target=(0, 0, 0),
-         up_vector=(0, 0, 1), light=None, behaviours=[]):
+         up_vector=(0, 0, 1), light=None, behaviours=[], info=[]):
     """Creates a simple window that displays the renderables.
 
     Arguments
@@ -61,6 +61,6 @@ def show(meshes, axes, size=(512, 580), background=(0.7, 0.7, 0.7, 1), title="Sc
         if light is not None:
             scene.light = light
 
-    w = simple_window(init, size=size)
+    w = simple_window(init, size=size, info=info)
     w.add_behaviours(behaviours)
     w.show(title)

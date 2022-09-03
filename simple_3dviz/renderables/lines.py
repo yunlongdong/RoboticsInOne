@@ -4,6 +4,7 @@ import numpy as np
 from pyrr import Matrix33
 from ..io.voxels import read_binvox
 from .base import Renderable
+from ..utils import normalize_colors
 
 
 class Lines(Renderable):
@@ -31,6 +32,23 @@ class Lines(Renderable):
         self._prog = None
         self._vbo = None
         self._vao = None
+    
+    @property
+    def colors(self):
+        """Return the color per vertex."""
+        return self._colors.copy()
+
+    @colors.setter
+    def colors(self, c):
+        c = normalize_colors(c, len(self._points))
+        self._colors = c
+        self._update_vbo()
+
+    def _update_vbo(self):
+        """Write in the vertex buffer object the vertices, normals and
+        colors."""
+        if self._vbo is not None:
+            self._vbo.write(np.hstack([self._points, self._colors]).astype(np.float32).tobytes())
 
     def init(self, ctx):
         self._prog = ctx.program(
