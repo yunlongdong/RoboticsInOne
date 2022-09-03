@@ -37,6 +37,11 @@ class Spherecloud(Renderable):
         self._colors = c
         self._update_vbo()
 
+    def scale(self, s):
+        """Multiply all the vertices with a number s."""
+        self._sizes *= s
+        self._update_vbo()
+
     def _update_vbo(self):
         """Write in the vertex buffer object the vertices, normals and
         colors."""
@@ -182,11 +187,11 @@ class Spherecloud(Renderable):
             self._centers.max(axis=0)
         ]
 
-    def scale(self, s):
-        """Multiply all the vertices with a number s."""
-        self._centers *= s
-        if self._vbo is not None:
-            self._vbo.write(self.packed_parameters.tobytes())
+    # def scale(self, s):
+    #     """Multiply all the vertices with a number s."""
+    #     self._centers *= s
+    #     if self._vbo is not None:
+    #         self._vbo.write(self.packed_parameters.tobytes())
 
     def to_unit_cube(self):
         """Transform the mesh such that it fits in the 0 centered unit cube."""

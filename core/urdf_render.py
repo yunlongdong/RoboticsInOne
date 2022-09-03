@@ -41,7 +41,7 @@ def get_all_from_robot(robot):
         axis = Lines.axes(size=0.06, width=0.006, origin=robotlink.abs_tf, name=robotlink.linkname)
         axes.append(axis)
         # CoM to the last
-        axes.append(Spherecloud(name=robotlink.linkname, centers=[robotlink.abs_com], colors=[0, 0, 0, 0]))
+        axes.append(Spherecloud(name=robotlink.linkname, centers=[robotlink.abs_com], colors=[0.8, 0, 0, 0.8], sizes=[0.01]))
 
     return meshes, axes, mesh_names
 
@@ -49,6 +49,7 @@ def urdf_show(path):
     file_name = osp.basename(path)
     robot = Robot(path)
 
+    # robot.invert_joint_z('3')
     # add joint angle
     # robot.set_joint_angle([0, 0, 1.57])
 

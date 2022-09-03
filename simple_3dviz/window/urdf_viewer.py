@@ -50,7 +50,14 @@ class Window(BaseWindow):
             self.m_checklist_link = wx.CheckListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, list(self.robot.robotlinks.keys()), 0 )
             text1 = wx.StaticText( self, wx.ID_ANY, 'Links Information', wx.DefaultPosition, wx.DefaultSize, 0 )
             bSizer2_1.Add( text1, -1, wx.ALL, 0)
-            bSizer2_1.Add( self.m_checklist_link , -1,  wx.EXPAND|wx.ALL, 0)
+            bSizer2_1.Add( self.m_checklist_link , 1,  wx.EXPAND|wx.ALL, 0)
+
+            joint_names = [ i for i in list(self.robot.robotjoints.keys())]
+            self.m_checklist_invert_j = wx.CheckListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, joint_names, 0 )
+            text2 = wx.StaticText( self, wx.ID_ANY, 'Invert Joint', wx.DefaultPosition, wx.DefaultSize, 0 )
+            bSizer2_1.Add( text2, -1, wx.ALL, 0)
+            bSizer2_1.Add( self.m_checklist_invert_j , 1,  wx.EXPAND|wx.ALL, 0)
+
 
             # self.link_rotate_z_sliders = []
             # for i in list(self.robot.robotjoints.keys()):
@@ -59,7 +66,7 @@ class Window(BaseWindow):
             #     self.link_rotate_z_sliders.append(slider)
             #     bSizer2_1.Add( text ,  -1, wx.ALIGN_CENTER|wx.ALL, 0)
             #     bSizer2_1.Add( slider ,  -1, wx.ALIGN_CENTER|wx.ALL, 0)
-            joint_names = [ i for i in list(self.robot.robotjoints.keys())]
+            
             self.joint_control = JointController(self, joint_names)
 
             text2 = wx.StaticText( self, wx.ID_ANY, 'Joints Control', wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -86,7 +93,7 @@ class Window(BaseWindow):
             bSizer3.Add( self.m_slider2, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
 
             self.m_checkBoxCoM = wx.CheckBox( self, wx.ID_ANY, u"CoM", wx.DefaultPosition, wx.DefaultSize, 0 )
-            # self.m_checkBox1.SetValue(True)
+            self.m_checkBoxCoM.SetValue(True)
             bSizer3.Add( self.m_checkBoxCoM, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
 
             self.m_checkBoxAxis = wx.CheckBox( self, wx.ID_ANY, u"Axis", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -108,6 +115,7 @@ class Window(BaseWindow):
             self.Bind(wx.EVT_CHECKBOX, self.OnCheckerCoM, self.m_checkBoxCoM)
             self.Bind(wx.EVT_CHECKBOX, self.OnCheckerAxis, self.m_checkBoxAxis)
             self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckerLink, self.m_checklist_link)
+            self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckerInvJ, self.m_checklist_invert_j)
 
             for i in self.joint_control.joint_controller_sliders:
                 self.Bind(wx.EVT_COMMAND_SCROLL_THUMBTRACK, self.OnSliderControl, i)
@@ -161,11 +169,11 @@ class Window(BaseWindow):
             if self.m_checkBoxCoM.IsChecked():
                 for render in self._window._scene._renderables:
                     if isinstance(render, Spherecloud):
-                        render.colors = [1.0, 0, 0, 1.0]
+                        render.scale(1000)
             else:
                 for render in self._window._scene._renderables:
                     if isinstance(render, Spherecloud):
-                        render.colors = [1.0, 0, 0, 0.0]
+                        render.scale(0.001) 
             self.view._on_paint(None)
             return
 
@@ -173,15 +181,11 @@ class Window(BaseWindow):
             if self.m_checkBoxAxis.IsChecked():
                 for render in self._window._scene._renderables:
                     if isinstance(render, Lines):
-                        colors = render.colors
-                        colors[:, -1] = 1.0
-                        render.colors = colors
+                        render.scale(1000)
             else:
                 for render in self._window._scene._renderables:
                     if isinstance(render, Lines):
-                        colors = render.colors                   
-                        colors[:, -1] = 0.0
-                        render.colors = colors
+                        render.scale(0.001)
             self.view._on_paint(None)
             return
 
@@ -200,6 +204,23 @@ class Window(BaseWindow):
             self.view._on_paint(None)
             return
 
+        def OnCheckerInvJ(self, e):
+            for j in self.m_checklist_invert_j.GetCheckedStrings():
+                robot = self._window.robot
+                robot.invert_joint_z(j)
+                for render in self._window._scene._renderables:
+                    if isinstance(render, Mesh) or isinstance(render, Lines):
+                        robotlink = robot.robotlinks[render.name]
+                        abs_tf = robotlink.abs_tf
+                        m = np.eye(4)
+                        m[:3, :3] = render.R.T
+                        m[:3, 3] = render.t
+                        m_inv = inv_tf(m)
+                        render.affine_transform_no_update(R=m_inv[:3, :3].T, t=m_inv[:3, 3])
+                        render.affine_transform(R=abs_tf[:3, :3].T, t=abs_tf[:3, 3])
+                            
+            self.view._on_paint(None)
+            return 
         def _on_close(self, event):
             # If close was called before then close
             if self._window._closing:
