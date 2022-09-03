@@ -11,6 +11,7 @@ from ..scenes import Scene
 from .base import BaseWindow
 from ..renderables import Mesh, Lines, Spherecloud
 from urdf_parser.utils import inv_tf
+from .custom_widget import JointController
 
 dir_abs_path = osp.dirname(osp.abspath(__file__))
 
@@ -47,16 +48,24 @@ class Window(BaseWindow):
 
             self.robot = self._window.robot or []
             self.m_checklist_link = wx.CheckListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, list(self.robot.robotlinks.keys()), 0 )
-            bSizer2_1.Add( self.m_checklist_link , 1,  wx.EXPAND|wx.ALL, 0)
+            text1 = wx.StaticText( self, wx.ID_ANY, 'Links Information', wx.DefaultPosition, wx.DefaultSize, 0 )
+            bSizer2_1.Add( text1, -1, wx.ALL, 0)
+            bSizer2_1.Add( self.m_checklist_link , -1,  wx.EXPAND|wx.ALL, 0)
 
-            self.link_rotate_z_sliders = []
-            for i in list(self.robot.robotjoints.keys()):
-                text = wx.StaticText( self, wx.ID_ANY, i, wx.DefaultPosition, wx.DefaultSize, 0 )
-                slider = wx.Slider( self, wx.ID_ANY, 0, -100, 100, wx.DefaultPosition, wx.DefaultSize, wx.SL_HORIZONTAL )
-                self.link_rotate_z_sliders.append(slider)
-                bSizer2_1.Add( text ,  -1, wx.ALIGN_CENTER|wx.ALL, 0)
-                bSizer2_1.Add( slider ,  -1, wx.ALIGN_CENTER|wx.ALL, 0)
-                
+            # self.link_rotate_z_sliders = []
+            # for i in list(self.robot.robotjoints.keys()):
+            #     text = wx.StaticText( self, wx.ID_ANY, i, wx.DefaultPosition, wx.DefaultSize, 0 )
+            #     slider = wx.Slider( self, wx.ID_ANY, 0, -100, 100, wx.DefaultPosition, wx.DefaultSize, wx.SL_HORIZONTAL )
+            #     self.link_rotate_z_sliders.append(slider)
+            #     bSizer2_1.Add( text ,  -1, wx.ALIGN_CENTER|wx.ALL, 0)
+            #     bSizer2_1.Add( slider ,  -1, wx.ALIGN_CENTER|wx.ALL, 0)
+            joint_names = [ i for i in list(self.robot.robotjoints.keys())]
+            self.joint_control = JointController(self, joint_names)
+
+            text2 = wx.StaticText( self, wx.ID_ANY, 'Joints Control', wx.DefaultPosition, wx.DefaultSize, 0 )
+            bSizer2_1.Add( text2, -1, wx.ALL, 0)
+            bSizer2_1.Add (self.joint_control, 5, wx.EXPAND|wx.ALL, 0)
+
             bSizer2.Add( self.view, 5, wx.EXPAND |wx.ALL, 0 )
             bSizer2.Add( bSizer2_1, -1, wx.EXPAND|wx.ALL, 0 )
             
@@ -100,8 +109,8 @@ class Window(BaseWindow):
             self.Bind(wx.EVT_CHECKBOX, self.OnCheckerAxis, self.m_checkBoxAxis)
             self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckerLink, self.m_checklist_link)
 
-            for i in self.link_rotate_z_sliders:
-                self.Bind(wx.EVT_COMMAND_SCROLL, self.OnSliderControl, i)
+            for i in self.joint_control.joint_controller_sliders:
+                self.Bind(wx.EVT_COMMAND_SCROLL_THUMBTRACK, self.OnSliderControl, i)
 
             self.show_all_link()
 
@@ -131,7 +140,7 @@ class Window(BaseWindow):
             return 
 
         def OnSliderControl(self, e):
-            q = [ i.GetValue()/20.0 for i in self.link_rotate_z_sliders]
+            q = [ i.GetValue()/20.0 for i in self.joint_control.joint_controller_sliders]
             robot = self._window.robot
             robot.set_joint_angle(q)
             for render in self._window._scene._renderables:

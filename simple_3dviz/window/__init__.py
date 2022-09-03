@@ -1,7 +1,7 @@
 """Create a window with an attached scene that is rendered in real time."""
 
 try:
-    from .wx import Window
+    from .urdf_viewer import Window
 except ImportError:
     raise ImportError("No supported gui library was found. Install wxPython.")
 
@@ -30,7 +30,7 @@ def simple_window(init, info, robot, size=(512, 512)):
     return w
 
 
-def show(meshes, axes, info, robot, size=(512, 580), background=(0.7, 0.7, 0.7, 1), title="Scene",
+def show(meshes, axes, info, robot, size=(512, 580), background=(0., 0., 0., 1), title="Scene",
          camera_position=(-2, -2, -2), camera_target=(0, 0, 0),
          up_vector=(0, 0, 1), light=None, behaviours=[], ):
     """Creates a simple window that displays the renderables.
