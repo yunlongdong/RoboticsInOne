@@ -47,6 +47,11 @@ class Lines(Renderable):
         self._colors = c
         self._update_vbo()
 
+    def scale(self, s):
+        """Multiply all the vertices with a number s."""
+        self._points *= s
+        self._update_vbo()
+
     def _update_vbo(self):
         """Write in the vertex buffer object the vertices, normals and
         colors."""
