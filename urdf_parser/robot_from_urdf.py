@@ -103,6 +103,8 @@ class Robot:
             print("Number of joints mismatched with joint angles...")
         for index, robotjoint in enumerate(self.robotjoints.values()):
             robotjoint.angle = jointangles[index]
+            if robotjoint.reverse:
+                robotjoint.angle *= -1.
         # update
         self.calculate_tfs_in_world_frame()
 
@@ -156,8 +158,9 @@ class Robot:
                 if self.robotjoints[node.parent.id].reverse:
                     old2new = np.eye(4)
                     old2new[:3, :3] = matrix33.create_from_x_rotation(np.pi)
-                    tf_reverse = np.matmul(tf_reverse, matrix44.create_from_z_rotation(angle))
                     tf_reverse = np.matmul(tf_reverse, old2new)
+                    tf_reverse = np.matmul(tf_reverse, matrix44.create_from_z_rotation(-angle))
+                    # np.matmul(tf, old2new)
                 else:
                     tf_reverse = tf
                 
