@@ -3,7 +3,7 @@ from wx import html, stc
 import numpy as np
 import os.path as osp
 
-from .urdf_render import urdf_show
+from .urdf_show import urdf_show
 
 dir_abs_path = osp.dirname(osp.abspath(__file__))
 
@@ -71,7 +71,7 @@ class MainFrame ( wx.Frame ):
         self.SetIcon(icon)
 
         # start doc
-        self.m_html_start_doc.LoadFile(osp.join(dir_abs_path, "../docs/start.html"))
+        self.m_html_start_doc.LoadFile(osp.join(dir_abs_path, "../../docs/start.html"))
 
         # bind event
         self.bind_all()

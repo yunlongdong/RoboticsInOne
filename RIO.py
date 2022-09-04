@@ -1,10 +1,10 @@
 import wx
-from core import main_frame
+from ui.rio.main_frame import MainFrame
 
 
 if __name__ == "__main__":
     app = wx.App()
 
-    frame = main_frame.MainFrame(None)
+    frame = MainFrame(None)
     frame.Show()
     app.MainLoop()

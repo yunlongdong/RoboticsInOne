@@ -7,11 +7,13 @@ from copy import copy
 import os.path as osp
 import sys
 sys.path.append('../../')
-from ..behaviours import Behaviour
-from ..scenes import Scene
-from .base import BaseWindow
-from ..renderables import Mesh, Lines, Spherecloud
-from urdf_parser.utils import inv_tf
+from core.urdf_parser.utils import inv_tf
+
+from ..s3d.behaviours import Behaviour
+from ..s3d.scenes import Scene
+from ..s3d.window.base import BaseWindow
+from ..s3d.renderables import Mesh, Lines, Spherecloud
+
 from .custom_widget import JointController
 
 dir_abs_path = osp.dirname(osp.abspath(__file__))
@@ -20,7 +22,6 @@ class Window(BaseWindow):
     _FRAME_STYLE = wx.DEFAULT_FRAME_STYLE & ~(
         wx.RESIZE_BORDER | wx.MAXIMIZE_BOX
     )
-
 
     class _Frame(wx.Frame):
         """A simple frame for our wxWidgets app."""
@@ -37,7 +38,7 @@ class Window(BaseWindow):
             self.Bind(wx.EVT_CLOSE, self._on_close)
 
             icon = wx.Icon()
-            icon.CopyFromBitmap(wx.Bitmap(osp.join(dir_abs_path, "../../icons/ico.bmp"), wx.BITMAP_TYPE_ANY))
+            icon.CopyFromBitmap(wx.Bitmap(osp.join(dir_abs_path, "../icons/ico.bmp"), wx.BITMAP_TYPE_ANY))
             # icon.LoadFile("icons/sm.ico", wx.BITMAP_TYPE_ANY)
             self.SetIcon(icon)
             self.SetBackgroundColour( wx.Colour( 255, 255, 255 ) )
