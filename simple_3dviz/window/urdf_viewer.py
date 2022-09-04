@@ -3,6 +3,7 @@ import numpy as np
 import wx
 import wx.glcanvas
 from wx import html, stc
+from copy import copy
 import os.path as osp
 import sys
 sys.path.append('../../')
@@ -53,6 +54,8 @@ class Window(BaseWindow):
             bSizer2_1.Add( self.m_checklist_link , 1,  wx.EXPAND|wx.ALL, 0)
 
             joint_names = [ i for i in list(self.robot.robotjoints.keys())]
+            self.joint_names = joint_names
+            self.joint_inv_prev = {j:0 for j in self.joint_names}
             self.m_checklist_invert_j = wx.CheckListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, joint_names, 0 )
             text2 = wx.StaticText( self, wx.ID_ANY, 'Invert Joint', wx.DefaultPosition, wx.DefaultSize, 0 )
             bSizer2_1.Add( text2, -1, wx.ALL, 0)
@@ -205,28 +208,43 @@ class Window(BaseWindow):
             return
 
         def OnCheckerInvJ(self, e):
-            for j in self.m_checklist_invert_j.GetCheckedStrings():
-                robot = self._window.robot
-                robot.invert_joint_z(j)
-                for render in self._window._scene._renderables:
-                    if isinstance(render, Mesh):
-                        robotlink = robot.robotlinks[render.name]
-                        abs_tf_reverse = robotlink.abs_tf_reverse
-                        m = np.eye(4)
-                        m[:3, :3] = render.R.T
-                        m[:3, 3] = render.t
-                        m_inv = inv_tf(m)
-                        render.affine_transform_no_update(R=m_inv[:3, :3].T, t=m_inv[:3, 3])
-                        render.affine_transform(R=abs_tf_reverse[:3, :3].T, t=abs_tf_reverse[:3, 3])
-                    elif isinstance(render, Lines):
-                        robotlink = robot.robotlinks[render.name]
-                        abs_tf = robotlink.abs_tf
-                        m = np.eye(4)
-                        m[:3, :3] = render.R.T
-                        m[:3, 3] = render.t
-                        m_inv = inv_tf(m)
-                        render.affine_transform_no_update(R=m_inv[:3, :3].T, t=m_inv[:3, 3])
-                        render.affine_transform(R=abs_tf[:3, :3].T, t=abs_tf[:3, 3])
+            print('On Checker Invert J', self.m_checklist_invert_j.GetCheckedStrings())
+            
+            robot = self._window.robot
+            self.joint_inv_now = {j:0 for j in self.joint_names}
+
+            for inv_j in self.m_checklist_invert_j.GetCheckedStrings():
+                self.joint_inv_now[inv_j] = 1
+            print('prev:', self.joint_inv_prev)
+            print('now:', self.joint_inv_now)
+
+            for j_n in self.joint_names:
+                if self.joint_inv_now[j_n] != self.joint_inv_prev[j_n]:
+                    robot.invert_joint_z(j_n)
+
+            self.joint_inv_prev = copy(self.joint_inv_now)
+            
+
+            
+            for render in self._window._scene._renderables:
+                if isinstance(render, Mesh):
+                    robotlink = robot.robotlinks[render.name]
+                    abs_tf_reverse = robotlink.abs_tf_reverse
+                    m = np.eye(4)
+                    m[:3, :3] = render.R.T
+                    m[:3, 3] = render.t
+                    m_inv = inv_tf(m)
+                    render.affine_transform_no_update(R=m_inv[:3, :3].T, t=m_inv[:3, 3])
+                    render.affine_transform(R=abs_tf_reverse[:3, :3].T, t=abs_tf_reverse[:3, 3])
+                elif isinstance(render, Lines):
+                    robotlink = robot.robotlinks[render.name]
+                    abs_tf = robotlink.abs_tf
+                    m = np.eye(4)
+                    m[:3, :3] = render.R.T
+                    m[:3, 3] = render.t
+                    m_inv = inv_tf(m)
+                    render.affine_transform_no_update(R=m_inv[:3, :3].T, t=m_inv[:3, 3])
+                    render.affine_transform(R=abs_tf[:3, :3].T, t=abs_tf[:3, 3])
                             
             self.view._on_paint(None)
             return
