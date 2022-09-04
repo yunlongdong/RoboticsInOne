@@ -4,15 +4,81 @@ from functools import reduce
 import numpy as np
 import os.path as osp
 
+
+
+from ..s3d import Mesh, Lines, Spherecloud
+from ..s3d.behaviours.misc import LightToCamera
+from ..s3d.renderables import Renderable, Lines
+from ..s3d.behaviours import Behaviour, SceneInit
+from ..s3d.behaviours.mouse import MouseRotate, MouseZoom, MousePan
+from ..s3d.behaviours.keyboard import CameraReport, SortTriangles
+
 import sys
 sys.path.append('../')
-from simple_3dviz.window import show
-from simple_3dviz import Mesh, Lines, Spherecloud
-from simple_3dviz.behaviours.misc import LightToCamera
-from urdf_parser.robot_from_urdf import Robot
-from simple_3dviz.behaviours import SceneInit
+from core.urdf_parser.robot_from_urdf import Robot
 
-from pyrr import matrix33
+
+try:
+    from .urdf_frame import Window
+except ImportError:
+    raise ImportError("No supported gui library was found. Install wxPython.")
+
+
+
+
+
+def simple_window(init, info, robot, size=(512, 512)):
+    """Return a window with the expected behaviours added.
+
+    Arguments
+    ---------
+        init: callable that sets up the scene
+        size: (w, h) the size of the window
+
+    Returns
+    -------
+        Window instance
+    """
+    w = Window(info, robot, size)
+    w.add_behaviours([SceneInit(init), MouseRotate(), MouseZoom(),
+                      MousePan(), CameraReport(), SortTriangles()])
+    return w
+
+
+def show(meshes, axes, info, robot, size=(512, 580), background=(0., 0., 0., 1), title="Scene",
+         camera_position=(-2, -2, -2), camera_target=(0, 0, 0),
+         up_vector=(0, 0, 1), light=None, behaviours=[], ):
+    """Creates a simple window that displays the renderables.
+
+    Arguments
+    ---------
+        renderables: list[Renderable] the renderables to be displayed in the
+                     scene
+        size: (w, h) the size of the window
+        background: (r, g, b, a) the rgba tuple for the background
+        title: str the title of the window
+        camera_position: (x, y, z) the position of the camera
+        camera_target: (x, y, z) the point that the camera looks at
+        up_vector: (x, y, z) defines the floor and sky
+        light: (x, y, z) defines the position of the light source
+    """
+    
+
+    def init(scene):
+        # scene.add(Lines.axes(size=0.06, width=0.006, origin=[0, 0, 0.245]))
+        # scene.add(Lines.axes(size=0.06, width=0.006, origin=[0, 0, 0.245+0.195]))
+        for r in axes+meshes:
+            scene.add(r)
+        scene.background = background
+        scene.camera_position = camera_position
+        scene.camera_target = camera_target
+        scene.up_vector = up_vector
+        if light is not None:
+            scene.light = light
+
+    w = simple_window(init, info, robot, size=size)
+    w.add_behaviours(behaviours)
+    w.show(title)
 
 def scene_init(camera_position, camera_target):
     def inner(scene):
