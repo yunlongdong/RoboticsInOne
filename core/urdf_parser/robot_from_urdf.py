@@ -103,12 +103,11 @@ class Robot:
             print("Number of joints mismatched with joint angles...")
         for index, robotjoint in enumerate(self.robotjoints.values()):
             robotjoint.angle = jointangles[index]
-            if robotjoint.reverse:
-                robotjoint.angle *= -1.
         # update
         self.calculate_tfs_in_world_frame()
 
     def invert_joint_z(self, jointname):
+        # 反转
         self.robotjoints[jointname].reverse = not self.robotjoints[jointname].reverse
         self.robotjoints[jointname].angle *= -1.
         last2old = get_extrinsic_tf(self.robotjoints[jointname].rpy, self.robotjoints[jointname].xyz)

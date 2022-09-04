@@ -221,6 +221,12 @@ class Window(BaseWindow):
             print('On Checker Invert J', self.m_checklist_invert_j.GetCheckedStrings())
             
             robot = self._window.robot
+            # reset robot
+            robot.set_joint_angle(np.zeros(robot.num_robotjoints))
+            # reset slider
+            for i in self.joint_control.joint_controller_sliders:
+                i.SetValue(0.) 
+
             self.joint_inv_now = {j:0 for j in self.joint_names}
 
             for inv_j in self.m_checklist_invert_j.GetCheckedStrings():
