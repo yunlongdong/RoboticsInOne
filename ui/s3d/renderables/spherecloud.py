@@ -26,6 +26,10 @@ class Spherecloud(Renderable):
         self._vbo = None
         self._vao = None
 
+    def updatePos(self, centers):
+        self._centers = np.asarray(centers)
+        self._update_vbo()
+
     @property
     def colors(self):
         """Return the color per vertex."""

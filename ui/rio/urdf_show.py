@@ -85,15 +85,10 @@ def scene_init(camera_position, camera_target):
     return inner
 
 def get_all_from_robot(robot):
-    # test = list(robot.robotjoints.keys())[1]
-    # print("test=", test)
-    # robot.invert_joint_z(test)
-    # robot.export_to_urdf()
 
     meshes = []
     mesh_names = []
     # axes list, such as link frame, CoM, remember CoM shound be appended at the last
-    # axes = [Lines.axes(size=0.2, width=0.008, name='origin')]
     axes = []
     for robotlink in robot.robotlinks.values():
         mesh_filename = robotlink.mesh_fileName

@@ -175,26 +175,7 @@ class Window(BaseWindow):
             q = [ i.GetValue()/20.0 for i in self.joint_control.joint_controller_sliders]
             robot = self._window.robot
             robot.set_joint_angle(q)
-            for render in self._window._scene._renderables:
-                if isinstance(render, Mesh):
-                    robotlink = robot.robotlinks[render.name]
-                    abs_tf_visual = robotlink.abs_tf_visual
-                    m = np.eye(4)
-                    m[:3, :3] = render.R.T
-                    m[:3, 3] = render.t
-                    m_inv = inv_tf(m)
-                    render.affine_transform_no_update(R=m_inv[:3, :3].T, t=m_inv[:3, 3])
-                    render.affine_transform(R=abs_tf_visual[:3, :3].T, t=abs_tf_visual[:3, 3])
-                if isinstance(render, Lines):
-                    robotlink = robot.robotlinks[render.name]
-                    abs_tf_link = robotlink.abs_tf_link
-                    m = np.eye(4)
-                    m[:3, :3] = render.R.T
-                    m[:3, 3] = render.t
-                    m_inv = inv_tf(m)
-                    render.affine_transform_no_update(R=m_inv[:3, :3].T, t=m_inv[:3, 3])
-                    render.affine_transform(R=abs_tf_link[:3, :3].T, t=abs_tf_link[:3, 3])
-                            
+            self.updateAllRenders()          
             self.view._on_paint(None)
             return 
 
@@ -259,9 +240,23 @@ class Window(BaseWindow):
                     robot.invert_joint_z(j_n)
 
             self.joint_inv_prev = copy(self.joint_inv_now)
-            
 
-            
+            self.updateAllRenders()         
+            self.view._on_paint(None)
+            return
+        
+        def _on_close(self, event):
+            # If close was called before then close
+            if self._window._closing:
+                self.view._on_close(event)
+                self.Destroy()
+
+            # otherwise just set the window to closing
+            self._window._closing = True
+        
+        # The followings are utility funtions
+        def updateAllRenders(self):
+            robot = self._window.robot
             for render in self._window._scene._renderables:
                 if isinstance(render, Mesh):
                     robotlink = robot.robotlinks[render.name]
@@ -281,18 +276,10 @@ class Window(BaseWindow):
                     m_inv = inv_tf(m)
                     render.affine_transform_no_update(R=m_inv[:3, :3].T, t=m_inv[:3, 3])
                     render.affine_transform(R=abs_tf_link[:3, :3].T, t=abs_tf_link[:3, 3])
-                            
-            self.view._on_paint(None)
-            return
+                elif isinstance(render, Spherecloud):
+                    robotlink = robot.robotlinks[render.name]
+                    render.updatePos([robotlink.abs_com])
         
-        def _on_close(self, event):
-            # If close was called before then close
-            if self._window._closing:
-                self.view._on_close(event)
-                self.Destroy()
-
-            # otherwise just set the window to closing
-            self._window._closing = True
 
     class _Canvas(wx.glcanvas.GLCanvas):
         def __init__(self, window, parent):

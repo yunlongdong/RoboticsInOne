@@ -92,13 +92,12 @@ class Robot:
             print("zaxis_list=", zaxis_list)
         robot_dh_params = get_modified_dh_params(point_list, zaxis_list, epsilon=1e-6)
 
-
-
         pd_frame = DataFrame(robot_dh_params, columns=['alpha', 'd', 'theta', 'r'])
         # print("\nModified DH Parameters: (csv)")
         # print(pd_frame.to_csv())
         print("\nModified DH Parameters: (markdown)")
         print(pd_frame.to_markdown())
+        return pd_frame
 
     def set_joint_angle(self, jointangles):
         try:
