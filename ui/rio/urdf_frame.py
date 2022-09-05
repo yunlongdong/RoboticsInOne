@@ -14,7 +14,7 @@ from ..s3d.scenes import Scene
 from ..s3d.window.base import BaseWindow
 from ..s3d.renderables import Mesh, Lines, Spherecloud
 
-from .custom_widget import JointController
+from .custom_widget import JointController, KinematicsFrame
 
 dir_abs_path = osp.dirname(osp.abspath(__file__))
 
@@ -123,6 +123,7 @@ class Window(BaseWindow):
             self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckerLink, self.m_checklist_link)
             self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckerInvJ, self.m_checklist_invert_j)
             self.Bind(wx.EVT_BUTTON, self.OnButtonSave, self.m_button_save)
+            self.Bind(wx.EVT_BUTTON, self.OnButtonKin, self.m_button_kine)
 
             for i in self.joint_control.joint_controller_sliders:
                 self.Bind(wx.EVT_COMMAND_SCROLL_THUMBTRACK, self.OnSliderControl, i)
@@ -139,6 +140,15 @@ class Window(BaseWindow):
                 # do something here
                 robot = self._window.robot
                 robot.export_to_urdf()
+
+        def OnButtonKin(self, e):
+            frame = KinematicsFrame(self)
+
+
+            frame.SetFK("import numpy as np")
+            frame.SetIK("import numpy as np")
+            frame.Show()
+            return 
 
         def OnColor(self, e):
             self.show_all_link()

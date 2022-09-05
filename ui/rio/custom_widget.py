@@ -1,5 +1,8 @@
 import wx
 import wx.lib.scrolledpanel
+from wx import stc
+
+from .code_stc import CodePad
 
 class JointController(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, joint_names):
@@ -23,16 +26,91 @@ class JointController(wx.lib.scrolledpanel.ScrolledPanel):
 
         self.SetSizer( bSizer )
         self.Layout()
-    
 
+
+
+class KinematicsFrame(wx.Frame):
+    def __init__(self, parent, id=wx.ID_ANY, title="Kinematics", size=(512, 512)):
+        wx.Frame.__init__(self, parent, size=size, title=title)
+        self.SetBackgroundColour( wx.Colour( 255, 255, 255 ) )
+        self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
+
+        bSizer1 = wx.BoxSizer( wx.VERTICAL )
+
+        bSizer1_1 = wx.BoxSizer( wx.VERTICAL )
+
+        bSizer1_1_1 = wx.BoxSizer( wx.HORIZONTAL )
+
+        self.m_staticText1 = wx.StaticText( self, wx.ID_ANY, u"Forward", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText1.Wrap( -1 )
+
+        bSizer1_1_1.Add( self.m_staticText1, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 2 )
+
+        self.m_button_gen_fk = wx.Button( self, wx.ID_ANY, u"Copy", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_1_1.Add( self.m_button_gen_fk, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 6 )
+
+        self.m_button3 = wx.Button( self, wx.ID_ANY, u"MyButton", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_1_1.Add( self.m_button3, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+
+
+        bSizer1_1.Add( bSizer1_1_1, 0, wx.EXPAND, 5 )
+
+
+        bSizer1.Add( bSizer1_1, 1, wx.EXPAND, 5 )
+
+        bSizer1_2 = wx.BoxSizer( wx.VERTICAL )
+
+        bSizer1_2_1 = wx.BoxSizer( wx.HORIZONTAL )
+
+        self.m_staticText2 = wx.StaticText( self, wx.ID_ANY, u"Inverse ", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText2.Wrap( -1 )
+
+        bSizer1_2_1.Add( self.m_staticText2, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 2 )
+
+        self.m_button_gen_ik = wx.Button( self, wx.ID_ANY, u"Copy", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_2_1.Add( self.m_button_gen_ik, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 6 )
+
+        self.m_button31 = wx.Button( self, wx.ID_ANY, u"MyButton", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_2_1.Add( self.m_button31, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+
+
+        bSizer1_2.Add( bSizer1_2_1, 0, wx.EXPAND, 5 )
+
+        self.m_fk_stc = CodePad(self)
+        bSizer1_1.Add( self.m_fk_stc, 1, wx.EXPAND |wx.ALL, 5 )
+        self.m_ik_stc = CodePad(self)
+        bSizer1_2.Add( self.m_ik_stc, 1, wx.EXPAND |wx.ALL, 5 )
+
+
+        bSizer1.Add( bSizer1_2, 1, wx.EXPAND, 5 )
+
+
+        self.SetSizer( bSizer1 )
+        self.Layout()
+
+        self.Centre( wx.BOTH )
+
+    def SetIK(self, ik_code):
+        self.m_ik_stc.SetValue(ik_code)
+
+    def SetFK(self, fk_code):
+        self.m_fk_stc.SetValue(fk_code)
 
 if __name__ == "__main__":
     App = wx.App()
-    frame = wx.Frame(None, size=(512, 512))
-    jc = JointController(frame, ['j1', 'j2', 'j3']*10)
+    frame = KinematicsFrame(None, size=(512, 512))
+    # jc = JointController(frame, ['j1', 'j2', 'j3']*10)
+    frame.m_fk_stc.SetValue("""import numpy as np
 
+def fk(q):
+    x = forward_kinematics(q)
+    return x
+""")
+    frame.m_ik_stc.SetValue("""import numpy as np
+
+def ik(x):
+    q = forward_kinematics(x)
+    return q
+""")
     frame.Show()
     App.MainLoop()
-
-
-
