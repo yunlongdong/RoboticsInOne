@@ -194,11 +194,11 @@ class Window(BaseWindow):
         def OnCheckerAxis(self, e):
             if self.m_checkBoxAxis.IsChecked():
                 for render in self._window._scene._renderables:
-                    if isinstance(render, Lines):
+                    if isinstance(render, Lines) and "MDH" not in render.name:
                         render.scale(1000)
             else:
                 for render in self._window._scene._renderables:
-                    if isinstance(render, Lines):
+                    if isinstance(render, Lines) and "MDH" not in render.name:
                         render.scale(0.001)
             self.view._on_paint(None)
             return

@@ -84,20 +84,21 @@ class Robot:
         zaxis_list = []
         for node in LevelOrderIter(self.root_link_node):
             if node.type == 'link' and node.parent != None:
-                point_list.append(self.robotlinks[node.id].abs_tf[0:3, 3])
-                zaxis_list.append(np.matmul(self.robotlinks[node.id].abs_tf[0:3, 0:3], self.robotjoints[node.parent.id].axis))
+                point_list.append(self.robotlinks[node.id].abs_tf_link[0:3, 3])
+                zaxis_list.append(np.matmul(self.robotlinks[node.id].abs_tf_link[0:3, 0:3], self.robotjoints[node.parent.id].axis))
         
         if log:
             print("point_list=", point_list)
             print("zaxis_list=", zaxis_list)
         robot_dh_params = get_modified_dh_params(point_list, zaxis_list, epsilon=1e-6)
 
-        pd_frame = DataFrame(robot_dh_params, columns=['alpha', 'd', 'theta', 'r'])
+        pd_frame = DataFrame(robot_dh_params, columns=['alpha', 'a', 'theta', 'd'])
         # print("\nModified DH Parameters: (csv)")
         # print(pd_frame.to_csv())
         print("\nModified DH Parameters: (markdown)")
         print(pd_frame.to_markdown())
-        return pd_frame
+        print(pd_frame.to_numpy())
+        return pd_frame.to_numpy()
 
     def set_joint_angle(self, jointangles):
         try:
@@ -141,6 +142,17 @@ class Robot:
     
     def export_to_urdf(self):
         self.urdf_tree.write(osp.join(osp.dirname(self.urdf_file), "generated_" + osp.basename(self.urdf_file)))
+
+    def show_MDH_frame(self):
+        point_list= []
+        zaxis_list = []
+        for node in LevelOrderIter(self.root_link_node):
+            if node.type == 'link' and node.parent != None:
+                point_list.append(self.robotlinks[node.id].abs_tf_link[0:3, 3])
+                zaxis_list.append(np.matmul(self.robotlinks[node.id].abs_tf_link[0:3, 0:3], self.robotjoints[node.parent.id].axis))
+        origin_list, xaxis_list, zaxis_list = get_modified_dh_params(point_list, zaxis_list, epsilon=1e-6)
+        return get_MDH_frame(origin_list, xaxis_list, zaxis_list)
+
 
     """The followings are utility functions"""
     def calculate_tfs_in_world_frame(self):

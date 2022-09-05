@@ -63,7 +63,10 @@ def get_modified_dh_params(point_list, zaxis_list, epsilon=1e-5, log=False):
         xaxis0 = np.cross(zaxis0, zaxis1)
         if np.linalg.norm(xaxis0) < epsilon:
             print("found parallel revolute joint...")
-            xaxis_list[i] = xaxis_list[i-1] #TODO: parallel case
+            if i==0:
+                xaxis_list[i] = np.array([1, 0, 0.])
+            else:
+                xaxis_list[i] = xaxis_list[i-1] #TODO: parallel case
             xaxis_list[i+1] = xaxis_list[i]
 
             a, b, c = np.inner(zaxis0, zaxis1), np.inner(zaxis0, zaxis0), np.inner(zaxis1, zaxis1)
@@ -102,5 +105,21 @@ def get_modified_dh_params(point_list, zaxis_list, epsilon=1e-5, log=False):
         # alpha, a, theta, d in wikipedia
         # also alpha, d, theta, r in symoro
         modified_dh_params_list[i] = [alpha, a, theta, d]
-    return modified_dh_params_list
+    #return modified_dh_params_list
+    return origin_list, xaxis_list, zaxis_list
 
+def get_MDH_frame(origin_list, xaxis_list, zaxis_list):
+    MDH_frame_list = []
+    for origin, xaxis, zaxis in zip(origin_list, xaxis_list, zaxis_list):
+        yaxis = -np.cross(xaxis, zaxis)
+        xaxis = xaxis / np.linalg.norm(xaxis)
+        yaxis = yaxis / np.linalg.norm(yaxis)
+        zaxis = zaxis / np.linalg.norm(zaxis)
+        tf = np.eye(4)
+        tf[:3, 0] = xaxis
+        tf[:3, 1] = yaxis
+        tf[:3, 2] = zaxis
+        tf[:3, 3] = origin
+        MDH_frame_list.append(tf)
+    print("MDH_frame_list=", MDH_frame_list)
+    return MDH_frame_list
