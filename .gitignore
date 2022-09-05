@@ -1,3 +1,4 @@
 *.pyc
 *.png
 __pycache__
+generated*

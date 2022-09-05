@@ -41,6 +41,7 @@ class Robotlink:
 class Robotjoint:
     def __init__(self):
         self.jointname = ''
+        self.jointtype = None
         self.angle = 0
         self.axis = np.zeros(3)
         self.xyz = np.zeros(3)
@@ -260,19 +261,20 @@ class Robot:
         robotjoint = Robotjoint()
         robotjoint.jointname = joint.get('name')
         jointtype = joint.get('type')
-        try:
-            assert jointtype=='revolute'
-        except:
-            print("Can only deal with revolute joints now!!! The urdf contains {0} joints.".format(jointtype))
+        if jointtype in ["revolute", "fixed"]:
+            robotjoint.jointtype = jointtype
+        else:
+            raise Exception('Can only deal with revolute or fixed joints now!!! The urdf contains {0} joints...".format(jointtype)')
 
         for child in joint:
             if child.tag == 'axis':
+                assert robotjoint.jointtype == "revolute"
                 robotjoint.axis = np.array(child.get('xyz').split(), dtype=float)
                 try:
                     np.testing.assert_allclose(robotjoint.axis, np.array([0, 0, 1.]))
                 except:
                     print("joint axis:", robotjoint.axis)
-                    print("Error: all axes of joints should be [0, 0, 1]...")
+                    raise Exception("Error: all axes of joints should be [0, 0, 1]...")
             elif child.tag == 'origin':
                 robotjoint.xyz = np.array(child.get('xyz').split(), dtype=float)
                 robotjoint.rpy = np.array(child.get('rpy').split(), dtype=float)
