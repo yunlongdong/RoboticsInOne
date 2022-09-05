@@ -50,31 +50,33 @@ class Window(BaseWindow):
 
             self.robot = self._window.robot or []
             self.m_checklist_link = wx.CheckListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, list(self.robot.robotlinks.keys()), 0 )
-            text1 = wx.StaticText( self, wx.ID_ANY, 'Links Information', wx.DefaultPosition, wx.DefaultSize, 0 )
-            bSizer2_1.Add( text1, -1, wx.ALL, 0)
+            text = wx.StaticText( self, wx.ID_ANY, 'Links Information', wx.DefaultPosition, wx.DefaultSize, 0 )
+            bSizer2_1.Add( text, -1, wx.ALL, 0)
             bSizer2_1.Add( self.m_checklist_link , 1,  wx.EXPAND|wx.ALL, 0)
 
             joint_names = [ i for i in list(self.robot.robotjoints.keys())]
             self.joint_names = joint_names
             self.joint_inv_prev = {j:0 for j in self.joint_names}
             self.m_checklist_invert_j = wx.CheckListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, joint_names, 0 )
-            text2 = wx.StaticText( self, wx.ID_ANY, 'Invert Joint', wx.DefaultPosition, wx.DefaultSize, 0 )
-            bSizer2_1.Add( text2, -1, wx.ALL, 0)
+            text1 = wx.StaticText( self, wx.ID_ANY, 'Invert Joint', wx.DefaultPosition, wx.DefaultSize, 0 )
+            text2 = wx.StaticText( self, wx.ID_ANY, 'Utils', wx.DefaultPosition, wx.DefaultSize, 0 )
+            self.m_button_save = wx.Button( self, wx.ID_ANY, 'Save URDF')
+            self.m_button_mdh = wx.Button( self, wx.ID_ANY, 'Save Modified-DH')
+            self.m_button_kine = wx.Button( self, wx.ID_ANY, 'Kinematics')
+
+            bSizer2_1.Add( text1, -1, wx.ALL, 0)
             bSizer2_1.Add( self.m_checklist_invert_j , 1,  wx.EXPAND|wx.ALL, 0)
+            bSizer2_1.Add( text2, 0, wx.ALL, 0)
+            bSizer2_1.Add( self.m_button_save , 0,  wx.EXPAND|wx.ALL, 0)
+            bSizer2_1.Add( self.m_button_mdh , 0,  wx.EXPAND|wx.ALL, 0)
+            bSizer2_1.Add( self.m_button_kine , 0,  wx.EXPAND|wx.ALL, 0)
 
 
-            # self.link_rotate_z_sliders = []
-            # for i in list(self.robot.robotjoints.keys()):
-            #     text = wx.StaticText( self, wx.ID_ANY, i, wx.DefaultPosition, wx.DefaultSize, 0 )
-            #     slider = wx.Slider( self, wx.ID_ANY, 0, -100, 100, wx.DefaultPosition, wx.DefaultSize, wx.SL_HORIZONTAL )
-            #     self.link_rotate_z_sliders.append(slider)
-            #     bSizer2_1.Add( text ,  -1, wx.ALIGN_CENTER|wx.ALL, 0)
-            #     bSizer2_1.Add( slider ,  -1, wx.ALIGN_CENTER|wx.ALL, 0)
             
             self.joint_control = JointController(self, joint_names)
 
-            text2 = wx.StaticText( self, wx.ID_ANY, 'Joints Control', wx.DefaultPosition, wx.DefaultSize, 0 )
-            bSizer2_1.Add( text2, -1, wx.ALL, 0)
+            text = wx.StaticText( self, wx.ID_ANY, 'Joints Control', wx.DefaultPosition, wx.DefaultSize, 0 )
+            bSizer2_1.Add( text, -1, wx.ALL, 0)
             bSizer2_1.Add (self.joint_control, 5, wx.EXPAND|wx.ALL, 0)
 
             bSizer2.Add( self.view, 5, wx.EXPAND |wx.ALL, 0 )
@@ -120,6 +122,7 @@ class Window(BaseWindow):
             self.Bind(wx.EVT_CHECKBOX, self.OnCheckerAxis, self.m_checkBoxAxis)
             self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckerLink, self.m_checklist_link)
             self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckerInvJ, self.m_checklist_invert_j)
+            self.Bind(wx.EVT_BUTTON, self.OnButtonSave, self.m_button_save)
 
             for i in self.joint_control.joint_controller_sliders:
                 self.Bind(wx.EVT_COMMAND_SCROLL_THUMBTRACK, self.OnSliderControl, i)
@@ -129,6 +132,13 @@ class Window(BaseWindow):
         def show_all_link(self):
             for i in range(len(self.robot.robotlinks.keys())):
                 self.m_checklist_link.Check(i)
+        
+        def OnButtonSave(self, e):
+            dlg = wx.MessageDialog(self, 'The generated URDF will be saved besides the original URDF file.', caption='Save URDF?', style=wx.YES_NO)
+            if dlg.ShowModal() == wx.ID_YES:
+                # do something here
+                robot = self._window.robot
+                robot.export_to_urdf()
 
         def OnColor(self, e):
             self.show_all_link()
