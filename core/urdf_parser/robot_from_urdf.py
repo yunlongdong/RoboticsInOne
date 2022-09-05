@@ -7,16 +7,20 @@ from .utils import *
 
 class Robotlink:
     def __init__(self):
+        self.linkname = ''
+        self.mesh_fileName = ''
         self.mass = 0.
         self.com = np.zeros(3)
         self.rpy = np.zeros(3)
-        self.inertia = np.zeros((3, 3))
-        self.mesh_fileName = ''
-        self.linkname = ''
-        self.abs_tf = np.eye(4) # absolute tranformation matrix from link to world
-        self.rel_tf = np.eye(4) # tranfromation matrix from this link to last link
-        self.abs_com = np.zeros(3)
-        self.abs_tf_reverse = np.eye(4)
+        self.inertia = np.zeros((3, 3)) # origin: CoM
+        self.xyz_visual = np.zeros(3)
+        self.rpy_visual = np.zeros(3)
+
+        self.inertia_joint_frame = np.zeros((3, 3)) # origin: parent joint frame origin
+        self.abs_tf_link = np.eye(4) # absolute tranformation matrix from child link to world
+        # self.rel_tf_link = np.eye(4) # tranfromation matrix from child link to parent link
+        self.abs_com = np.zeros(3)  # absolute CoM position
+        self.abs_tf_visual = np.eye(4)   # absolute mesh transform
 
 
     @property
@@ -43,7 +47,6 @@ class Robotjoint:
         self.rpy = np.zeros(3)
         self.parent_link = ''   # name of parent link
         self.child_link = ''    # name of child link
-        self.reverse = False
     
     def log_joint_info(self):
         print("joint {0}: axis {1}, xyz {2}, rpy {3}".format(self.jointname, self.axis, self.xyz, self.rpy))
@@ -107,9 +110,6 @@ class Robot:
         self.calculate_tfs_in_world_frame()
 
     def invert_joint_z(self, jointname):
-        # 反转
-        self.robotjoints[jointname].reverse = not self.robotjoints[jointname].reverse
-        self.robotjoints[jointname].angle *= -1.
         last2old = get_extrinsic_tf(self.robotjoints[jointname].rpy, self.robotjoints[jointname].xyz)
         old2new = np.eye(4)
         old2new[:3, :3] = matrix33.create_from_x_rotation(np.pi)
@@ -126,49 +126,46 @@ class Robot:
                 self.set_joint_rpy_xyz(robotjoint.jointname, new2next_rpy, new2next[:3, 3])
         # change link pos
         linkname = self.robotjoints[jointname].child_link
-        link = self.robotlinks[self.robotjoints[jointname].child_link]
+        link = self.robotlinks[linkname]
         old2link = get_extrinsic_tf(robotjoint.rpy, np.zeros(3))
         link_rpy = get_rpy_from_rotation(np.matmul(inv_tf(old2new), old2link))
         link_com = tf_coordinate(inv_tf(old2new), link.com)
-        # print("inv_tf(old2new)=", inv_tf(old2new))
-        # print("link_com=", link_com)
-        # print("original link_com=", link.com)
         self.set_link_rpy_com(linkname, link_rpy, link_com)
+        # set visual
+        old2visual = get_extrinsic_tf(self.robotlinks[linkname].rpy_visual, self.robotlinks[linkname].xyz_visual)
+        new2visual = np.matmul(inv_tf(old2new), old2visual)
+        rpy_visual = get_rpy_from_rotation(new2visual)
+        xyz_visual = new2visual[:3, 3]
+        self.set_link_rpy_xyz_visual(linkname, rpy_visual, xyz_visual)
         self.calculate_tfs_in_world_frame()
-        pass
     
     def export_to_urdf(self):
-        self.urdf_tree.write(osp.join(osp.dirname(self.urdf_file), "generate_" + osp.basename(self.urdf_file)))
-        pass
+        self.urdf_tree.write(osp.join(osp.dirname(self.urdf_file), "generated_" + osp.basename(self.urdf_file)))
 
     """The followings are utility functions"""
     def calculate_tfs_in_world_frame(self):
         for node in LevelOrderIter(self.root_link_node):
             if node.type == 'link' and node.parent != None:
-                parent_tf_world = self.robotlinks[node.parent.parent.id].abs_tf
-                xyz = self.robotjoints[node.parent.id].xyz
-                rpy = self.robotjoints[node.parent.id].rpy
+                # last link to world
+                parent_tf_world = self.robotlinks[node.parent.parent.id].abs_tf_link
+                parent_joint = self.robotjoints[node.parent.id]
+                xyz = parent_joint.xyz
+                rpy = parent_joint.rpy
+                # current link to last link
                 tf = get_extrinsic_tf(rpy, xyz)
+                # joint angle
                 angle = self.robotjoints[node.parent.id].angle
-                tf_reverse = tf.copy()
-                # tf for joint
                 tf = np.matmul(tf, matrix44.create_from_z_rotation(angle))
-                # tf for link
-                if self.robotjoints[node.parent.id].reverse:
-                    old2new = np.eye(4)
-                    old2new[:3, :3] = matrix33.create_from_x_rotation(np.pi)
-                    tf_reverse = np.matmul(tf_reverse, old2new)
-                    tf_reverse = np.matmul(tf_reverse, matrix44.create_from_z_rotation(-angle))
-                    # np.matmul(tf, old2new)
-                else:
-                    tf_reverse = tf
-                
-                self.robotlinks[node.id].rel_tf = tf
-                abs_tf = np.matmul(parent_tf_world, tf)
-                self.robotlinks[node.id].abs_tf = abs_tf
-                self.robotlinks[node.id].abs_tf_reverse = np.matmul(parent_tf_world, tf_reverse)
-                # print("joint ", self.robotjoints[node.parent.id].jointname, abs_tf)
-                self.robotlinks[node.id].abs_com = tf_coordinate(abs_tf, self.robotlinks[node.id].com)
+                # link to world
+                current_tf_world = np.matmul(parent_tf_world, tf)
+                self.robotlinks[node.id].abs_tf_link = current_tf_world
+                self.robotlinks[node.id].abs_com = tf_coordinate(current_tf_world, self.robotlinks[node.id].com)
+
+                # visual mesh tf
+                current_link2visual = np.eye(4)
+                current_link2visual = get_extrinsic_tf(self.robotlinks[node.id].rpy_visual, self.robotlinks[node.id].xyz_visual)
+                # print("error=", current_link2visual1 - current_link2visual)
+                self.robotlinks[node.id].abs_tf_visual = np.matmul(current_tf_world, current_link2visual)      
     
     def set_joint_rpy_xyz(self, jointname, rpy, xyz):
         self.robotjoints[jointname].rpy = rpy
@@ -187,6 +184,15 @@ class Robot:
         assert len(a) == 1
         a[0].set('rpy', str(self.robotlinks[linkname].rpy).replace("[", "").replace("]", ""))
         a[0].set('xyz', str(self.robotlinks[linkname].com).replace("[", "").replace("]", ""))
+
+    def set_link_rpy_xyz_visual(self, linkname, rpy_visual, xyz_visual):
+        self.robotlinks[linkname].rpy_visual = rpy_visual
+        self.robotlinks[linkname].xyz_visual = xyz_visual
+        # update urdf tree
+        a = self.urdf_tree.findall("./*[@name='{0}']/visual/origin".format(linkname))
+        assert len(a) == 1
+        a[0].set('rpy', str(self.robotlinks[linkname].rpy_visual).replace("[", "").replace("]", ""))
+        a[0].set('xyz', str(self.robotlinks[linkname].xyz_visual).replace("[", "").replace("]", ""))
 
     def parse_urdf(self):
         urdf_root = self.get_urdf_root()
@@ -235,10 +241,15 @@ class Robot:
                     elif item.tag == "mass":
                         robotlink.mass = float(item.get('value'))
                     elif item.tag == "inertia":
-                        robotlink.inertia = np.array([[float(item.get('ixx')), float(item.get('ixy')), float(item.get      ('ixz'))],
+                        robotlink.inertia = np.array([[float(item.get('ixx')), float(item.get('ixy')), float(item.get('ixz'))],
                                             [float(item.get('ixy')), float(item.get('iyy')), float(item.get('iyz'))],
                                             [float(item.get('ixz')), float(item.get('iyz')), float(item.get('izz'))]])
-                
+            if child.tag == 'visual':
+                for item in child:
+                    if item.tag == "origin":
+                        robotlink.xyz_visual = np.array(item.get('xyz').split(), dtype=float)
+                        robotlink.rpy_visual = np.array(item.get('rpy').split(), dtype=float)
+                        break
         self.robotlinks[robotlink.linkname] = robotlink
         # add link node to urdf tree
         node = AnyNode(id=robotlink.linkname, parent=None, children=None, type='link')

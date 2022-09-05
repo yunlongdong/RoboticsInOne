@@ -24,9 +24,6 @@ except ImportError:
     raise ImportError("No supported gui library was found. Install wxPython.")
 
 
-
-
-
 def simple_window(init, info, robot, size=(512, 512)):
     """Return a window with the expected behaviours added.
 
@@ -105,13 +102,13 @@ def get_all_from_robot(robot):
         mesh_names.append(robotlink.linkname)
 
         m = np.eye(4)
-        m[:3, :3] = robotlink.abs_tf_reverse[:3, :3]
-        m[:3, 3] = robotlink.abs_tf_reverse[:3, 3]
+        m[:3, :3] = robotlink.abs_tf_visual[:3, :3]
+        m[:3, 3] = robotlink.abs_tf_visual[:3, 3]
 
         mesh.affine_transform(R=m[:3, :3].T, t=m[:3, 3])
         meshes.append(mesh)
         # axis
-        axis = Lines.axes(size=0.06, width=0.006, origin=robotlink.abs_tf, name=robotlink.linkname)
+        axis = Lines.axes(size=0.06, width=0.006, origin=robotlink.abs_tf_link, name=robotlink.linkname)
         axes.append(axis)
         # CoM to the last
         axes.append(Spherecloud(name=robotlink.linkname, centers=[robotlink.abs_com], colors=[0.8, 0, 0, 0.8], sizes=[0.01]))

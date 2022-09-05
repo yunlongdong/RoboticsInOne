@@ -168,22 +168,22 @@ class Window(BaseWindow):
             for render in self._window._scene._renderables:
                 if isinstance(render, Mesh):
                     robotlink = robot.robotlinks[render.name]
-                    abs_tf = robotlink.abs_tf_reverse
+                    abs_tf_visual = robotlink.abs_tf_visual
                     m = np.eye(4)
                     m[:3, :3] = render.R.T
                     m[:3, 3] = render.t
                     m_inv = inv_tf(m)
                     render.affine_transform_no_update(R=m_inv[:3, :3].T, t=m_inv[:3, 3])
-                    render.affine_transform(R=abs_tf[:3, :3].T, t=abs_tf[:3, 3])
+                    render.affine_transform(R=abs_tf_visual[:3, :3].T, t=abs_tf_visual[:3, 3])
                 if isinstance(render, Lines):
                     robotlink = robot.robotlinks[render.name]
-                    abs_tf = robotlink.abs_tf
+                    abs_tf_link = robotlink.abs_tf_link
                     m = np.eye(4)
                     m[:3, :3] = render.R.T
                     m[:3, 3] = render.t
                     m_inv = inv_tf(m)
                     render.affine_transform_no_update(R=m_inv[:3, :3].T, t=m_inv[:3, 3])
-                    render.affine_transform(R=abs_tf[:3, :3].T, t=abs_tf[:3, 3])
+                    render.affine_transform(R=abs_tf_link[:3, :3].T, t=abs_tf_link[:3, 3])
                             
             self.view._on_paint(None)
             return 
@@ -255,22 +255,22 @@ class Window(BaseWindow):
             for render in self._window._scene._renderables:
                 if isinstance(render, Mesh):
                     robotlink = robot.robotlinks[render.name]
-                    abs_tf_reverse = robotlink.abs_tf_reverse
+                    abs_tf_visual = robotlink.abs_tf_visual
                     m = np.eye(4)
                     m[:3, :3] = render.R.T
                     m[:3, 3] = render.t
                     m_inv = inv_tf(m)
                     render.affine_transform_no_update(R=m_inv[:3, :3].T, t=m_inv[:3, 3])
-                    render.affine_transform(R=abs_tf_reverse[:3, :3].T, t=abs_tf_reverse[:3, 3])
+                    render.affine_transform(R=abs_tf_visual[:3, :3].T, t=abs_tf_visual[:3, 3])
                 elif isinstance(render, Lines):
                     robotlink = robot.robotlinks[render.name]
-                    abs_tf = robotlink.abs_tf
+                    abs_tf_link = robotlink.abs_tf_link
                     m = np.eye(4)
                     m[:3, :3] = render.R.T
                     m[:3, 3] = render.t
                     m_inv = inv_tf(m)
                     render.affine_transform_no_update(R=m_inv[:3, :3].T, t=m_inv[:3, 3])
-                    render.affine_transform(R=abs_tf[:3, :3].T, t=abs_tf[:3, 3])
+                    render.affine_transform(R=abs_tf_link[:3, :3].T, t=abs_tf_link[:3, 3])
                             
             self.view._on_paint(None)
             return
