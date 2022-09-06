@@ -85,7 +85,6 @@ def scene_init(camera_position, camera_target):
     return inner
 
 def get_all_from_robot(robot):
-    # MDH_frame_list = robot.show_MDH_frame()
     meshes = []
     mesh_names = []
     # axes list, such as link frame, CoM, remember CoM shound be appended at the last
@@ -103,16 +102,15 @@ def get_all_from_robot(robot):
         mesh.affine_transform(R=m[:3, :3].T, t=m[:3, 3])
         meshes.append(mesh)
         # axis
-        axis = Lines.axes(size=0.06, width=0.006, origin=robotlink.abs_tf_link, name=robotlink.linkname)
-        axes.append(axis)
+        if robotlink.linkname == robot.root_link_node.id:
+            axis = Lines.axes(size=0.06, width=0.006, origin=robotlink.abs_tf_link, name="World_"+robotlink.linkname)    # world axis
+        else:
+            axis = Lines.axes(size=0.06, width=0.006, origin=robotlink.abs_tf_link, name=robotlink.linkname)
+            axes.append(axis)
+            axis = Lines.axes(size=0.06, width=0.006, origin=robotlink.abs_tf_link_MDH, name="MDH_"+robotlink.linkname)
+            axes.append(axis)
         # CoM to the last
         axes.append(Spherecloud(name=robotlink.linkname, centers=[robotlink.abs_com], colors=[0.8, 0, 0, 0.8], sizes=[0.01]))
-    
-    # i = 1
-    # for MDH_frame in MDH_frame_list:
-    #     axis = Lines.axes(size=0.06, width=0.006, colors=[[0.1, 0.7, 0.1], [0.7, 0.1, 0.1], [0.1, 0.1, 0.7]], origin=MDH_frame, name="MDH"+str(i))
-    #     axes.append(axis)
-    #     i += 1
 
     return meshes, axes, mesh_names
 

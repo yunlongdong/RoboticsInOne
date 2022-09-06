@@ -106,6 +106,14 @@ class Window(BaseWindow):
             self.m_checkBoxAxis.SetValue(True)
             bSizer3.Add( self.m_checkBoxAxis, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
 
+            self.m_checkBoxAxis_MDH = wx.CheckBox( self, wx.ID_ANY, u"MDH Axis", wx.DefaultPosition, wx.DefaultSize, 0 )
+            self.m_checkBoxAxis_MDH.SetValue(True)
+            bSizer3.Add( self.m_checkBoxAxis_MDH, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+
+            self.m_checkBoxAxis_World = wx.CheckBox( self, wx.ID_ANY, u"World", wx.DefaultPosition, wx.DefaultSize, 0 )
+            self.m_checkBoxAxis_World.SetValue(True)
+            bSizer3.Add( self.m_checkBoxAxis_World, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+
 
             bSizer1.Add( bSizer2, 6, wx.ALL|wx.EXPAND, 0 )
             bSizer1.Add( bSizer3, 0, wx.ALL|wx.EXPAND, 0 )
@@ -120,6 +128,8 @@ class Window(BaseWindow):
             self.Bind(wx.EVT_SCROLL, self.OnSlider, self.m_slider2)
             self.Bind(wx.EVT_CHECKBOX, self.OnCheckerCoM, self.m_checkBoxCoM)
             self.Bind(wx.EVT_CHECKBOX, self.OnCheckerAxis, self.m_checkBoxAxis)
+            self.Bind(wx.EVT_CHECKBOX, self.OnCheckerAxis_MDH, self.m_checkBoxAxis_MDH)
+            self.Bind(wx.EVT_CHECKBOX, self.OnCheckerAxis_World, self.m_checkBoxAxis_World)
             self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckerLink, self.m_checklist_link)
             self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckerInvJ, self.m_checklist_invert_j)
             self.Bind(wx.EVT_BUTTON, self.OnButtonSave, self.m_button_save)
@@ -194,11 +204,39 @@ class Window(BaseWindow):
         def OnCheckerAxis(self, e):
             if self.m_checkBoxAxis.IsChecked():
                 for render in self._window._scene._renderables:
-                    if isinstance(render, Lines) and "MDH" not in render.name:
+                    if "MDH_" in render.name or "World_" in render.name:
+                        continue
+                    elif isinstance(render, Lines):
                         render.scale(1000)
             else:
                 for render in self._window._scene._renderables:
-                    if isinstance(render, Lines) and "MDH" not in render.name:
+                    if "MDH_" in render.name or "World_" in render.name:
+                        continue
+                    elif isinstance(render, Lines):
+                        render.scale(0.001)
+            self.view._on_paint(None)
+            return
+
+        def OnCheckerAxis_MDH(self, e):
+            if self.m_checkBoxAxis_MDH.IsChecked():
+                for render in self._window._scene._renderables:
+                    if isinstance(render, Lines) and "MDH_" in render.name:
+                        render.scale(1000)
+            else:
+                for render in self._window._scene._renderables:
+                    if isinstance(render, Lines) and "MDH_" in render.name:
+                        render.scale(0.001)
+            self.view._on_paint(None)
+            return
+        
+        def OnCheckerAxis_World(self, e):
+            if self.m_checkBoxAxis_World.IsChecked():
+                for render in self._window._scene._renderables:
+                    if isinstance(render, Lines) and "World_" in render.name:
+                        render.scale(1000)
+            else:
+                for render in self._window._scene._renderables:
+                    if isinstance(render, Lines) and "World_" in render.name:
                         render.scale(0.001)
             self.view._on_paint(None)
             return
@@ -268,8 +306,20 @@ class Window(BaseWindow):
                     render.affine_transform_no_update(R=m_inv[:3, :3].T, t=m_inv[:3, 3])
                     render.affine_transform(R=abs_tf_visual[:3, :3].T, t=abs_tf_visual[:3, 3])
                 elif isinstance(render, Lines):
-                    robotlink = robot.robotlinks[render.name]
-                    abs_tf_link = robotlink.abs_tf_link
+                    linkname = None
+                    abs_tf_link = None
+                    if "World_" in render.name:
+                        linkname = render.name.replace("World_", "")
+                        robotlink = robot.robotlinks[linkname]
+                        abs_tf_link = robotlink.abs_tf_link
+                    elif "MDH_" in render.name:
+                        linkname = render.name.replace("MDH_", "")
+                        robotlink = robot.robotlinks[linkname]
+                        abs_tf_link = robotlink.abs_tf_link_MDH
+                    else:
+                        linkname = render.name
+                        robotlink = robot.robotlinks[linkname]
+                        abs_tf_link = robotlink.abs_tf_link
                     m = np.eye(4)
                     m[:3, :3] = render.R.T
                     m[:3, 3] = render.t
