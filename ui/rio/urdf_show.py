@@ -104,10 +104,12 @@ def get_all_from_robot(robot):
         # axis
         if robotlink.linkname == robot.root_link_node.id:
             axis = Lines.axes(size=0.06, width=0.006, origin=robotlink.abs_tf_link, name="World_"+robotlink.linkname)    # world axis
+            axes.append(axis)
         else:
             axis = Lines.axes(size=0.06, width=0.006, origin=robotlink.abs_tf_link, name=robotlink.linkname)
             axes.append(axis)
             axis = Lines.axes(size=0.06, width=0.006, origin=robotlink.abs_tf_link_MDH, name="MDH_"+robotlink.linkname)
+            axis.scale(0.001)   # 初始不显示
             axes.append(axis)
         # CoM to the last
         axes.append(Spherecloud(name=robotlink.linkname, centers=[robotlink.abs_com], colors=[0.8, 0, 0, 0.8], sizes=[0.01]))

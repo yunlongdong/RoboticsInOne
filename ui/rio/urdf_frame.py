@@ -107,7 +107,7 @@ class Window(BaseWindow):
             bSizer3.Add( self.m_checkBoxAxis, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
 
             self.m_checkBoxAxis_MDH = wx.CheckBox( self, wx.ID_ANY, u"MDH Axis", wx.DefaultPosition, wx.DefaultSize, 0 )
-            self.m_checkBoxAxis_MDH.SetValue(True)
+            self.m_checkBoxAxis_MDH.SetValue(False)
             bSizer3.Add( self.m_checkBoxAxis_MDH, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
 
             self.m_checkBoxAxis_World = wx.CheckBox( self, wx.ID_ANY, u"World", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -152,8 +152,7 @@ class Window(BaseWindow):
                 robot.export_to_urdf()
 
         def OnButtonKin(self, e):
-            frame = KinematicsFrame(self)
-
+            frame = KinematicsFrame(self, self.robot)
 
             frame.SetFK("import numpy as np")
             frame.SetIK("import numpy as np")
@@ -329,7 +328,7 @@ class Window(BaseWindow):
                 elif isinstance(render, Spherecloud):
                     robotlink = robot.robotlinks[render.name]
                     render.updatePos([robotlink.abs_com])
-        
+
 
     class _Canvas(wx.glcanvas.GLCanvas):
         def __init__(self, window, parent):
