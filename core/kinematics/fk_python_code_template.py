@@ -9,7 +9,7 @@ class FK_SYM:
 
     def tf(self, index):
         """
-        https://blog.csdn.net/Haiyang19980818/article/details/123948552
+        https://en.wikipedia.org/wiki/Denavit%E2%80%93Hartenberg_parameters
         """
         mdh = self.mdhs[index]
         alpha, a, theta, d = mdh
