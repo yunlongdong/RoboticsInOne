@@ -396,9 +396,10 @@ class Robot:
 
 
 if __name__ == "__main__":
-    robot = Robot(fileName='../../urdf_examples/estun/estun.urdf')
+    file_full_path = osp.dirname(osp.abspath(__file__))
+    robot = Robot(fileName=osp.join(file_full_path, '../../urdf_examples/estun/estun.urdf'))
     robot.log_urdf_info()
     robot.show_MDH_frame()
     robotlinks = list(robot.robotlinks.values())
-    print("error of com=", robotlinks[-1].abs_com - robotlinks[-1].abs_com_MDH)
+    print("absolute com=", robotlinks[-1].abs_com)
     

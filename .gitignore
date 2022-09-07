@@ -2,3 +2,4 @@
 *.png
 __pycache__
 generated*
+test
