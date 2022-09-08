@@ -1,0 +1,8 @@
+wxPython
+moderngl
+numpy
+scipy
+pandas
+pyrr
+pybullet
+anytree

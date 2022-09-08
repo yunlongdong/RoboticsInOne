@@ -1,13 +1,20 @@
 from sympy import symbols, sin, cos, lambdify
 from sympy.matrices import Matrix, eye
+import sys
+sys.path.append(r'../')
+from urdf_parser.robot_from_urdf import *
+from urdf_parser.utils import *
+import os.path as osp
+import pybullet as p
+from numpy.random import random
+
 class FK_SYM:
     def __init__(self, base2world_rpy, base2world_xyz, MDHs) -> None:
-        self.num_joints = len(MDHs) + 1
+        self.num_joints = len(MDHs)
         self.qs = [symbols('q{}'.format(i+1)) for i in range(self.num_joints)]
         self.mdhs = MDHs
-        rotate_z = eye(4)
-        rotate_z[:3, :3] = self.create_from_z_rotation(self.qs[0])
-        self.global_tf_list = [self.get_extrinsic_tf(base2world_rpy, base2world_xyz)*rotate_z]
+        self.global_tf_list = []
+        self.global_tf_list.append(self.get_extrinsic_tf(base2world_rpy, base2world_xyz)*self.tf(0))
         self.global_pos = None
         self.return_global_pos =  self.calulate_global_pos()
 
@@ -17,7 +24,7 @@ class FK_SYM:
         """
         mdh = self.mdhs[index]
         alpha, a, theta, d = mdh
-        theta += self.qs[index+1]
+        theta += self.qs[index]
 
         T = eye(4)
         T[0, 0] = cos(theta)
@@ -33,11 +40,12 @@ class FK_SYM:
         T[2, 1] = cos(theta)*sin(alpha)
         T[2, 2] = cos(alpha)
         T[2, 3] = d*cos(alpha)
+
         return T
     
     def calulate_global_pos(self):
         last_global_tf = self.global_tf_list[-1]
-        for i in range(len(self.qs)-1):
+        for i in range(1, self.num_joints):
             self.global_tf_list.append(last_global_tf * self.tf(i))
             last_global_tf = self.global_tf_list[-1]
         self.global_pos = self.global_tf_list[-1] * Matrix([symbols('x'), symbols('y'), symbols('z'), 1.])
@@ -75,14 +83,39 @@ class FK_SYM:
         )
 
 
-if __name__ == "__main__":
-    base2world_rpy = [0, 0, 0.]
-    base2world_xyz = [0, 0, 0.]
-    MDHs = [[1.57, 0, 0, -0.121], [0, -0.543, 0, 0.]]
-    fk = FK_SYM(base2world_rpy, base2world_xyz, MDHs)
 
-    qs = [0.] * fk.num_joints
-    local_pos = [0.1, 0.2, 0.3]
+def check_fk(filename=''):
+    file_full_path = osp.dirname(osp.abspath(__file__))
+    # robot
+    robot = Robot(fileName=osp.join(file_full_path, filename))
+    robot.show_MDH_frame(log=True)
+
+    # parameters
+    base2world_rpy = list(robot.robotjoints.values())[0].rpy_MDH
+    base2world_xyz = list(robot.robotjoints.values())[0].xyz_MDH
+    local_pos = list(robot.robotlinks.values())[-1].com_MDH
+    MDHs = robot.MDH_params
+    fk = FK_SYM(base2world_rpy, base2world_xyz, MDHs)
+    # randomly set joint angles
+    qs = list(random(fk.num_joints))
+    print("set random joint angle=", qs)
+    robot.set_joint_angle(qs)
+    # calculated by fk
     global_pos = fk.return_global_pos(qs, local_pos)
-    print("global_pos=", global_pos)
+    print("fk global_pos=", global_pos)
+    # calculated by RIO
+    print("RIO global_pos=", list(robot.robotlinks.values())[-1].abs_com)
+
+    # calculated with pybullet
+    phy_Client = p.connect(p.DIRECT)
+    robot = p.loadURDF(osp.join(file_full_path, filename), useFixedBase=True)
+    # pybullet simulation
+    for _ in range(100):
+        p.setJointMotorControlArray(robot, range(fk.num_joints), p.POSITION_CONTROL, targetPositions=qs)
+        p.stepSimulation()
+    link_pos, link_ori, com_pos, com_ori, world_link_pos, world_link_ori = p.getLinkState(robot, fk.num_joints-1, computeForwardKinematics=True)
+    print("pybullet global_pos=", link_pos)
+
+if __name__ == "__main__":
+    check_fk(filename=r'$filename')
     

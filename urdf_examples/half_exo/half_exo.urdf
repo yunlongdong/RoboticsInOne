@@ -96,11 +96,7 @@
       link="R_hip_ab_Link" />
     <axis
       xyz="0 0 1" />
-    <limit
-      lower="0"
-      upper="0"
-      effort="0"
-      velocity="0" />
+    <limit effort="1000" velocity="10"/>
   </joint>
   <link
     name="R_hip_flex_link">
@@ -154,11 +150,7 @@
       link="R_hip_flex_link" />
     <axis
       xyz="0 0 1" />
-    <limit
-      lower="0"
-      upper="0"
-      effort="0"
-      velocity="0" />
+    <limit effort="1000" velocity="10"/>
   </joint>
   <link
     name="R_knee_link">
@@ -212,10 +204,6 @@
       link="R_knee_link" />
     <axis
       xyz="0 0 1" />
-    <limit
-      lower="0"
-      upper="0"
-      effort="0"
-      velocity="0" />
+    <limit effort="1000" velocity="10"/>
   </joint>
 </robot>

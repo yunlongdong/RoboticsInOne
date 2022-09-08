@@ -2,14 +2,13 @@ from sympy import symbols, sin, cos, lambdify, zeros
 from sympy.matrices import Matrix, eye
 class JAC_SYM:
     def __init__(self, base2world_rpy, base2world_xyz, MDHs) -> None:
-        self.num_joints = len(MDHs) + 1
+        self.num_joints = len(MDHs)
         self.qs = [symbols('q{}'.format(i+1)) for i in range(self.num_joints)]
         self.mdhs = MDHs
         self.jacobian = zeros(6, len(self.qs))
 
-        rotate_z = eye(4)
-        rotate_z[:3, :3] = self.create_from_z_rotation(self.qs[0])
-        self.global_tf_list = [self.get_extrinsic_tf(base2world_rpy, base2world_xyz)*rotate_z]
+        self.global_tf_list = []
+        self.global_tf_list.append(self.get_extrinsic_tf(base2world_rpy, base2world_xyz)*self.tf(0))
         self.z_list = [self.global_tf_list[-1][:3, 2]]
         self.o_oc = []
         self.return_jacobian = self.calulate_global_jacobian()
@@ -60,7 +59,7 @@ class JAC_SYM:
         """
         mdh = self.mdhs[index]
         alpha, a, theta, d = mdh
-        theta += self.qs[index+1]
+        theta += self.qs[index]
 
         T = eye(4)
         T[0, 0] = cos(theta)
@@ -114,12 +113,12 @@ class JAC_SYM:
     
 
 if __name__ == "__main__":
-    base2world_rpy = [0, 0, 0.]
-    base2world_xyz = [0, 0, 0.]
-    MDHs = [[1.57, 0, 0, -0.121], [0, -0.543, 0, 0.]]
+    base2world_rpy = []
+    base2world_xyz = []
+    MDHs = [[]]
     jac = JAC_SYM(base2world_rpy, base2world_xyz, MDHs)
 
     qs = [0.] * jac.num_joints
-    local_pos = [0.1, 0.2, 0.3]
+    local_pos = []
     jacobian = jac.return_jacobian(qs, local_pos)
-    print(jacobian)
+    print("jacobian=", jacobian)

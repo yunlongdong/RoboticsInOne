@@ -36,6 +36,7 @@ class Robotlink:
         # self.rel_tf_link = np.eye(4) # tranfromation matrix from child link to parent link
         self.abs_com_MDH = np.zeros(3)  # absolute CoM position
         self.abs_tf_visual_MDH = np.eye(4)   # absolute mesh transform
+        self.rel_tf_MDH = np.eye(4)
 
 
     @property
@@ -143,11 +144,11 @@ class Robot:
     def export_to_urdf(self):
         self.urdf_tree.write(osp.join(osp.dirname(self.urdf_file), "generated_" + osp.basename(self.urdf_file)))
 
-    def show_MDH_frame(self):
+    def show_MDH_frame(self, log=False):
         # TODO:注意可能需要先reset joint angle，避免abs_tf_link的影响
         self.set_joint_angle(np.zeros(self.num_robotjoints))
         MDH_tf_list_total = []
-        MDH_param_list_total = []
+        MDH_param_list_total = [np.array([0, 0, 0, 0.])]
         jointname_list_subtree = self.get_urdf_subtree()
         for jointname_list in jointname_list_subtree:
             point_list= []
@@ -167,8 +168,9 @@ class Robot:
         MDH_pd_frame = DataFrame(MDH_param_list_total, columns=['alpha', 'a', 'theta', 'd'])
         # print("\nModified DH Parameters: (csv)")
         # print(pd_frame.to_csv())
-        print("\nModified DH Parameters: (markdown)")
-        print(MDH_pd_frame.to_markdown())
+        if log:
+            print("\nModified DH Parameters: (markdown)")
+            print(MDH_pd_frame.to_markdown())
         self.MDH_params = MDH_pd_frame.to_numpy()
         return MDH_tf_list_total
 
@@ -233,9 +235,11 @@ class Robot:
                 rpy_MDH = parent_joint.rpy_MDH
                 # current link to last link
                 tf = get_extrinsic_tf(rpy_MDH, xyz_MDH)
+                
                 # joint angle
                 angle = self.robotjoints[node.parent.id].angle
                 tf = np.matmul(tf, matrix44.create_from_z_rotation(angle))
+                self.robotlinks[node.id].rel_tf_MDH = tf
                 # link to world
                 current_tf_world = np.matmul(parent_tf_world, tf)
                 self.robotlinks[node.id].abs_tf_link_MDH = current_tf_world
@@ -245,7 +249,8 @@ class Robot:
                 current_link2visual = np.eye(4)
                 current_link2visual = get_extrinsic_tf(self.robotlinks[node.id].rpy_visual_MDH, self.robotlinks[node.id].xyz_visual_MDH)
                 # print("error=", current_link2visual1 - current_link2visual)
-                self.robotlinks[node.id].abs_tf_visual_MDH = np.matmul(current_tf_world, current_link2visual) 
+                self.robotlinks[node.id].abs_tf_visual_MDH = np.matmul(current_tf_world, current_link2visual)
+                # print("{0} com error=".format(node.id), self.robotlinks[node.id].abs_com_MDH - self.robotlinks[node.id].abs_com)
 
     def update_MDH_frame(self, MDH_tf_list, jointname_list):
         self.calculate_tfs_in_world_frame()
@@ -324,7 +329,7 @@ class Robot:
                 subtree.insert(0, parent_jointname)
                 leave_linkname = parent_linkname
             subtree_list.append(subtree)
-        print(subtree_list)
+        # print("subtree_list=", subtree_list)
         return subtree_list
 
     def process_link(self, link):
@@ -398,8 +403,10 @@ class Robot:
 if __name__ == "__main__":
     file_full_path = osp.dirname(osp.abspath(__file__))
     robot = Robot(fileName=osp.join(file_full_path, '../../urdf_examples/estun/estun.urdf'))
+    # robot = Robot(fileName=osp.join(file_full_path, '../../urdf_examples/kuka iiwa/model.urdf'))
     robot.log_urdf_info()
-    robot.show_MDH_frame()
+    robot.show_MDH_frame(log=True)
     robotlinks = list(robot.robotlinks.values())
     print("absolute com=", robotlinks[-1].abs_com)
+    robot.set_joint_angle(np.random.random(robot.num_robotjoints))
     
