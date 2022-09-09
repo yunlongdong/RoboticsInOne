@@ -18,8 +18,6 @@ class dyn_CODEGEN:
         print("generated par_filename=", self.par_filename)
         self.symoro_robot, _  = parfile.readpar(self.robotname, self.par_filename)
     
-
-
     def dyn_python_code_gen(self):
         with open(osp.join(self.file_full_path, 'template/fk_python_template.py'),'r',encoding='utf-8') as f:
             content = f.read()
@@ -69,6 +67,45 @@ class dyn_CODEGEN:
             f.write(content)
     
     def M_code_gen(self):
+        self.symoro_robot, _  = parfile.readpar(self.robotname, self.par_filename)
+        model_symo = self.symoro_robot.compute_inertiamatrix()
+        old_file_path = model_symo.file_out.name
+        new_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_inm.txt")
+        shutil.move(old_file_path, new_file_path)
+        pat = re.compile("Equations:"+'(.*?)'+"\*=\*", re.S)
+        with open(new_file_path, 'r') as f:
+            inm_content = f.read()
+        symoro_M_code = pat.findall(inm_content)[0].replace(";", "")
+        symoro_M_code = symoro_M_code.replace("\n", "\n    ")
+        
+        # 替换
+        with open(osp.join(self.file_full_path, 'template/M_python_template.py'),'r',encoding='utf-8') as f:
+            content = f.read()
+        index_list = [str(i+1) for i in range(self.robot.num_robotjoints)]
+
+        mass_list_from_robot = np.array([robotlink.mass for robotlink in list(self.robot.robotlinks.values())])
+        content = content.replace("$mass_list_from_robot", np.array2string(mass_list_from_robot, separator=', '))
+        inertia_list_from_robot = ["np.array("+np.array2string(robotlink.inertia_MDH, separator=', ').replace('\n', '\n'+' '*8)+")" for robotlink in list(self.robot.robotlinks.values())]
+        inertia_list_from_robot = "[" + ', '.join(inertia_list_from_robot) + "]"
+        content = content.replace("$inertia_list_from_robot", inertia_list_from_robot)
+
+        content = content.replace("$qs", str([0.]*self.robot.num_robotjoints))
+        content = content.replace("$m_index", self.return_aggregated_list([['m'], index_list]))
+        content = content.replace("$q_index", self.return_aggregated_list([['q'], index_list]))
+
+        content = content.replace("$q_index", self.return_aggregated_list([['q'], index_list]))
+        com_code = ""
+        inertia_code = ""
+        for i in range(self.robot.num_robotjoints):
+            com_code += "c{0}x, c{0}y, c{0}z = {1}\n    ".format(i+1, np.array2string(list(self.robot.robotlinks.values())[i].com_MDH, separator=', '))
+            inertia_code += "I{0}xx, I{0}xy, I{0}xz, I{0}yy, I{0}yz, I{0}zz = return_elements(inertia_list[{0}])\n    ".format(i+1)
+        content = content.replace("$com_code", com_code)
+        content = content.replace("$inertia_code", inertia_code)
+        content = content.replace("$symoro_M_code", symoro_M_code)
+        content = content.replace("$Matrix", self.return_matrix_string(self.robot.num_robotjoints, self.robot.num_robotjoints, header='A', symoro_code=symoro_M_code).replace("\n", "\n"+" "*12))
+        check_code_path = osp.dirname(self.robot.urdf_file)
+        with open(osp.join(check_code_path, "generated_calculate_M.py"), "w") as f:
+            f.write(content)
         pass
 
     def check_M_code_gen(self):
@@ -77,6 +114,7 @@ class dyn_CODEGEN:
         # old_file_path = model_symo.file_out.name
         # shutil.move(old_file_path, osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_idm.txt"))
         # M矩阵
+        self.symoro_robot, _  = parfile.readpar(self.robotname, self.par_filename)
         model_symo = self.symoro_robot.compute_inertiamatrix()
         old_file_path = model_symo.file_out.name
         new_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_inm.txt")
@@ -151,6 +189,8 @@ if __name__ == "__main__":
     robot = Robot(fileName=osp.join(file_full_path, '../../urdf_examples/kuka iiwa/model.urdf'))
     code_gen = dyn_CODEGEN(robot)
     code_gen.check_M_code_gen()
+    code_gen.M_code_gen()
+    
     # 导出transformation matrix
     # model_symo = geometry.direct_geometric(symoro_robot, [(0, code_gen.robot.num_robotjoints)], trig_subs=True)
     # old_file_path = model_symo.file_out.name
