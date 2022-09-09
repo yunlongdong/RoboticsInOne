@@ -1,5 +1,6 @@
 wxPython
 moderngl
+plyfile
 numpy
 scipy
 pandas

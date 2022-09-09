@@ -1,7 +1,7 @@
 import numpy as np
 import os.path as osp
 
-class CODEGEN:
+class fk_CODEGEN:
     def __init__(self, robot) -> None:
         self.file_full_path = osp.dirname(osp.abspath(__file__))
         self.robot = robot

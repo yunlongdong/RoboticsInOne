@@ -5,7 +5,7 @@ from wx import stc
 from .code_stc import CodePad
 
 sys.path.append('../../')
-from core.kinematics.fk_codegen import CODEGEN
+from core.kinematics.fk_codegen import fk_CODEGEN
 
 class JointController(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, joint_names):
@@ -38,7 +38,7 @@ class KinematicsFrame(wx.Frame):
         self.SetBackgroundColour( wx.Colour( 255, 255, 255 ) )
         self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
         self.robot = robot
-        self.codegen = CODEGEN(robot)
+        self.codegen = fk_CODEGEN(robot)
 
         bSizer1 = wx.BoxSizer( wx.VERTICAL )
 

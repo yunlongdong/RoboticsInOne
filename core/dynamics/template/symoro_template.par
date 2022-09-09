@@ -1,0 +1,60 @@
+(* Robotname = '$robotname' *)
+NL = $num_joints
+NJ = $num_joints
+NF = $num_joints
+Type = 0
+is_floating = False
+is_mobile = False
+
+(* Geometric parameters *)
+ant = {$ant}
+sigma = {$zeros_nq}
+b = {$zeros_nq}
+d = {$d}
+r = {$r}
+gamma = {$zeros_nq}
+alpha = {$alpha}
+mu = {$ones_nq}
+theta = {$theta}
+
+(* Dynamic parameters and external forces *)
+XX = {$XX}
+XY = {$XY}
+XZ = {$XZ}
+YY = {$YY}
+YZ = {$YZ}
+ZZ = {$ZZ}
+MX = {$MX}
+MY = {$MY}
+MZ = {$MZ}
+M = {$M}
+IA = {$zeros_nq}
+FV = {$FV}
+FS = {$FS}
+FX = {$zeros_nq}
+FY = {$zeros_nq}
+FZ = {$zeros_nq}
+CX = {$zeros_nq}
+CY = {$zeros_nq}
+CZ = {$zeros_nq}
+
+(* Joint parameters *)
+eta = {$zeros_nq}
+k = {$zeros_nq}
+QP = {$QP}
+QDP = {$QDP}
+GAM = {$zeros_nq}
+
+(* Velocity and acceleration of the base *)
+W0 = {0,0,0}
+WP0 = {0,0,0}
+V0 = {0,0,0}
+VP0 = {0,0,0}
+
+(* Acceleration of gravity *)
+G = {gx,gy,gz}
+
+(* Transformation of 0 frame position fT0 *)
+Z = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1}
+
+(* End of definition *)

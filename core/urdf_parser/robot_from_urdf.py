@@ -14,29 +14,26 @@ class Robotlink:
         self.mass = 0.
         self.com = np.zeros(3)
         self.rpy = np.zeros(3)
-        self.inertia = np.zeros((3, 3)) # origin: CoM
+        self.inertia = np.zeros((3, 3)) # origin: CoM, frame: urdf link frame
         self.xyz_visual = np.zeros(3)
         self.rpy_visual = np.zeros(3)
 
         self.inertia_joint_frame = np.zeros((3, 3)) # origin: parent joint frame origin
         self.abs_tf_link = np.eye(4) # absolute tranformation matrix from child link to world
-        # self.rel_tf_link = np.eye(4) # tranfromation matrix from child link to parent link
         self.abs_com = np.zeros(3)  # absolute CoM position
         self.abs_tf_visual = np.eye(4)   # absolute mesh transform
 
         # MDH frame
         self.com_MDH = np.zeros(3)
         self.rpy_MDH = np.zeros(3)
-        self.inertia_MDH = np.zeros((3, 3)) # origin: CoM
+        self.inertia_MDH = np.zeros((3, 3)) # origin: CoM, frame: MDH frame
         self.xyz_visual_MDH = np.zeros(3)
         self.rpy_visual_MDH = np.zeros(3)
 
         self.inertia_joint_frame_MDH = np.zeros((3, 3)) # origin: parent joint frame origin
         self.abs_tf_link_MDH = np.eye(4) # absolute tranformation matrix from child link to world
-        # self.rel_tf_link = np.eye(4) # tranfromation matrix from child link to parent link
         self.abs_com_MDH = np.zeros(3)  # absolute CoM position
         self.abs_tf_visual_MDH = np.eye(4)   # absolute mesh transform
-        self.rel_tf_MDH = np.eye(4)
 
 
     @property
@@ -239,7 +236,6 @@ class Robot:
                 # joint angle
                 angle = self.robotjoints[node.parent.id].angle
                 tf = np.matmul(tf, matrix44.create_from_z_rotation(angle))
-                self.robotlinks[node.id].rel_tf_MDH = tf
                 # link to world
                 current_tf_world = np.matmul(parent_tf_world, tf)
                 self.robotlinks[node.id].abs_tf_link_MDH = current_tf_world
@@ -260,19 +256,36 @@ class Robot:
             # last2world_MDH * current2last_MDH = current2world_MDH
             current2last_MDH = np.matmul(inv_tf(last2world_MDH), current2world_MDH)
             last2world_MDH = current2world_MDH
-            # change joint property
+
+            # update joint property
             self.robotjoints[jointname].xyz_MDH = current2last_MDH[:3, 3]
             self.robotjoints[jointname].rpy_MDH = get_rpy_from_rotation(current2last_MDH)
-            # change link property
+
+            # update link property
             linkname = self.robotjoints[jointname].child_link
             robotlink = self.robotlinks[linkname]
             current2world = self.robotlinks[linkname].abs_tf_link
             # current2world * get_extrinsic_rotation(rpy) = current2world_MDH * get_extrinsic_rotation(rpy_MDH)
+            old2MDH = np.matmul(inv_tf(current2world_MDH), current2world)
             rpy_MDH_matrix = np.matmul(np.matmul(inv_tf(current2world_MDH), current2world), get_extrinsic_rotation(robotlink.rpy))
             self.robotlinks[linkname].rpy_MDH = get_rpy_from_rotation(rpy_MDH_matrix)
             # current2world * com = current2world_MDH * com_MDH
             self.robotlinks[linkname].com_MDH = tf_coordinate(np.matmul(inv_tf(current2world_MDH), current2world), self.robotlinks[linkname].com)
-
+            # update inertia matrix
+            mass = robotlink.mass
+            cx, cy, cz = robotlink.com_MDH
+            # current2world*get_extrinsic_rotation(robotlink.rpy) * inertia_urdf * ...
+            # current2world_MDH*get_extrinsic_rotation(robotlink.rpy_MDH) * inertia_MDH * ...
+            old2MDH = old2MDH[:3, :3].T
+            tmp = np.matmul(np.matmul(get_extrinsic_rotation(robotlink.rpy_MDH)[:3, :3].T, old2MDH), get_extrinsic_rotation(robotlink.rpy)[:3, :3])
+            tmp = np.matmul(old2MDH, get_extrinsic_rotation(robotlink.rpy)[:3, :3])
+            self.robotlinks[linkname].inertia_MDH = np.matmul(np.matmul(tmp, robotlink.inertia), tmp.T) + np.array([[mass*cy**2+mass*cz**2, -mass*cx*cy, -mass*cx*cz],
+                        [-mass*cx*cy, mass*cx**2+mass*cz**2, -mass*cy*cz],
+                        [-mass*cx*cz, -mass*cy*cz, mass*cx**2+mass*cy**2]])
+            self.robotlinks[linkname].inertia += np.array([[mass*cy**2+mass*cz**2, -mass*cx*cy, -mass*cx*cz],
+                        [-mass*cx*cy, mass*cx**2+mass*cz**2, -mass*cy*cz],
+                        [-mass*cx*cz, -mass*cy*cz, mass*cx**2+mass*cy**2]])
+            # update visual property
             current_link2visual = get_extrinsic_tf(self.robotlinks[linkname].rpy_visual, self.robotlinks[linkname].xyz_visual)
             current_link2visual_MDH = np.matmul(np.matmul(inv_tf(current2world_MDH), self.robotlinks[linkname].abs_tf_link), current_link2visual)
             self.robotlinks[linkname].xyz_visual_MDH = current_link2visual_MDH[:3, 3]
