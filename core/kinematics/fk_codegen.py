@@ -57,6 +57,15 @@ class CODEGEN:
         check_code_path = osp.dirname(self.robot.urdf_file)
         with open(osp.join(check_code_path, "generated_check_fk.py"), "w") as f:
             f.write(content)
-
+    
     def check_jacobian_gen(self):
-        pass
+        with open(osp.join(self.file_full_path, 'template/check_jacobian_template.py'),'r',encoding='utf-8') as f:
+            content = f.read()
+        
+        urdf_parser_path = osp.dirname(osp.abspath(osp.join(osp.abspath(__file__), "../")))
+        print(urdf_parser_path)
+        content = content.replace("sys.path.append(r'../')", "sys.path.append(r'{0}')".format(urdf_parser_path))
+        content = content.replace("$filename", self.robot.urdf_file)
+        check_code_path = osp.dirname(self.robot.urdf_file)
+        with open(osp.join(check_code_path, "generated_check_jacobian.py"), "w") as f:
+            f.write(content)

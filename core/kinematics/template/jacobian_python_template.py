@@ -5,14 +5,14 @@ class JAC_SYM:
         self.num_joints = len(MDHs)
         self.qs = [symbols('q{}'.format(i+1)) for i in range(self.num_joints)]
         self.mdhs = MDHs
-        self.jacobian = zeros(6, len(self.qs))
+        self.jacobian = zeros(6, self.num_joints)
 
         self.global_tf_list = []
         self.global_tf_list.append(self.get_extrinsic_tf(base2world_rpy, base2world_xyz)*self.tf(0))
         self.z_list = [self.global_tf_list[-1][:3, 2]]
         self.o_oc = []
         self.return_jacobian = self.calulate_global_jacobian()
-        
+    
     def get_modified_dh_frame(self, index):
         mdh = self.mdhs[index]
         alpha, a, theta, d = mdh
@@ -37,13 +37,14 @@ class JAC_SYM:
     def calulate_global_jacobian(self):
         local_pos = Matrix([symbols('x'), symbols('y'), symbols('z'), 1.])
         last_global_tf = self.global_tf_list[-1]
-        for i in range(len(self.qs)-1):
+        for i in range(1, self.num_joints):
+            # update global tf
             global_tf = last_global_tf * self.tf(i)
             self.global_tf_list.append(global_tf)
             self.z_list.append(global_tf[:3, 2])
             last_global_tf = self.global_tf_list[-1]
         oc = self.global_tf_list[-1] * local_pos
-        for i in range(len(self.qs)):
+        for i in range(self.num_joints):
             o_oc = oc - self.global_tf_list[i][:, 3]
             o_oc = o_oc[:3, :]
             self.o_oc.append(o_oc)
@@ -110,7 +111,7 @@ class JAC_SYM:
             [sin(theta), cos(theta), 0.0],
             [0.0, 0.0, 1.0]]
         )
-    
+   
 
 if __name__ == "__main__":
     base2world_rpy = []

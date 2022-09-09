@@ -8,6 +8,7 @@ import os.path as osp
 import pybullet as p
 from numpy.random import random
 
+
 class FK_SYM:
     def __init__(self, base2world_rpy, base2world_xyz, MDHs) -> None:
         self.num_joints = len(MDHs)
@@ -118,4 +119,3 @@ def check_fk(filename=''):
 
 if __name__ == "__main__":
     check_fk(filename=r'$filename')
-    
