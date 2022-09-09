@@ -11,7 +11,7 @@ class JAC_SYM:
         self.global_tf_list.append(self.get_extrinsic_tf(base2world_rpy, base2world_xyz)*self.tf(0))
         self.z_list = [self.global_tf_list[-1][:3, 2]]
         self.o_oc = []
-        self.return_jacobian = self.calulate_global_jacobian()
+        self.return_jacobian = self.calulate_global_jacobian_symbol()
     
     def get_modified_dh_frame(self, index):
         mdh = self.mdhs[index]
@@ -34,7 +34,7 @@ class JAC_SYM:
         T[2, 3] = d*cos(alpha)
         return T
     
-    def calulate_global_jacobian(self):
+    def calulate_global_jacobian_symbol(self):
         local_pos = Matrix([symbols('x'), symbols('y'), symbols('z'), 1.])
         last_global_tf = self.global_tf_list[-1]
         for i in range(1, self.num_joints):
