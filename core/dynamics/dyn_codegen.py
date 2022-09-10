@@ -19,6 +19,10 @@ class dyn_CODEGEN:
         self.symoro_par_gen()
         # 使用symoro计算inm和idm
         self.symoro_dyn_M()
+        self.idm_code = self.idm_python_codegen()
+        self.M_code = self.M_python_codegen()
+        self.check_idm_code = self.check_idm_codegen()
+        self.check_M_code = self.check_M_codegen()
 
     def symoro_dyn_M(self):
         # calculate M
@@ -34,7 +38,7 @@ class dyn_CODEGEN:
         new_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_idm.txt")
         shutil.move(old_file_path, new_file_path)
 
-    def inv_dyn_codegen(self, write=False):
+    def idm_python_codegen(self, write=False):
         idm_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_idm.txt")
         pat = re.compile("Equations:"+'(.*?)'+"\*=\*", re.S)
         with open(idm_file_path, 'r') as f:
@@ -81,7 +85,7 @@ class dyn_CODEGEN:
                 f.write(content)
         return content
     
-    def check_dyn_codegen(self, write=False):
+    def check_idm_codegen(self, write=False):
         idm_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_idm.txt")
         pat = re.compile("Equations:"+'(.*?)'+"\*=\*", re.S)
         with open(idm_file_path, 'r') as f:
@@ -118,7 +122,7 @@ class dyn_CODEGEN:
                 f.write(content)
         return content
     
-    def M_codegen(self, write=False):
+    def M_python_codegen(self, write=False):
         inm_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_inm.txt")
         pat = re.compile("Equations:"+'(.*?)'+"\*=\*", re.S)
         with open(inm_file_path, 'r') as f:

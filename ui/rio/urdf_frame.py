@@ -158,7 +158,7 @@ class Window(BaseWindow):
             frame = KinematicsFrame(self, self.robot)
 
             frame.SetFK("import numpy as np")
-            frame.SetIK("import numpy as np")
+            frame.SetJacobian("import numpy as np")
             frame.Show()
             return
         

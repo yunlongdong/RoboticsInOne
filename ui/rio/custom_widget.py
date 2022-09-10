@@ -70,18 +70,25 @@ class KinematicsFrame(wx.Frame):
 
         bSizer1_2_1.Add( self.m_staticText2, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 2 )
 
-        self.m_button_gen_jacobian = wx.Button( self, wx.ID_ANY, u"Copy", wx.DefaultPosition, wx.DefaultSize, 0 )
-        bSizer1_2_1.Add( self.m_button_gen_jacobian, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 6 )
-
-        self.m_button31 = wx.Button( self, wx.ID_ANY, u"MyButton", wx.DefaultPosition, wx.DefaultSize, 0 )
-        bSizer1_2_1.Add( self.m_button31, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+        self.m_button_copy = wx.Button(self, wx.ID_ANY, u"Copy", wx.DefaultPosition, wx.DefaultSize, 0)
+        bSizer1_2_1.Add(self.m_button_copy, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 6)
+        
+        # 生成计算代码
+        self.m_button_cal = wx.Button(self, wx.ID_ANY, u"Cal Code", wx.DefaultPosition, wx.DefaultSize, 0)
+        bSizer1_2_1.Add(self.m_button_cal, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+        # 生成验算代码
+        self.m_button_check = wx.Button(self, wx.ID_ANY, u"Check Code", wx.DefaultPosition, wx.DefaultSize, 0)
+        bSizer1_2_1.Add(self.m_button_check, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+        # 一键运行
+        self.m_button_run = wx.Button(self, wx.ID_ANY, u"Run", wx.DefaultPosition, wx.DefaultSize, 0)
+        bSizer1_2_1.Add(self.m_button_run, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
 
         bSizer1_2.Add( bSizer1_2_1, 0, wx.EXPAND, 5 )
 
         self.m_fk_stc = CodePad(self)
         bSizer1_1.Add( self.m_fk_stc, 1, wx.EXPAND |wx.ALL, 5 )
-        self.m_ik_stc = CodePad(self)
-        bSizer1_2.Add( self.m_ik_stc, 1, wx.EXPAND |wx.ALL, 5 )
+        self.m_jacobian_stc = CodePad(self)
+        bSizer1_2.Add( self.m_jacobian_stc, 1, wx.EXPAND |wx.ALL, 5 )
 
         bSizer1.Add( bSizer1_2, 1, wx.EXPAND, 5 )
 
@@ -90,11 +97,11 @@ class KinematicsFrame(wx.Frame):
 
         self.Centre( wx.BOTH )
 
-    def SetIK(self, ik_code):
-        self.m_ik_stc.SetValue(self.codegen.jacobian_python_code_gen())
+    def SetJacobian(self, jacobian_code):
+        self.m_jacobian_stc.SetValue(self.codegen.jacobian_code)
 
     def SetFK(self, fk_code):
-        self.m_fk_stc.SetValue(self.codegen.fk_python_code_gen())
+        self.m_fk_stc.SetValue(self.codegen.fk_code)
 
 class DynamicsFrame(wx.Frame):
     def __init__(self, parent, robot, id=wx.ID_ANY, title="Dynamics", size=(512, 512)):
@@ -154,25 +161,15 @@ class DynamicsFrame(wx.Frame):
         self.Centre( wx.BOTH )
 
     def SetMass(self, M_code):
-        self.m_mass_stc.SetValue(self.codegen.M_codegen())
+        self.m_mass_stc.SetValue(self.codegen.M_code)
 
     def SetIdyn(self, dyn_code):
-        self.m_idyn_stc.SetValue(self.codegen.inv_dyn_codegen())
+        self.m_idyn_stc.SetValue(self.codegen.idm_code)
 
 if __name__ == "__main__":
     App = wx.App()
     frame = KinematicsFrame(None, size=(512, 512))
-    frame.m_fk_stc.SetValue("""import numpy as np
-
-def fk(q):
-    x = forward_kinematics(q)
-    return x
-""")
-    frame.m_ik_stc.SetValue("""import numpy as np
-
-def ik(x):
-    q = forward_kinematics(x)
-    return q
-""")
+    frame.m_fk_stc.SetValue("""import numpy as np""")
+    frame.m_jacobian_stc.SetValue("""import numpy as np""")
     frame.Show()
     App.MainLoop()

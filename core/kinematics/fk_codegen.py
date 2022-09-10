@@ -1,3 +1,4 @@
+import code
 import numpy as np
 import os.path as osp
 
@@ -5,8 +6,12 @@ class fk_CODEGEN:
     def __init__(self, robot) -> None:
         self.file_full_path = osp.dirname(osp.abspath(__file__))
         self.robot = robot
+        self.fk_code = self.fk_python_codegen()
+        self.jacobian_code = self.jacobian_python_codegen()
+        self.check_fk_code = self.check_fk_codegen()
+        self.check_jacobian_code = self.check_jacobian_codegen()
     
-    def fk_python_code_gen(self, write=False):
+    def fk_python_codegen(self, write=False):
         with open(osp.join(self.file_full_path, 'template/fk_python_template.py'),'r',encoding='utf-8') as f:
             content = f.read()
         
@@ -22,11 +27,9 @@ class fk_CODEGEN:
         # local_pos默认替换为最后一个link的质心
         CoM_string = "local_pos = {0}".format(np.array2string(list(self.robot.robotlinks.values())[-1].com, separator=","))
         content = content.replace("local_pos = []", CoM_string, 1)
-        # 生成pybullet测试代码
-        self.check_fk_gen()
         return content
     
-    def jacobian_python_code_gen(self, write=False):
+    def jacobian_python_codegen(self, write=False):
         with open(osp.join(self.file_full_path, 'template/jacobian_python_template.py'),'r',encoding='utf-8') as f:
             content = f.read()
         
@@ -42,11 +45,9 @@ class fk_CODEGEN:
         # local_pos默认替换为最后一个link的质心
         CoM_string = "local_pos = {0}".format(np.array2string(list(self.robot.robotlinks.values())[-1].com, separator=","))
         content = content.replace("local_pos = []", CoM_string, 1)
-        # 生成pybullet测试代码
-        self.check_jacobian_gen()
         return content
 
-    def check_fk_gen(self, write=False):
+    def check_fk_codegen(self, write=False):
         with open(osp.join(self.file_full_path, 'template/check_fk_template.py'),'r',encoding='utf-8') as f:
             content = f.read()
         
@@ -60,7 +61,7 @@ class fk_CODEGEN:
                 f.write(content)
         return content
     
-    def check_jacobian_gen(self, write=False):
+    def check_jacobian_codegen(self, write=False):
         with open(osp.join(self.file_full_path, 'template/check_jacobian_template.py'),'r',encoding='utf-8') as f:
             content = f.read()
         
