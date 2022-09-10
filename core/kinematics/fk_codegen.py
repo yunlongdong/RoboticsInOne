@@ -1,4 +1,3 @@
-import code
 import numpy as np
 import os.path as osp
 
@@ -10,6 +9,9 @@ class fk_CODEGEN:
         self.jacobian_code = self.jacobian_python_codegen()
         self.check_fk_code = self.check_fk_codegen()
         self.check_jacobian_code = self.check_jacobian_codegen()
+        old_str = "__main__"
+        new_str = "core.kinematics.fk_codegen"
+        exec(self.fk_code.replace(old_str, new_str), globals())
     
     def fk_python_codegen(self, write=False):
         with open(osp.join(self.file_full_path, 'template/fk_python_template.py'),'r',encoding='utf-8') as f:
