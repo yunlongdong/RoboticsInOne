@@ -24,7 +24,7 @@ class fk_CODEGEN:
         MDHs_string = "MDHs = {0}".format(np.array2string(self.robot.MDH_params, separator=",").replace("\n", "\n\t\t\t"))
         content = content.replace("MDHs = [[]]", MDHs_string, 1)
         # local_pos默认替换为最后一个link的质心
-        CoM_string = "local_pos = {0}".format(np.array2string(list(self.robot.robotlinks.values())[-1].com, separator=","))
+        CoM_string = "local_pos = {0}".format(np.array2string(list(self.robot.robotlinks.values())[-1].com_MDH, separator=","))
         content = content.replace("local_pos = []", CoM_string, 1)
         return content
     
@@ -42,7 +42,7 @@ class fk_CODEGEN:
         MDHs_string = "MDHs = {0}".format(np.array2string(self.robot.MDH_params, separator=",").replace("\n", "\n\t\t\t"))
         content = content.replace("MDHs = [[]]", MDHs_string, 1)
         # local_pos默认替换为最后一个link的质心
-        CoM_string = "local_pos = {0}".format(np.array2string(list(self.robot.robotlinks.values())[-1].com, separator=","))
+        CoM_string = "local_pos = {0}".format(np.array2string(list(self.robot.robotlinks.values())[-1].com_MDH, separator=","))
         content = content.replace("local_pos = []", CoM_string, 1)
         return content
 

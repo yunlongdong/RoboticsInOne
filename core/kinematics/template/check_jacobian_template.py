@@ -123,9 +123,7 @@ class JAC_SYM:
     
 
 def check_jacobian(filename=''):
-    file_full_path = osp.dirname(osp.abspath(__file__))
-    # robot
-    robot = Robot(fileName=osp.join(file_full_path, filename))
+    robot = Robot(fileName=filename)
     robot.show_MDH_frame(log=True)
 
     # parameters
@@ -143,7 +141,7 @@ def check_jacobian(filename=''):
 
     # calculated with pybullet
     phy_Client = p.connect(p.DIRECT)
-    p_robot = p.loadURDF(osp.join(file_full_path, filename), useFixedBase=True)
+    p_robot = p.loadURDF(filename, useFixedBase=True)
     # pybullet simulation
     linearJacobian, angularJacobian = p.calculateJacobian(p_robot, linkIndex=jac.num_joints-1, localPosition=list(robot.robotlinks.values())[-1].com, objPositions=qs, objVelocities=[0.]*jac.num_joints, objAccelerations=[0.]*jac.num_joints)
     p_jacobian = np.concatenate((np.array(linearJacobian), np.array(angularJacobian)), axis=0)

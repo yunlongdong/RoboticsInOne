@@ -138,6 +138,7 @@ class KinematicsFrame(wx.Frame):
                     exec(self.codegen.fk_code.replace(old_str, new_str), globals())
                 elif self.code_type == "check":
                     exec(self.codegen.check_fk_code.replace(old_str, new_str), globals())
+            # jacobian
             else:
                 if self.code_type == "code":
                     exec(self.codegen.jacobian_code.replace(old_str, new_str), globals())

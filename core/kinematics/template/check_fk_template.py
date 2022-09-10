@@ -87,19 +87,18 @@ class FK_SYM:
 
 
 def check_fk(filename=''):
-    file_full_path = osp.dirname(osp.abspath(__file__))
-    # robot
-    robot = Robot(fileName=osp.join(file_full_path, filename))
+    robot = Robot(fileName=filename)
     robot.show_MDH_frame(log=True)
 
     # parameters
     base2world_rpy = list(robot.robotjoints.values())[0].rpy_MDH
     base2world_xyz = list(robot.robotjoints.values())[0].xyz_MDH
     local_pos = list(robot.robotlinks.values())[-1].com_MDH
+    print("local_pos=", local_pos)
     MDHs = robot.MDH_params
     fk = FK_SYM(base2world_rpy, base2world_xyz, MDHs)
     # randomly set joint angles
-    qs = list(random(fk.num_joints))
+    qs = [0.] * fk.num_joints#list(random(fk.num_joints))
     print("set random joint angle=", qs)
     robot.set_joint_angle(qs)
     # calculated by fk
@@ -110,7 +109,7 @@ def check_fk(filename=''):
 
     # calculated with pybullet
     phy_Client = p.connect(p.DIRECT)
-    p_robot = p.loadURDF(osp.join(file_full_path, filename), useFixedBase=True)
+    p_robot = p.loadURDF(filename, useFixedBase=True)
     # pybullet simulation
     for _ in range(100):
         p.setJointMotorControlArray(p_robot, range(fk.num_joints), p.POSITION_CONTROL, targetPositions=qs)
