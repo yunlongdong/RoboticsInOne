@@ -135,6 +135,7 @@ class Window(BaseWindow):
             self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckerLink, self.m_checklist_link)
             self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckerInvJ, self.m_checklist_invert_j)
             self.Bind(wx.EVT_BUTTON, self.OnButtonSave, self.m_button_save)
+            self.Bind(wx.EVT_BUTTON, self.OnButtonSaveMDH, self.m_button_mdh)
             self.Bind(wx.EVT_BUTTON, self.OnButtonKin, self.m_button_kine)
             self.Bind(wx.EVT_BUTTON, self.OnButtonDyn, self.m_button_dyn)
 
@@ -153,6 +154,13 @@ class Window(BaseWindow):
                 # do something here
                 robot = self._window.robot
                 robot.export_to_urdf()
+
+        def OnButtonSaveMDH(self, e):
+            dlg = wx.MessageDialog(self, 'The generated MDH file will be saved besides the original URDF file.', caption='Save MDH?', style=wx.YES_NO)
+            if dlg.ShowModal() == wx.ID_YES:
+                # do something here
+                robot = self._window.robot
+                robot.export_to_MDH()
 
         def OnButtonKin(self, e):
             frame = KinematicsFrame(self, self.robot)

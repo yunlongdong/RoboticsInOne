@@ -141,6 +141,15 @@ class Robot:
     def export_to_urdf(self):
         self.urdf_tree.write(osp.join(osp.dirname(self.urdf_file), "generated_" + osp.basename(self.urdf_file)))
 
+    def export_to_MDH(self):
+        filename = osp.join(osp.dirname(self.urdf_file), "generated_" + osp.splitext(osp.basename(self.urdf_file))[0] + "_MDH.txt")
+        base2world_rpy = list(self.robotjoints.values())[0].rpy_MDH
+        base2world_xyz = list(self.robotjoints.values())[0].xyz_MDH
+        with open(filename, 'w') as f :
+            f.writelines("base2worls_rpy = " + np.array2string(base2world_rpy, separator=', ')+ '\n')
+            f.writelines("base2worls_xyz = " + np.array2string(base2world_xyz, separator=', ') + '\n')
+            f.writelines(np.array2string(self.MDH_params, separator=', ') + '\n')
+
     def show_MDH_frame(self, log=False):
         # TODO:注意可能需要先reset joint angle，避免abs_tf_link的影响
         self.set_joint_angle(np.zeros(self.num_robotjoints))
@@ -289,6 +298,9 @@ class Robot:
             self.robotlinks[linkname].xyz_visual_MDH = current_link2visual_MDH[:3, 3]
             self.robotlinks[linkname].rpy_visual_MDH = get_rpy_from_rotation(current_link2visual_MDH)
         self.calculate_MDH_tfs_in_world_frame()
+
+    def load_from_MDH(self):
+        pass
 
     def parse_urdf(self):
         urdf_root = self.get_urdf_root()
