@@ -115,7 +115,7 @@ def check_fk(filename=''):
         p.setJointMotorControlArray(p_robot, range(fk.num_joints), p.POSITION_CONTROL, targetPositions=qs)
         p.stepSimulation()
     link_pos, link_ori, com_pos, com_ori, world_link_pos, world_link_ori = p.getLinkState(p_robot, fk.num_joints-1, computeForwardKinematics=True)
-    print("pybullet global_pos=", link_pos)
+    print("pybullet global_pos=", np.array(link_pos))
 
 if __name__ == "__main__":
     check_fk(filename=r'$filename')

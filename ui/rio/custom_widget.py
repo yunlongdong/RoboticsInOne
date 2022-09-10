@@ -8,6 +8,9 @@ sys.path.append('../../')
 from core.kinematics.fk_codegen import fk_CODEGEN
 from core.dynamics.dyn_codegen import dyn_CODEGEN
 
+from io import StringIO
+from contextlib import redirect_stdout
+
 class JointController(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, joint_names):
         wx.ScrolledWindow.__init__(self, parent)
@@ -34,7 +37,6 @@ class JointController(wx.lib.scrolledpanel.ScrolledPanel):
 
 
 class KinematicsFrame(wx.Frame):
-
     def __init__( self, parent, robot):
         wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Kinematics Toolbox", pos = wx.DefaultPosition, size = wx.Size( 800,600 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 
@@ -72,7 +74,7 @@ class KinematicsFrame(wx.Frame):
 
         bSizer1_2 = wx.BoxSizer( wx.HORIZONTAL )
 
-        self.m_button_run = wx.Button( self, wx.ID_ANY, u"run", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_button_run = wx.Button( self, wx.ID_ANY, u"Run", wx.DefaultPosition, wx.DefaultSize, 0 )
         bSizer1_2.Add( self.m_button_run, 0, wx.ALL, 5 )
 
 
@@ -92,83 +94,173 @@ class KinematicsFrame(wx.Frame):
 
 
         self.Bind(wx.EVT_BUTTON, self.OnCode, self.m_button_codegen)
+        self.Bind(wx.EVT_BUTTON, self.OnCheck, self.m_button_kine_check)
+        self.Bind(wx.EVT_BUTTON, self.OnCpp, self.m_button_cpp)
         self.Bind(wx.EVT_BUTTON, self.OnRun, self.m_button_run)
+        self.code_type = "code"
     
     def OnCode(self, e):
+        self.code_type = "code"
         mode = self.m_choice_kinematics.GetCurrentSelection()
-        robot = self.robot
         # choose FK
         if mode == 0:
             self.python_codepad.SetValue(self.codegen.fk_code)
         else:
             self.python_codepad.SetValue(self.codegen.jacobian_code)
 
+    def OnCheck(self, e):
+        self.code_type = "check"
+        mode = self.m_choice_kinematics.GetCurrentSelection()
+        # choose FK
+        if mode == 0:
+            self.python_codepad.SetValue(self.codegen.check_fk_code)
+        else:
+            self.python_codepad.SetValue(self.codegen.check_jacobian_code)
+
+    def OnCpp(self, e):
+        self.python_codepad.SetValue("# Coming soon...")
+
     def OnRun(self, e):
-        print('run code')
-        self.m_textCtrl_results.SetValue('1\n2\n')
+        old_str = "__main__"
+        new_str = "ui.rio.custom_widget"
+        #keep a named handle on the prior stdout 
+        old_stdout = sys.stdout 
+        #keep a named handle on io.StringIO() buffer 
+        new_stdout = StringIO() 
+        #Redirect python stdout into the builtin io.StringIO() buffer 
+        sys.stdout = new_stdout
+
+        mode = self.m_choice_kinematics.GetCurrentSelection()
+        # choose FK
+        if mode == 0:
+            if self.code_type == "code":
+                exec(self.codegen.fk_code.replace(old_str, new_str), globals())
+            elif self.code_type == "check":
+                exec(self.codegen.check_fk_code.replace(old_str, new_str), globals())
+        else:
+            if self.code_type == "code":
+                exec(self.codegen.jacobian_code.replace(old_str, new_str), globals())
+            elif self.code_type == "check":
+                exec(self.codegen.check_jacobian_code.replace(old_str, new_str), globals())
+
+        result = str(sys.stdout.getvalue().strip())
+        sys.stdout = old_stdout
+        self.m_textCtrl_results.SetValue(result)
 
 class DynamicsFrame(wx.Frame):
-    def __init__(self, parent, robot, id=wx.ID_ANY, title="Dynamics", size=(512, 512)):
-        wx.Frame.__init__(self, parent, size=size, title=title)
-        self.SetBackgroundColour( wx.Colour( 255, 255, 255 ) )
-        self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
-        self.robot = robot
-        self.codegen = dyn_CODEGEN(robot)
+    def __init__(self, parent, robot):
+        wx.Frame.__init__(self, parent, id = wx.ID_ANY, title = u"Dynamics Toolbox", pos = wx.DefaultPosition, size = wx.Size(800, 600), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL)
 
-        bSizer1 = wx.BoxSizer( wx.VERTICAL )
+        self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
+        self.SetBackgroundColour(wx.Colour(255, 255, 255))
 
-        bSizer1_1 = wx.BoxSizer( wx.VERTICAL )
+        bSizer1 = wx.BoxSizer(wx.VERTICAL)
 
-        bSizer1_1_1 = wx.BoxSizer( wx.HORIZONTAL )
+        bSizer1_1 = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.m_staticText1 = wx.StaticText( self, wx.ID_ANY, u"Mass Matrix", wx.DefaultPosition, wx.DefaultSize, 0 )
-        self.m_staticText1.Wrap( -1 )
+        self.m_staticText3 = wx.StaticText( self, wx.ID_ANY, u"Dynamics", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText3.Wrap( -1 )
 
-        bSizer1_1_1.Add( self.m_staticText1, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 2 )
+        bSizer1_1.Add( self.m_staticText3, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
 
-        self.m_button_gen_fk = wx.Button( self, wx.ID_ANY, u"Copy", wx.DefaultPosition, wx.DefaultSize, 0 )
-        bSizer1_1_1.Add( self.m_button_gen_fk, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 6 )
+        m_choice_dynamicsChoices = [ u"Mass Matrix", u"Inverse Dynamics" ]
+        self.m_choice_dynamics = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, m_choice_dynamicsChoices, 0 )
+        self.m_choice_dynamics.SetSelection( 0 )
+        bSizer1_1.Add(self.m_choice_dynamics, 0, wx.ALL, 5)
 
-        self.m_button3 = wx.Button( self, wx.ID_ANY, u"MyButton", wx.DefaultPosition, wx.DefaultSize, 0 )
-        bSizer1_1_1.Add( self.m_button3, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+        self.m_button_codegen = wx.Button( self, wx.ID_ANY, u"Code", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_1.Add(self.m_button_codegen, 0, wx.ALL, 5)
 
-        bSizer1_1.Add( bSizer1_1_1, 0, wx.EXPAND, 5 )
-        bSizer1.Add( bSizer1_1, 1, wx.EXPAND, 5 )
+        self.m_button_kine_check = wx.Button( self, wx.ID_ANY, u"Check", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_1.Add(self.m_button_kine_check, 0, wx.ALL, 5)
 
-        bSizer1_2 = wx.BoxSizer( wx.VERTICAL )
+        self.m_button_cpp = wx.Button( self, wx.ID_ANY, u"C++", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_1.Add( self.m_button_cpp, 0, wx.ALL, 5 )
 
-        bSizer1_2_1 = wx.BoxSizer( wx.HORIZONTAL )
 
-        self.m_staticText2 = wx.StaticText( self, wx.ID_ANY, u"Inverse Dynamics", wx.DefaultPosition, wx.DefaultSize, 0 )
-        self.m_staticText2.Wrap( -1 )
+        bSizer1.Add( bSizer1_1, 0, wx.EXPAND, 5 )
 
-        bSizer1_2_1.Add( self.m_staticText2, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 2 )
+        self.python_codepad = CodePad(self)
+        bSizer1.Add( self.python_codepad, 1, wx.EXPAND |wx.ALL, 5 )
 
-        self.m_button_gen_jacobian = wx.Button( self, wx.ID_ANY, u"Copy", wx.DefaultPosition, wx.DefaultSize, 0 )
-        bSizer1_2_1.Add( self.m_button_gen_jacobian, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 6 )
+        bSizer1_2 = wx.BoxSizer( wx.HORIZONTAL )
 
-        self.m_button31 = wx.Button( self, wx.ID_ANY, u"MyButton", wx.DefaultPosition, wx.DefaultSize, 0 )
-        bSizer1_2_1.Add( self.m_button31, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+        self.m_button_run = wx.Button( self, wx.ID_ANY, u"Run", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_2.Add( self.m_button_run, 0, wx.ALL, 5 )
 
-        bSizer1_2.Add( bSizer1_2_1, 0, wx.EXPAND, 5 )
 
-        self.m_mass_stc = CodePad(self)
-        bSizer1_1.Add( self.m_mass_stc, 1, wx.EXPAND |wx.ALL, 5 )
-        self.m_idyn_stc = CodePad(self)
-        bSizer1_2.Add( self.m_idyn_stc, 1, wx.EXPAND |wx.ALL, 5 )
+        bSizer1.Add( bSizer1_2, 0, wx.EXPAND, 5 )
 
-        bSizer1.Add( bSizer1_2, 1, wx.EXPAND, 5 )
+        self.m_textCtrl_results = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE )
+        bSizer1.Add( self.m_textCtrl_results, 1, wx.ALL|wx.EXPAND, 3 )
+
 
         self.SetSizer( bSizer1 )
         self.Layout()
 
         self.Centre( wx.BOTH )
 
-    def SetMass(self, M_code):
-        self.m_mass_stc.SetValue(self.codegen.M_code)
+        self.robot = robot
+        self.codegen = dyn_CODEGEN(robot)
 
-    def SetIdyn(self, dyn_code):
-        self.m_idyn_stc.SetValue(self.codegen.idm_code)
+
+        self.Bind(wx.EVT_BUTTON, self.OnCode, self.m_button_codegen)
+        self.Bind(wx.EVT_BUTTON, self.OnCheck, self.m_button_kine_check)
+        self.Bind(wx.EVT_BUTTON, self.OnCpp, self.m_button_cpp)
+        self.Bind(wx.EVT_BUTTON, self.OnRun, self.m_button_run)
+        self.code_type = "code"
+
+    def OnCode(self, e):
+        self.code_type = "code"
+        mode = self.m_choice_dynamics.GetCurrentSelection()
+        # choose mass matrix
+        if mode == 0:
+            self.python_codepad.SetValue(self.codegen.M_code)
+        # choose idm
+        else:
+            self.python_codepad.SetValue(self.codegen.idm_code)
+
+    def OnCheck(self, e):
+        self.code_type = "check"
+        mode = self.m_choice_dynamics.GetCurrentSelection()
+        # choose mass matrix
+        if mode == 0:
+            self.python_codepad.SetValue(self.codegen.check_M_code)
+        # choose idm
+        else:
+            self.python_codepad.SetValue(self.codegen.check_idm_code)
+
+    def OnCpp(self, e):
+        self.python_codepad.SetValue("# Coming soon...")
+
+    def OnRun(self, e):
+        old_str = "__main__"
+        new_str = "ui.rio.custom_widget"
+        #keep a named handle on the prior stdout 
+        old_stdout = sys.stdout 
+        #keep a named handle on io.StringIO() buffer 
+        new_stdout = StringIO() 
+        #Redirect python stdout into the builtin io.StringIO() buffer 
+        sys.stdout = new_stdout
+
+        mode = self.m_choice_dynamics.GetCurrentSelection()
+        # choose mass matrix
+        if mode == 0:
+            if self.code_type == "code":
+                exec(self.codegen.M_code.replace(old_str, new_str), globals())
+            elif self.code_type == "check":
+                exec(self.codegen.check_M_code.replace(old_str, new_str), globals())
+        # choose idm
+        else:
+            if self.code_type == "code":
+                exec(self.codegen.idm_code.replace(old_str, new_str), globals())
+            elif self.code_type == "check":
+                exec(self.codegen.check_idm_code.replace(old_str, new_str), globals())
+
+        result = str(sys.stdout.getvalue().strip())
+        sys.stdout = old_stdout
+        self.m_textCtrl_results.SetValue(result)
+
 
 if __name__ == "__main__":
     App = wx.App()
