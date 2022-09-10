@@ -4,9 +4,9 @@ import shutil, re
 
 import sys
 sys.path.append("../../")
-from ..urdf_parser.robot_from_urdf import *
+from core.urdf_parser.robot_from_urdf import *
 # symoro
-from ..interfaces.symoro.symoroutils import parfile
+from core.interfaces.symoro.symoroutils import parfile
 
 class dyn_CODEGEN:
     def __init__(self, robot) -> None:
