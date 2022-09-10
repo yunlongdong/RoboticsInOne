@@ -18,8 +18,14 @@ class dyn_CODEGEN:
         print("generated par_filename=", self.par_filename)
         self.symoro_robot, _  = parfile.readpar(self.robotname, self.par_filename)
     
-    def dyn_python_code_gen(self):
-        with open(osp.join(self.file_full_path, 'template/fk_python_template.py'),'r',encoding='utf-8') as f:
+    def inv_dyn_code_gen(self):
+        self.symoro_robot, _  = parfile.readpar(self.robotname, self.par_filename)
+        model_symo = self.symoro_robot.compute_idym()
+        old_file_path = model_symo.file_out.name
+        new_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_idm.txt")
+        shutil.move(old_file_path, new_file_path)
+
+        with open(osp.join(self.file_full_path, 'template/inv_dyn_python_template.py'),'r',encoding='utf-8') as f:
             content = f.read()
     
     def symoro_par_gen(self):
@@ -185,11 +191,12 @@ class dyn_CODEGEN:
 
 if __name__ == "__main__":
     file_full_path = osp.dirname(osp.abspath(__file__))
-    # robot = Robot(fileName=osp.join(file_full_path, '../../urdf_examples/estun/estun.urdf'))
+    # robot = Robot(fileName=osp.join(file_full_path, '../../urdf_examples/half_exo/half_exo.urdf'))
     robot = Robot(fileName=osp.join(file_full_path, '../../urdf_examples/kuka iiwa/model.urdf'))
     code_gen = dyn_CODEGEN(robot)
     code_gen.check_M_code_gen()
     code_gen.M_code_gen()
+    code_gen.inv_dyn_code_gen()
     
     # 导出transformation matrix
     # model_symo = geometry.direct_geometric(symoro_robot, [(0, code_gen.robot.num_robotjoints)], trig_subs=True)
