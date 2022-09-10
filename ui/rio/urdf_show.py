@@ -18,10 +18,9 @@ sys.path.append('../')
 from core.urdf_parser.robot_from_urdf import Robot
 
 
-try:
-    from .urdf_frame import Window
-except ImportError:
-    raise ImportError("No supported gui library was found. Install wxPython.")
+
+from .urdf_frame import Window
+
 
 
 def simple_window(init, info, robot, size=(512, 512)):

@@ -34,74 +34,78 @@ class JointController(wx.lib.scrolledpanel.ScrolledPanel):
 
 
 class KinematicsFrame(wx.Frame):
-    def __init__(self, parent, robot, id=wx.ID_ANY, title="Kinematics", size=(512, 512)):
-        wx.Frame.__init__(self, parent, size=size, title=title)
-        self.SetBackgroundColour( wx.Colour( 255, 255, 255 ) )
+
+    def __init__( self, parent, robot):
+        wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Kinematics Toolbox", pos = wx.DefaultPosition, size = wx.Size( 800,600 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+
         self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
-        self.robot = robot
-        self.codegen = fk_CODEGEN(robot)
+        self.SetBackgroundColour( wx.Colour( 255, 255, 255 ) )
 
         bSizer1 = wx.BoxSizer( wx.VERTICAL )
 
-        bSizer1_1 = wx.BoxSizer( wx.VERTICAL )
+        bSizer1_1 = wx.BoxSizer( wx.HORIZONTAL )
 
-        bSizer1_1_1 = wx.BoxSizer( wx.HORIZONTAL )
+        self.m_staticText3 = wx.StaticText( self, wx.ID_ANY, u"Kinematics", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText3.Wrap( -1 )
 
-        self.m_staticText1 = wx.StaticText( self, wx.ID_ANY, u"Forward", wx.DefaultPosition, wx.DefaultSize, 0 )
-        self.m_staticText1.Wrap( -1 )
+        bSizer1_1.Add( self.m_staticText3, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
 
-        bSizer1_1_1.Add( self.m_staticText1, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 2 )
+        m_choice_kinematicsChoices = [ u"Forward Kinematics", u"Jacobian" ]
+        self.m_choice_kinematics = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, m_choice_kinematicsChoices, 0 )
+        self.m_choice_kinematics.SetSelection( 0 )
+        bSizer1_1.Add( self.m_choice_kinematics, 0, wx.ALL, 5 )
 
-        self.m_button_gen_fk = wx.Button( self, wx.ID_ANY, u"Copy", wx.DefaultPosition, wx.DefaultSize, 0 )
-        bSizer1_1_1.Add( self.m_button_gen_fk, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 6 )
+        self.m_button_codegen = wx.Button( self, wx.ID_ANY, u"Code", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_1.Add( self.m_button_codegen, 0, wx.ALL, 5 )
 
-        self.m_button3 = wx.Button( self, wx.ID_ANY, u"MyButton", wx.DefaultPosition, wx.DefaultSize, 0 )
-        bSizer1_1_1.Add( self.m_button3, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+        self.m_button_kine_check = wx.Button( self, wx.ID_ANY, u"Check", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_1.Add( self.m_button_kine_check, 0, wx.ALL, 5 )
 
-        bSizer1_1.Add( bSizer1_1_1, 0, wx.EXPAND, 5 )
-        bSizer1.Add( bSizer1_1, 1, wx.EXPAND, 5 )
+        self.m_button_cpp = wx.Button( self, wx.ID_ANY, u"C++", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_1.Add( self.m_button_cpp, 0, wx.ALL, 5 )
 
-        bSizer1_2 = wx.BoxSizer( wx.VERTICAL )
 
-        bSizer1_2_1 = wx.BoxSizer( wx.HORIZONTAL )
+        bSizer1.Add( bSizer1_1, 0, wx.EXPAND, 5 )
 
-        self.m_staticText2 = wx.StaticText( self, wx.ID_ANY, u"Jacobian ", wx.DefaultPosition, wx.DefaultSize, 0 )
-        self.m_staticText2.Wrap( -1 )
+        self.python_codepad = CodePad(self)
+        bSizer1.Add( self.python_codepad, 1, wx.EXPAND |wx.ALL, 5 )
 
-        bSizer1_2_1.Add( self.m_staticText2, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 2 )
+        bSizer1_2 = wx.BoxSizer( wx.HORIZONTAL )
 
-        self.m_button_copy = wx.Button(self, wx.ID_ANY, u"Copy", wx.DefaultPosition, wx.DefaultSize, 0)
-        bSizer1_2_1.Add(self.m_button_copy, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 6)
-        
-        # 生成计算代码
-        self.m_button_cal = wx.Button(self, wx.ID_ANY, u"Cal Code", wx.DefaultPosition, wx.DefaultSize, 0)
-        bSizer1_2_1.Add(self.m_button_cal, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
-        # 生成验算代码
-        self.m_button_check = wx.Button(self, wx.ID_ANY, u"Check Code", wx.DefaultPosition, wx.DefaultSize, 0)
-        bSizer1_2_1.Add(self.m_button_check, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
-        # 一键运行
-        self.m_button_run = wx.Button(self, wx.ID_ANY, u"Run", wx.DefaultPosition, wx.DefaultSize, 0)
-        bSizer1_2_1.Add(self.m_button_run, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5)
+        self.m_button_run = wx.Button( self, wx.ID_ANY, u"run", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_2.Add( self.m_button_run, 0, wx.ALL, 5 )
 
-        bSizer1_2.Add( bSizer1_2_1, 0, wx.EXPAND, 5 )
 
-        self.m_fk_stc = CodePad(self)
-        bSizer1_1.Add( self.m_fk_stc, 1, wx.EXPAND |wx.ALL, 5 )
-        self.m_jacobian_stc = CodePad(self)
-        bSizer1_2.Add( self.m_jacobian_stc, 1, wx.EXPAND |wx.ALL, 5 )
+        bSizer1.Add( bSizer1_2, 0, wx.EXPAND, 5 )
 
-        bSizer1.Add( bSizer1_2, 1, wx.EXPAND, 5 )
+        self.m_textCtrl_results = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE )
+        bSizer1.Add( self.m_textCtrl_results, 1, wx.ALL|wx.EXPAND, 3 )
+
 
         self.SetSizer( bSizer1 )
         self.Layout()
 
         self.Centre( wx.BOTH )
 
-    def SetJacobian(self, jacobian_code):
-        self.m_jacobian_stc.SetValue(self.codegen.jacobian_code)
+        self.robot = robot
+        self.codegen = fk_CODEGEN(robot)
 
-    def SetFK(self, fk_code):
-        self.m_fk_stc.SetValue(self.codegen.fk_code)
+
+        self.Bind(wx.EVT_BUTTON, self.OnCode, self.m_button_codegen)
+        self.Bind(wx.EVT_BUTTON, self.OnRun, self.m_button_run)
+    
+    def OnCode(self, e):
+        mode = self.m_choice_kinematics.GetCurrentSelection()
+        robot = self.robot
+        # choose FK
+        if mode == 0:
+            self.python_codepad.SetValue(self.codegen.fk_code)
+        else:
+            self.python_codepad.SetValue(self.codegen.jacobian_code)
+
+    def OnRun(self, e):
+        print('run code')
+        self.m_textCtrl_results.SetValue('1\n2\n')
 
 class DynamicsFrame(wx.Frame):
     def __init__(self, parent, robot, id=wx.ID_ANY, title="Dynamics", size=(512, 512)):
