@@ -131,19 +131,21 @@ class KinematicsFrame(wx.Frame):
         sys.stdout = new_stdout
 
         mode = self.m_choice_kinematics.GetCurrentSelection()
-        # choose FK
-        if mode == 0:
-            if self.code_type == "code":
-                exec(self.codegen.fk_code.replace(old_str, new_str), globals())
-            elif self.code_type == "check":
-                exec(self.codegen.check_fk_code.replace(old_str, new_str), globals())
-        else:
-            if self.code_type == "code":
-                exec(self.codegen.jacobian_code.replace(old_str, new_str), globals())
-            elif self.code_type == "check":
-                exec(self.codegen.check_jacobian_code.replace(old_str, new_str), globals())
-
-        result = str(sys.stdout.getvalue().strip())
+        try:
+            # choose FK
+            if mode == 0:
+                if self.code_type == "code":
+                    exec(self.codegen.fk_code.replace(old_str, new_str), globals())
+                elif self.code_type == "check":
+                    exec(self.codegen.check_fk_code.replace(old_str, new_str), globals())
+            else:
+                if self.code_type == "code":
+                    exec(self.codegen.jacobian_code.replace(old_str, new_str), globals())
+                elif self.code_type == "check":
+                    exec(self.codegen.check_jacobian_code.replace(old_str, new_str), globals())
+            result = str(sys.stdout.getvalue().strip())
+        except:
+            result = "error..."
         sys.stdout = old_stdout
         self.m_textCtrl_results.SetValue(result)
 
@@ -244,20 +246,22 @@ class DynamicsFrame(wx.Frame):
         sys.stdout = new_stdout
 
         mode = self.m_choice_dynamics.GetCurrentSelection()
-        # choose mass matrix
-        if mode == 0:
-            if self.code_type == "code":
-                exec(self.codegen.M_code.replace(old_str, new_str), globals())
-            elif self.code_type == "check":
-                exec(self.codegen.check_M_code.replace(old_str, new_str), globals())
-        # choose idm
-        else:
-            if self.code_type == "code":
-                exec(self.codegen.idm_code.replace(old_str, new_str), globals())
-            elif self.code_type == "check":
-                exec(self.codegen.check_idm_code.replace(old_str, new_str), globals())
-
-        result = str(sys.stdout.getvalue().strip())
+        try:
+            # choose mass matrix
+            if mode == 0:
+                if self.code_type == "code":
+                    exec(self.codegen.M_code.replace(old_str, new_str), globals())
+                elif self.code_type == "check":
+                    exec(self.codegen.check_M_code.replace(old_str, new_str), globals())
+            # choose idm
+            else:
+                if self.code_type == "code":
+                    exec(self.codegen.idm_code.replace(old_str, new_str), globals())
+                elif self.code_type == "check":
+                    exec(self.codegen.check_idm_code.replace(old_str, new_str), globals())
+            result = str(sys.stdout.getvalue().strip())
+        except:
+            result = "error..."
         sys.stdout = old_stdout
         self.m_textCtrl_results.SetValue(result)
 

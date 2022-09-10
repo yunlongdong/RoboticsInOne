@@ -116,6 +116,7 @@ def check_fk(filename=''):
         p.stepSimulation()
     link_pos, link_ori, com_pos, com_ori, world_link_pos, world_link_ori = p.getLinkState(p_robot, fk.num_joints-1, computeForwardKinematics=True)
     print("pybullet global_pos=", np.array(link_pos))
+    print("pos error=", np.sum(np.abs(np.array(link_pos) - global_pos)))
 
 if __name__ == "__main__":
     check_fk(filename=r'$filename')

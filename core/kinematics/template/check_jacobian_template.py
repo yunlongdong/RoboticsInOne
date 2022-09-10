@@ -148,7 +148,7 @@ def check_jacobian(filename=''):
     linearJacobian, angularJacobian = p.calculateJacobian(p_robot, linkIndex=jac.num_joints-1, localPosition=list(robot.robotlinks.values())[-1].com, objPositions=qs, objVelocities=[0.]*jac.num_joints, objAccelerations=[0.]*jac.num_joints)
     p_jacobian = np.concatenate((np.array(linearJacobian), np.array(angularJacobian)), axis=0)
     print("pybullet jacobian=", p_jacobian)
-    print("jacobian error=", p_jacobian-jacobian)
+    print("jacobian error=", np.sum(np.abs(p_jacobian-jacobian), axis=(1, 0)))
 
 
 if __name__ == "__main__":
