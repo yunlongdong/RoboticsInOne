@@ -11,6 +11,30 @@ from core.dynamics.dyn_codegen import dyn_CODEGEN
 from io import StringIO
 from contextlib import redirect_stdout
 
+import ctypes
+import inspect
+import threading
+
+def _async_raise(tid, exctype):
+    """raises the exception, performs cleanup if needed"""
+    tid = ctypes.c_long(tid)
+
+    if not inspect.isclass(exctype):
+        exctype = type(exctype)
+    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, ctypes.py_object(exctype))
+    if res == 0:
+        # raise ValueError("invalid thread id")
+        print("stop invalid thread id:", tid)
+    elif res != 1:
+        # """if it returns a number greater than one, you're in trouble,
+        # and you should call it again with exc=NULL to revert the effect"""
+        ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, None)
+        # raise SystemError("PyThreadState_SetAsyncExc failed")
+        print("PyThreadState_SetAsyncExc failed")
+ 
+def stop_thread(thread):
+    _async_raise(thread.ident, SystemExit)
+
 class JointController(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, joint_names):
         wx.ScrolledWindow.__init__(self, parent)
@@ -98,6 +122,10 @@ class KinematicsFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.OnCpp, self.m_button_cpp)
         self.Bind(wx.EVT_BUTTON, self.OnRun, self.m_button_run)
         self.code_type = "code"
+
+        
+        self.running_state = 0
+
     
     def OnCode(self, e):
         self.code_type = "code"
@@ -121,6 +149,13 @@ class KinematicsFrame(wx.Frame):
         self.python_codepad.SetValue("# Coming soon...")
 
     def OnRun(self, e):
+        self.thread_run = threading.Thread(target=self.run)
+        if self.running_state == 0:
+            self.thread_run.start()
+
+    def run(self):
+        self.m_button_run.Disable()
+        self.running_state = 1
         old_str = "__main__"
         new_str = "ui.rio.custom_widget"
         #keep a named handle on the prior stdout 
@@ -149,6 +184,8 @@ class KinematicsFrame(wx.Frame):
             result = "error..."
         sys.stdout = old_stdout
         self.m_textCtrl_results.SetValue(result)
+        self.running_state = 0
+        self.m_button_run.Enable()
 
 class DynamicsFrame(wx.Frame):
     def __init__(self, parent, robot):

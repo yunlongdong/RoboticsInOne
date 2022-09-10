@@ -50,6 +50,6 @@ def check_jointtorque(filename=''):
     p_jointtorque = np.array(p.calculateInverseDynamics(p_robot, objPositions=qs, objVelocities=dqs, objAccelerations=ddqs))
     print("pybullet joint torque=", p_jointtorque)
     print("error=", np.sum(np.abs(p_jointtorque - symoro_jointtorque)))
-
+    p.disconnect()
 if __name__ == "__main__":
     check_jointtorque(filename=r'$filename')

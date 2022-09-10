@@ -147,7 +147,7 @@ def check_jacobian(filename=''):
     p_jacobian = np.concatenate((np.array(linearJacobian), np.array(angularJacobian)), axis=0)
     print("pybullet jacobian=", p_jacobian)
     print("jacobian error=", np.sum(np.abs(p_jacobian-jacobian), axis=(1, 0)))
-
+    p.disconnect()
 
 if __name__ == "__main__":
     check_jacobian(filename=r'$filename')

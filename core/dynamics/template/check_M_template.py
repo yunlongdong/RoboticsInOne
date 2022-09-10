@@ -38,6 +38,6 @@ def check_M(filename=''):
     p_inertia = np.array(p.calculateMassMatrix(p_robot, objPositions=qs))
     print("pybullet inertia matrix=", p_inertia)
     print("error=", np.sum(np.abs(p_inertia - symoro_inertia), axis=(1, 0)))
-
+    p.disconnect()
 if __name__ == "__main__":
     check_M(filename=r'$filename')
