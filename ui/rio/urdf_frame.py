@@ -156,17 +156,11 @@ class Window(BaseWindow):
 
         def OnButtonKin(self, e):
             frame = KinematicsFrame(self, self.robot)
-
-            frame.SetFK("import numpy as np")
-            frame.SetJacobian("import numpy as np")
             frame.Show()
             return
         
         def OnButtonDyn(self, e):
             frame = DynamicsFrame(self, self.robot)
-
-            frame.SetMass("import numpy as np")
-            frame.SetIdyn("import numpy as np")
             frame.Show()
             return 
 
