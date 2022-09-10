@@ -269,7 +269,7 @@ class Window(BaseWindow):
             return
 
         def OnCheckerInvJ(self, e):
-            print('On Checker Invert J', self.m_checklist_invert_j.GetCheckedStrings())
+            # print('On Checker Invert J', self.m_checklist_invert_j.GetCheckedStrings())
             
             robot = self._window.robot
             # reset robot
@@ -282,8 +282,8 @@ class Window(BaseWindow):
 
             for inv_j in self.m_checklist_invert_j.GetCheckedStrings():
                 self.joint_inv_now[inv_j] = 1
-            print('prev:', self.joint_inv_prev)
-            print('now:', self.joint_inv_now)
+            # print('prev:', self.joint_inv_prev)
+            # print('now:', self.joint_inv_now)
 
             for j_n in self.joint_names:
                 if self.joint_inv_now[j_n] != self.joint_inv_prev[j_n]:

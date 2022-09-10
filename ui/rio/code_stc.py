@@ -70,16 +70,24 @@ class CodePad(stc.StyledTextCtrl):
         
         self.SetBackSpaceUnIndents(True)
         self.SetWrapIndentMode(stc.STC_WRAPINDENT_FIXED)
+        self.SetEndAtLastLine(True)
+        # self.SetAutomaticFold(1)
 
     def SetupMargin(self):
-        self.SetMarginType(0, stc.STC_MARGIN_NUMBER)
-        self.SetMarginWidth(0, 0)
-        self.SetMarginType(1, stc.STC_MARGIN_SYMBOL)
-        self.SetMarginWidth(1, 22)
-        self.SetMarginSensitive(1, True)
+        # line number
+        # self.SetMarginType(0, stc.STC_MARGIN_NUMBER)
+        # self.SetMarginMask(0, 0)
+        # self.SetMarginWidth(0, 38)
+        # 
+        self.SetMarginType(1, stc.STC_MARGIN_NUMBER)
+        self.SetMarginWidth(1, 0)
+        self.SetMarginWidth(1, 35)
+        # self.SetMarginType(1, stc.STC_MARGIN_SYMBOL)
+        # self.SetMarginWidth(1, 22)
+        # self.SetMarginSensitive(1, True)
         # self.MarkerDefine(0, stc.STC_MARK_ROUNDRECT, "#CCFF00", "RED")
-        self.MarkerSetBackground(0, "red")
-        self.MarkerDefine(1, stc.STC_MARK_ARROW, "#00FF00", "#00FF00")
+        # self.MarkerSetBackground(0, "red")
+        # self.MarkerDefine(1, stc.STC_MARK_ARROW, "#00FF00", "#00FF00")
 
     def setStyles(self):
         def dump(cont):

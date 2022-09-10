@@ -7,6 +7,7 @@ from urdf_parser.utils import *
 import os.path as osp
 import pybullet as p
 from numpy.random import random
+import numpy as np
 
 
 class FK_SYM:
