@@ -98,7 +98,7 @@ def check_fk(filename=''):
     MDHs = robot.MDH_params
     fk = FK_SYM(base2world_rpy, base2world_xyz, MDHs)
     # randomly set joint angles
-    qs = [0.] * fk.num_joints#list(random(fk.num_joints))
+    qs = list(random(fk.num_joints))
     print("set random joint angle=", qs)
     robot.set_joint_angle(qs)
     # calculated by fk
