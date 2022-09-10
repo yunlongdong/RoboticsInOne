@@ -6,6 +6,7 @@ from .code_stc import CodePad
 
 sys.path.append('../../')
 from core.kinematics.fk_codegen import fk_CODEGEN
+from core.dynamics.dyn_codegen import dyn_CODEGEN
 
 class JointController(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, joint_names):
@@ -94,6 +95,70 @@ class KinematicsFrame(wx.Frame):
 
     def SetFK(self, fk_code):
         self.m_fk_stc.SetValue(self.codegen.fk_python_code_gen())
+
+class DynamicsFrame(wx.Frame):
+    def __init__(self, parent, robot, id=wx.ID_ANY, title="Dynamics", size=(512, 512)):
+        wx.Frame.__init__(self, parent, size=size, title=title)
+        self.SetBackgroundColour( wx.Colour( 255, 255, 255 ) )
+        self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
+        self.robot = robot
+        self.codegen = dyn_CODEGEN(robot)
+
+        bSizer1 = wx.BoxSizer( wx.VERTICAL )
+
+        bSizer1_1 = wx.BoxSizer( wx.VERTICAL )
+
+        bSizer1_1_1 = wx.BoxSizer( wx.HORIZONTAL )
+
+        self.m_staticText1 = wx.StaticText( self, wx.ID_ANY, u"Mass Matrix", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText1.Wrap( -1 )
+
+        bSizer1_1_1.Add( self.m_staticText1, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 2 )
+
+        self.m_button_gen_fk = wx.Button( self, wx.ID_ANY, u"Copy", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_1_1.Add( self.m_button_gen_fk, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 6 )
+
+        self.m_button3 = wx.Button( self, wx.ID_ANY, u"MyButton", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_1_1.Add( self.m_button3, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+
+        bSizer1_1.Add( bSizer1_1_1, 0, wx.EXPAND, 5 )
+        bSizer1.Add( bSizer1_1, 1, wx.EXPAND, 5 )
+
+        bSizer1_2 = wx.BoxSizer( wx.VERTICAL )
+
+        bSizer1_2_1 = wx.BoxSizer( wx.HORIZONTAL )
+
+        self.m_staticText2 = wx.StaticText( self, wx.ID_ANY, u"Inverse Dynamics", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText2.Wrap( -1 )
+
+        bSizer1_2_1.Add( self.m_staticText2, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 2 )
+
+        self.m_button_gen_jacobian = wx.Button( self, wx.ID_ANY, u"Copy", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_2_1.Add( self.m_button_gen_jacobian, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 6 )
+
+        self.m_button31 = wx.Button( self, wx.ID_ANY, u"MyButton", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_2_1.Add( self.m_button31, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
+
+        bSizer1_2.Add( bSizer1_2_1, 0, wx.EXPAND, 5 )
+
+        self.m_mass_stc = CodePad(self)
+        bSizer1_1.Add( self.m_mass_stc, 1, wx.EXPAND |wx.ALL, 5 )
+        self.m_idyn_stc = CodePad(self)
+        bSizer1_2.Add( self.m_idyn_stc, 1, wx.EXPAND |wx.ALL, 5 )
+
+        bSizer1.Add( bSizer1_2, 1, wx.EXPAND, 5 )
+
+        self.SetSizer( bSizer1 )
+        self.Layout()
+
+        self.Centre( wx.BOTH )
+
+    def SetMass(self, ik_code):
+        self.m_mass_stc.SetValue(self.codegen.M_code_gen())
+
+    def SetIdyn(self, fk_code):
+        # self.m_idyn_stc.SetValue(self.codegen.fk_python_code_gen())
+        pass
 
 if __name__ == "__main__":
     App = wx.App()
