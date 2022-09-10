@@ -153,12 +153,11 @@ class DynamicsFrame(wx.Frame):
 
         self.Centre( wx.BOTH )
 
-    def SetMass(self, ik_code):
-        self.m_mass_stc.SetValue(self.codegen.M_code_gen())
+    def SetMass(self, M_code):
+        self.m_mass_stc.SetValue(self.codegen.M_codegen())
 
-    def SetIdyn(self, fk_code):
-        # self.m_idyn_stc.SetValue(self.codegen.fk_python_code_gen())
-        pass
+    def SetIdyn(self, dyn_code):
+        self.m_idyn_stc.SetValue(self.codegen.inv_dyn_codegen())
 
 if __name__ == "__main__":
     App = wx.App()

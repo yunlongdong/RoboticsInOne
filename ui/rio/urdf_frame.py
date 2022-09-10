@@ -14,7 +14,7 @@ from ..s3d.scenes import Scene
 from ..s3d.window.base import BaseWindow
 from ..s3d.renderables import Mesh, Lines, Spherecloud
 
-from .custom_widget import JointController, KinematicsFrame
+from .custom_widget import JointController, KinematicsFrame, DynamicsFrame
 
 dir_abs_path = osp.dirname(osp.abspath(__file__))
 
@@ -63,6 +63,7 @@ class Window(BaseWindow):
             self.m_button_save = wx.Button( self, wx.ID_ANY, 'Save URDF')
             self.m_button_mdh = wx.Button( self, wx.ID_ANY, 'Save Modified-DH')
             self.m_button_kine = wx.Button( self, wx.ID_ANY, 'Kinematics')
+            self.m_button_dyn = wx.Button( self, wx.ID_ANY, 'Dynamics')
 
             bSizer2_1.Add( text1, -1, wx.ALL, 0)
             bSizer2_1.Add( self.m_checklist_invert_j , 1,  wx.EXPAND|wx.ALL, 0)
@@ -70,6 +71,7 @@ class Window(BaseWindow):
             bSizer2_1.Add( self.m_button_save , 0,  wx.EXPAND|wx.ALL, 0)
             bSizer2_1.Add( self.m_button_mdh , 0,  wx.EXPAND|wx.ALL, 0)
             bSizer2_1.Add( self.m_button_kine , 0,  wx.EXPAND|wx.ALL, 0)
+            bSizer2_1.Add( self.m_button_dyn , 0,  wx.EXPAND|wx.ALL, 0)
 
 
             
@@ -134,6 +136,7 @@ class Window(BaseWindow):
             self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckerInvJ, self.m_checklist_invert_j)
             self.Bind(wx.EVT_BUTTON, self.OnButtonSave, self.m_button_save)
             self.Bind(wx.EVT_BUTTON, self.OnButtonKin, self.m_button_kine)
+            self.Bind(wx.EVT_BUTTON, self.OnButtonDyn, self.m_button_dyn)
 
             for i in self.joint_control.joint_controller_sliders:
                 self.Bind(wx.EVT_COMMAND_SCROLL_THUMBTRACK, self.OnSliderControl, i)
@@ -156,6 +159,14 @@ class Window(BaseWindow):
 
             frame.SetFK("import numpy as np")
             frame.SetIK("import numpy as np")
+            frame.Show()
+            return
+        
+        def OnButtonDyn(self, e):
+            frame = DynamicsFrame(self, self.robot)
+
+            frame.SetMass("import numpy as np")
+            frame.SetIdyn("import numpy as np")
             frame.Show()
             return 
 
