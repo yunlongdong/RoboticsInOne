@@ -61,7 +61,7 @@ class Window(BaseWindow):
             text1 = wx.StaticText( self, wx.ID_ANY, 'Invert Joint', wx.DefaultPosition, wx.DefaultSize, 0 )
             text2 = wx.StaticText( self, wx.ID_ANY, 'Utils', wx.DefaultPosition, wx.DefaultSize, 0 )
             self.m_button_save = wx.Button( self, wx.ID_ANY, 'Save URDF')
-            self.m_button_mdh = wx.Button( self, wx.ID_ANY, 'Save Modified-DH')
+            self.m_button_mdh = wx.Button(self, wx.ID_ANY, "Save MDH")
             self.m_button_kine = wx.Button( self, wx.ID_ANY, 'Kinematics')
             self.m_button_dyn = wx.Button( self, wx.ID_ANY, 'Dynamics')
 
