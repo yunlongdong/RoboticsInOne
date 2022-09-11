@@ -276,7 +276,7 @@ class Window(BaseWindow):
             robot.set_joint_angle(np.zeros(robot.num_robotjoints))
             # reset slider
             for i in self.joint_control.joint_controller_sliders:
-                i.SetValue(0.) 
+                i.SetValue(0) 
 
             self.joint_inv_now = {j:0 for j in self.joint_names}
 

@@ -146,8 +146,8 @@ class Robot:
         base2world_rpy = list(self.robotjoints.values())[0].rpy_MDH
         base2world_xyz = list(self.robotjoints.values())[0].xyz_MDH
         with open(filename, 'w') as f :
-            f.writelines("base2worls_rpy = " + np.array2string(base2world_rpy, separator=', ')+ '\n')
-            f.writelines("base2worls_xyz = " + np.array2string(base2world_xyz, separator=', ') + '\n')
+            f.writelines("base2world_rpy = " + np.array2string(base2world_rpy, separator=', ')+ '\n')
+            f.writelines("base2world_xyz = " + np.array2string(base2world_xyz, separator=', ') + '\n')
             f.writelines(np.array2string(self.MDH_params, separator=', ') + '\n')
 
     def show_MDH_frame(self, log=False):

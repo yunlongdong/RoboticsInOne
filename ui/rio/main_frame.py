@@ -16,7 +16,7 @@ class MainFrame ( wx.Frame ):
 
         bSizer1 = wx.BoxSizer( wx.HORIZONTAL )
 
-        self.m_html_start_doc = html.HtmlWindow( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.html.HW_SCROLLBAR_AUTO )
+        self.m_html_start_doc = html.HtmlWindow(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.html.HW_SCROLLBAR_AUTO)
         bSizer1.Add( self.m_html_start_doc, 2, wx.EXPAND|wx.ALL, 2 )
 
         self.m_text_show = stc.StyledTextCtrl( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
@@ -71,7 +71,11 @@ class MainFrame ( wx.Frame ):
         self.SetIcon(icon)
 
         # start doc
-        self.m_html_start_doc.LoadFile(osp.join(dir_abs_path, "../../docs/start.html"))
+        # self.m_html_start_doc.LoadFile(osp.join(dir_abs_path, "../../docs/test.html"))
+        self.m_html_start_doc.SetStandardFonts(size=10)
+        with open(osp.join(dir_abs_path, "../../docs/start.html"), encoding='utf-8') as f:
+            content = f.read()
+        self.m_html_start_doc.SetPage(content)
 
         # bind event
         self.bind_all()
