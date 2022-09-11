@@ -1,7 +1,7 @@
 import sys, wx
 import wx.lib.scrolledpanel
 from wx import stc
-
+import os.path as osp
 from .code_stc import CodePad
 
 sys.path.append('../../')
@@ -14,6 +14,10 @@ from contextlib import redirect_stdout
 import ctypes
 import inspect
 import threading
+
+
+
+dir_abs_path = osp.dirname(osp.abspath(__file__))
 
 def _async_raise(tid, exctype):
     """raises the exception, performs cleanup if needed"""
@@ -112,7 +116,9 @@ class KinematicsFrame(wx.Frame):
         self.Layout()
 
         self.Centre( wx.BOTH )
-
+        icon = wx.Icon()
+        icon.CopyFromBitmap(wx.Bitmap(osp.join(dir_abs_path, "../icons/kine.bmp"), wx.BITMAP_TYPE_ANY))
+        self.SetIcon(icon)
         self.robot = robot
         self.codegen = fk_CODEGEN(robot)
 
@@ -239,6 +245,10 @@ class DynamicsFrame(wx.Frame):
         self.Layout()
 
         self.Centre( wx.BOTH )
+
+        icon = wx.Icon()
+        icon.CopyFromBitmap(wx.Bitmap(osp.join(dir_abs_path, "../icons/dyn.bmp"), wx.BITMAP_TYPE_ANY))
+        self.SetIcon(icon)
 
         self.robot = robot
         self.codegen = dyn_CODEGEN(robot)

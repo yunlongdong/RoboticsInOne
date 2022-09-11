@@ -61,6 +61,7 @@ class Window(BaseWindow):
             text1 = wx.StaticText( self, wx.ID_ANY, 'Invert Joint', wx.DefaultPosition, wx.DefaultSize, 0 )
             text2 = wx.StaticText( self, wx.ID_ANY, 'Utils', wx.DefaultPosition, wx.DefaultSize, 0 )
             self.m_button_save = wx.Button( self, wx.ID_ANY, 'Save URDF')
+            self.m_button_mdh = wx.Button(self, wx.ID_ANY, "Save MDH")
             self.m_button_kine = wx.Button( self, wx.ID_ANY, 'Kinematics')
             self.m_button_dyn = wx.Button( self, wx.ID_ANY, 'Dynamics')
 
@@ -68,6 +69,7 @@ class Window(BaseWindow):
             bSizer2_1.Add( self.m_checklist_invert_j , 1,  wx.EXPAND|wx.ALL, 0)
             bSizer2_1.Add( text2, 0, wx.ALL, 0)
             bSizer2_1.Add( self.m_button_save , 0,  wx.EXPAND|wx.ALL, 0)
+            bSizer2_1.Add( self.m_button_mdh , 0,  wx.EXPAND|wx.ALL, 0)
             bSizer2_1.Add( self.m_button_kine , 0,  wx.EXPAND|wx.ALL, 0)
             bSizer2_1.Add( self.m_button_dyn , 0,  wx.EXPAND|wx.ALL, 0)
 
