@@ -9,11 +9,11 @@
   <h4>Functions</h4>
     <ol>
         <li><p><font color="#42855B">URDF visualization, including link meshes, joint frame, center of mass, etc.</font></p></li>
-        <li><p><font color="#42855B">The joint angle can be adjusted.</font></p></li>
+        <li><p><font color="#42855B">The joint angles can be adjusted.</font></p></li>
         <li><p><font color="#42855B">You can manually invert the z axis of any joint so that the direction of rotation keeps the same with the real robot.</font></p></li>
         <li><p><font color="#42855B">Export of modified DH parameters.</font></p></li>
         <li><p><font color="#42855B">Kinematics: python code generation of forward kinematics and Jacobian matrices.</font></p></li>
-        <li><p><font color="#42855B">Dynamics: python code generation of the mass matrix M and inverse dyanmics.</font></p></li>
+        <li><p><font color="#42855B">Dynamics: python code generation of the mass matrix M and inverse dynamics.</font></p></li>
         <li><p><font color="#42855B">With a single click, you can check the correctness of the generated code with random input.</font></p></li>
     </ol>
     <br>
@@ -35,10 +35,10 @@
             <p>点击File->Open->Urdf，或使用快捷键Ctrl+U，选择你自己的URDF文件路径，此时会打开一个新的界面显示你的机器人。<strong>注意</strong>目前RIO仅支持关节z axis=(0, 0, 1)、并且只有一个末端、只包含旋转关节的urdf文件（没有child的link称为末端）。如果出现错误，请参考urdf_examples文件中提供的模板urdf，对自己的urdf文件进行适当修改，尤其要关注mesh文件的路径。</p>
         </li>
     <li>
-        <p><font color="#42855B">In the new window, "Color" is used to adjust the color of the mesh while the transparency is controlled by "Alpha". The checkboxes "CoM", "Axis", "MDH Axis" and "World" are respectively switches for the center of mass of links, the link frames demontrated by the URDF file, the Modified DH frames and the world frame.</font></p>
+        <p><font color="#42855B">In the new window, "Color" is used to adjust the color of the mesh while the transparency is controlled by "Alpha". The checkboxes "CoM", "Axis", "MDH Axis" and "World" are respectively switches for the center of mass of links, the link frames demonstrated by the URDF file, the Modified DH frames and the world frame.</font></p>
         <p>在二级界面中，Color可以调节mesh文件的颜色；Alpha可以调节mesh文件的透明度；勾选框CoM、Axis、MDH Axis、World分别负责link重心、URDF文件指定的关节坐标系、Modified DH坐标系、世界坐标系的显示或关闭。</p>
-        <p><font color="#42855B">In the right side, checkboxes named "Links information" are used to hide or show specific links. Besides, you can invert the revolute axis of a joint with "Invert joint" and click "Save URDF" to save as a new URDF file. "Save Modified-DH" could provide you with a text file indicating the rotation and translation of the base link as well as MDH parameters between joints. Besides, Sliders named "Joints Control" can decide the joint angles.</font></p>
-        <p>在右侧，Links information中的勾选框可以调节特定link的隐藏或显示；Invert joint可以手动反转特定joint的转轴方向；Utils中的Save URDF可以在你反转joint axis之后保存为新的URDF文件。Joints Control中的滑条可以转动关节；Save Modified-DH可以把MDH坐标系保存为一个txt文件，该文件包括两部分：base link相对于世界坐标系的转动和平移已经关节之间的MDH参数。</p>
+        <p><font color="#42855B">In the right side, checkboxes named "Links information" are used to hide or show specific links. Besides, you can invert the revolute axis of any joint with "Invert joint" and then click "Save URDF" to save as a new URDF file. "Save Modified-DH" could provide you with a text file indicating the rotation and translation of the base link as well as MDH parameters between joints. Besides, Sliders named "Joints Control" can decide the joint angles.</font></p>
+        <p>在右侧，Links information中的勾选框可以调节特定link的隐藏或显示；Invert joint可以手动反转特定joint的转轴方向；Utils中的Save URDF可以在你反转joint axis之后保存为新的URDF文件。Joints Control中的滑条可以转动关节；Save Modified-DH可以把MDH坐标系保存为一个txt文件，该文件包括两部分：base link相对于世界坐标系的转动和平移以及关节之间的MDH参数。</p>
     <li>
         <p><font color="#42855B">Clicking Kinematics or Dynamics, a new window is going to popup. In this window, the dropdown list contains "Forward Kinematics" and "Jacobian", or "Mass Matrix" and "Inverse Dynamics" for the Dynamics case. This ComboBox defines the type of generated code and the button "Code" is for the code of calculation while another button "Check" is for the code of checking. with the button "Run", the generated code shown in the upper code box shall get executed and the result is displayed in the lower text box.</font></p>
         <table border="1">
