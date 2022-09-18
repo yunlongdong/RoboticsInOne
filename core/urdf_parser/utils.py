@@ -1,5 +1,6 @@
 import numpy as np
 from pyrr import matrix33, matrix44, euler
+import os
 
 def get_rpy_from_rotation(T):
     rot_matrix = T[:3, :3]
@@ -136,3 +137,10 @@ def get_MDH_frame(origin_list, xaxis_list, zaxis_list):
         tf[:3, 3] = origin
         MDH_frame_list.append(tf)
     return MDH_frame_list
+
+def clean_folder(fileName):
+        abs_path = os.path.dirname(fileName)
+        file_list = os.listdir(abs_path)
+        for file in file_list:
+            if file.startswith("generated_"):
+                os.remove(os.path.join(abs_path, file))

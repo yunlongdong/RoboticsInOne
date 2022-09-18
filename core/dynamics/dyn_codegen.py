@@ -253,7 +253,7 @@ class dyn_CODEGEN:
                     result[i] += double_list[list_num][-1]
                 else:
                     result[i] += double_list[list_num][i]
-        return ','.join(result)
+        return ', '.join(result)
 
     def return_matrix_string(self, num_rows, num_cols, header, symoro_code):
         if num_cols == 1:
@@ -276,6 +276,7 @@ class dyn_CODEGEN:
                         matrix_string[max_ij-1, min_ij-1] = header+str(max_ij)+str(min_ij)
                         matrix_string[min_ij-1, max_ij-1] = header+str(max_ij)+str(min_ij)
         return np.array2string(matrix_string, separator=', ').replace("'", "")
+    
 
 
 if __name__ == "__main__":
