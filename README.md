@@ -23,6 +23,7 @@ RIO is committed to providing a standard and complete tool chain and ecology wit
 1. URDF Joints Axis should be [0, 0, 1]
 2. The urdf file contains only revolute joints
 3. Currently, only URDF code generation with 1 subtree is supported
+4. Floating base robots are not supported now.
 
 ## Contact us
 RoboticsInOne QQ Chat Group：179412348
