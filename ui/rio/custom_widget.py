@@ -209,7 +209,7 @@ class DynamicsFrame(wx.Frame):
 
         bSizer1_1.Add( self.m_staticText3, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
 
-        m_choice_dynamicsChoices = [ u"Mass Matrix", u"Inverse Dynamics" ]
+        m_choice_dynamicsChoices = [u"Mass Matrix", u"Inverse Dynamics", u"System ID"]
         self.m_choice_dynamics = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, m_choice_dynamicsChoices, 0 )
         self.m_choice_dynamics.SetSelection( 0 )
         bSizer1_1.Add(self.m_choice_dynamics, 0, wx.ALL, 5)
@@ -267,8 +267,11 @@ class DynamicsFrame(wx.Frame):
         if mode == 0:
             self.python_codepad.SetValue(self.codegen.M_code)
         # choose idm
-        else:
+        elif mode == 1:
             self.python_codepad.SetValue(self.codegen.idm_code)
+        # choose systemID
+        elif mode == 2:
+            self.python_codepad.SetValue(self.codegen.systemID_code)
 
     def OnCheck(self, e):
         self.code_type = "check"
@@ -277,8 +280,11 @@ class DynamicsFrame(wx.Frame):
         if mode == 0:
             self.python_codepad.SetValue(self.codegen.check_M_code)
         # choose idm
-        else:
+        elif mode == 1:
             self.python_codepad.SetValue(self.codegen.check_idm_code)
+        # choose systemID
+        elif mode == 2:
+            self.python_codepad.SetValue(self.codegen.check_systemID_code)
 
     def OnCpp(self, e):
         self.python_codepad.SetValue("# Coming soon...")
@@ -302,11 +308,16 @@ class DynamicsFrame(wx.Frame):
                 elif self.code_type == "check":
                     exec(self.codegen.check_M_code.replace(old_str, new_str), globals())
             # choose idm
-            else:
+            elif mode == 1:
                 if self.code_type == "code":
                     exec(self.codegen.idm_code.replace(old_str, new_str), globals())
                 elif self.code_type == "check":
                     exec(self.codegen.check_idm_code.replace(old_str, new_str), globals())
+            elif mode == 2:
+                if self.code_type == "code":
+                    exec(self.codegen.systemID_code.replace(old_str, new_str), globals())
+                elif self.code_type == "check":
+                    exec(self.codegen.check_systemID_code.replace(old_str, new_str), globals())
             result = str(sys.stdout.getvalue().strip())
         except:
             result = "error..."

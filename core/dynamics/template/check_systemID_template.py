@@ -85,6 +85,7 @@ class systemID:
         print("error=", np.sum(np.abs(p_jointtorque - symoro_jointtorque)))
         p.disconnect()
 
+
 if __name__ =="__main__":
     my_systemID = systemID(fileName=r'$fileName')
     my_systemID.compareTorque()

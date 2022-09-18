@@ -1,4 +1,3 @@
-from numpy.random import random
 import numpy as np
 from numpy import sin, cos
 

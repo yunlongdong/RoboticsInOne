@@ -23,6 +23,12 @@ class dyn_CODEGEN:
         self.M_code = self.M_python_codegen()
         self.check_idm_code = self.check_idm_codegen()
         self.check_M_code = self.check_M_codegen()
+        # 使用symoro推导base parameter和系数矩阵
+        self.symoro_basePara()
+        self.symoro_systemID()
+        self.systemID_code = self.systemID_python_codegen()
+        self.check_systemID_code = self.check_systemID_codegen()
+
 
     def symoro_dyn_M(self):
         # calculate M
@@ -89,11 +95,7 @@ class dyn_CODEGEN:
     
     def check_idm_codegen(self, write=False):
         idm_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_idm.txt")
-        pat = re.compile("Equations:"+'(.*?)'+"\*=\*", re.S)
-        with open(idm_file_path, 'r') as f:
-            idm_content = f.read()
-        symoro_idm_code = pat.findall(idm_content)[0].replace(";", "")
-        symoro_idm_code = symoro_idm_code.replace("\n", "\n    ")
+        symoro_idm_code = self.extract_code_from_symoro_txt(idm_file_path, num_space=4)
         
         # 替换
         with open(osp.join(self.file_full_path, 'template/check_idm_template.py'),'r',encoding='utf-8') as f:
@@ -165,11 +167,7 @@ class dyn_CODEGEN:
 
     def check_M_codegen(self, write=False):
         inm_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_inm.txt")
-        pat = re.compile("Equations:"+'(.*?)'+"\*=\*", re.S)
-        with open(inm_file_path, 'r') as f:
-            inm_content = f.read()
-        symoro_M_code = pat.findall(inm_content)[0].replace(";", "")
-        symoro_M_code = symoro_M_code.replace("\n", "\n    ")
+        symoro_M_code = self.extract_code_from_symoro_txt(inm_file_path, num_space=4)
         
         # 替换
         with open(osp.join(self.file_full_path, 'template/check_M_template.py'),'r',encoding='utf-8') as f:
@@ -197,6 +195,127 @@ class dyn_CODEGEN:
                 f.write(content)
         return content
 
+    # base parameter
+    def symoro_basePara(self):
+        # calculate base parameters
+        self.symoro_robot, _  = parfile.readpar(self.robotname, self.par_filename)
+        model_symo, base_robo = self.symoro_robot.compute_baseparams()
+        old_file_path = model_symo.file_out.name
+        new_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_dim.txt")
+        shutil.move(old_file_path, new_file_path)
+        # 保存为新的.par文件
+        base_robo.par_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_base.par")
+        parfile.writepar(base_robo)
+        self.base_robot = base_robo
+    
+    def symoro_systemID(self):
+        # calculate coefficients of base parameters
+        base_robot, _ = parfile.readpar(self.robotname + "_base", self.base_robot.par_file_path)
+        model_symo = base_robot.compute_dynidenmodel()
+        old_file_path = model_symo.file_out.name
+        new_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_regp.txt")
+        shutil.move(old_file_path, new_file_path)
+    
+    def systemID_python_codegen(self, write=True):
+        dim_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_dim.txt")
+        symoro_dim_code = self.extract_code_from_symoro_txt(dim_file_path, num_space=4)
+        # replace theta
+        symoro_theta = self.extract_theta_from_symoro_txt(dim_file_path)
+
+        regp_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_regp.txt")
+        symoro_regp_code = self.extract_code_from_symoro_txt(regp_file_path, num_space=4)
+        
+        # 替换
+        with open(osp.join(self.file_full_path, 'template/systemID_template.py'),'r',encoding='utf-8') as f:
+            content = f.read()
+        index_list = [str(i+1) for i in range(self.robot.num_robotjoints)]
+
+        links_in_order = self.robot.return_links_in_order()
+        root_link = self.robot.return_root_link()
+        mass_list_from_robot = np.array([robotlink.mass for robotlink in links_in_order])
+        content = content.replace("$mass_list_from_robot", np.array2string(mass_list_from_robot, separator=', '))
+        inertia_list_from_robot = ["np.array("+np.array2string(robotlink.inertia_MDH, separator=', ').replace('\n', '\n'+' '*8)+")" for robotlink in links_in_order]
+        inertia_list_from_robot = "[" + ', '.join(inertia_list_from_robot) + "]"
+        content = content.replace("$inertia_list_from_robot", inertia_list_from_robot)
+        base_rotation = get_extrinsic_rotation(root_link.rpy_MDH)[:3, :3]
+        content = content.replace("$base_rotation", "np.array("+np.array2string(base_rotation, separator=', ').replace("\n", "\n"+' '*8)+")")
+        
+        content = content.replace("$m_index", self.return_aggregated_list([['m'], index_list]))
+        content = content.replace("$q_index", self.return_aggregated_list([['q'], index_list]))
+        content = content.replace("$dq_index", self.return_aggregated_list([['dq'], index_list]))
+        content = content.replace("$ddq_index", self.return_aggregated_list([['ddq'], index_list]))
+        content = content.replace("$set_Fs", ' = '.join(['F'+str(i)+'s' for i in range(1, self.robot.num_robotjoints+1)]) + '= 0.')
+        content = content.replace("$set_Fv", ' = '.join(['F'+str(i)+'v' for i in range(1, self.robot.num_robotjoints+1)]) + '= 0.')
+
+        com_code = ""
+        inertia_code = ""
+        for i in range(self.robot.num_robotjoints):
+            com_code += "c{0}x, c{0}y, c{0}z = {1}\n    ".format(i+1, np.array2string(links_in_order[i].com_MDH, separator=', '))
+            inertia_code += "I{0}xx, I{0}xy, I{0}xz, I{0}yy, I{0}yz, I{0}zz = return_elements(inertia_list[{0}])\n    ".format(i+1)
+        content = content.replace("$com_code", com_code)
+        content = content.replace("$inertia_code", inertia_code)
+        content = content.replace("$symoro_dim_code", symoro_dim_code)
+        content = content.replace("$symoro_regp_code", symoro_regp_code)
+
+        content = content.replace("$num_theta", str(len(symoro_theta)))
+        content = content.replace("$theta_para", "theta = np.array([" + ', '.join(symoro_theta) + "])")
+        theta_name = ["'{0}'".format(theta) for theta in symoro_theta]
+        content = content.replace("$theta_name", "theta_name = [" + ', '.join(theta_name) + "]")
+        content = content.replace("$num_joints", str(self.robot.num_robotjoints))
+
+        check_path = osp.dirname(self.robot.urdf_file)
+        if write:
+            with open(osp.join(check_path, "generated_systemID.py"), "w") as f:
+                f.write(content)
+        return content
+
+    def check_systemID_codegen(self, write=False):
+        dim_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_dim.txt")
+        symoro_dim_code = self.extract_code_from_symoro_txt(dim_file_path, num_space=8)
+        # replace theta
+        symoro_theta = self.extract_theta_from_symoro_txt(dim_file_path)
+
+        regp_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_regp.txt")
+        symoro_regp_code = self.extract_code_from_symoro_txt(regp_file_path, num_space=8)
+        
+        # 替换
+        with open(osp.join(self.file_full_path, 'template/check_systemID_template.py'),'r',encoding='utf-8') as f:
+            content = f.read()
+        index_list = [str(i+1) for i in range(self.robot.num_robotjoints)]
+        
+        content = content.replace("$m_index", self.return_aggregated_list([['m'], index_list]))
+        content = content.replace("$q_index", self.return_aggregated_list([['q'], index_list]))
+        content = content.replace("$dq_index", self.return_aggregated_list([['dq'], index_list]))
+        content = content.replace("$ddq_index", self.return_aggregated_list([['ddq'], index_list]))
+        content = content.replace("$set_Fs", ' = '.join(['F'+str(i)+'s' for i in range(1, self.robot.num_robotjoints+1)]) + '= 0.')
+        content = content.replace("$set_Fv", ' = '.join(['F'+str(i)+'v' for i in range(1, self.robot.num_robotjoints+1)]) + '= 0.')
+
+        com_code = ""
+        inertia_code = ""
+        for i in range(self.robot.num_robotjoints):
+            com_code += "c{0}x, c{0}y, c{0}z = links_in_order[{0}].com_MDH\n        ".format(i+1)
+            inertia_code += "I{0}xx, I{0}xy, I{0}xz, I{0}yy, I{0}yz, I{0}zz = self.return_elements(inertia_list[{0}])\n        ".format(i+1)
+        content = content.replace("$com_code", com_code)
+        content = content.replace("$inertia_code", inertia_code)
+        content = content.replace("$symoro_dim_code", symoro_dim_code)
+        content = content.replace("$symoro_regp_code", symoro_regp_code)
+
+        urdf_parser_path = osp.dirname(osp.abspath(osp.join(osp.abspath(__file__), "../")))
+        content = content.replace("sys.path.append(r'../')", "sys.path.append(r'{0}')".format(urdf_parser_path))
+        content = content.replace("$fileName", osp.abspath(self.robot.urdf_file))
+
+        content = content.replace("$num_theta", str(len(symoro_theta)))
+        content = content.replace("$theta_para", "theta = np.array([" + ', '.join(symoro_theta) + "])")
+        theta_name = ["'{0}'".format(theta) for theta in symoro_theta]
+        content = content.replace("$theta_name", "theta_name = [" + ', '.join(theta_name) + "]")
+        content = content.replace("$num_joints", str(self.robot.num_robotjoints))
+
+        check_path = osp.dirname(self.robot.urdf_file)
+        if write:
+            with open(osp.join(check_path, "generated_check_systemID.py"), "w") as f:
+                f.write(content)
+        return content
+    
     # The followings are utility functions
     def symoro_par_gen(self):
         with open(osp.join(self.file_full_path, 'template/symoro_template.par'),'r',encoding='utf-8') as f:
@@ -276,6 +395,35 @@ class dyn_CODEGEN:
                         matrix_string[min_ij-1, max_ij-1] = header+str(max_ij)+str(min_ij)
         return np.array2string(matrix_string, separator=', ').replace("'", "")
     
+    def extract_code_from_symoro_txt(self, file_path, num_space=4):
+        pat = re.compile("Equations:"+'(.*?)'+"\*=\*", re.S)
+        with open(file_path, 'r') as f:
+            content = f.read()
+        symoro_code = pat.findall(content)[0].replace(";", "")
+        symoro_code = symoro_code.replace("\n", "\n"+" "*num_space)
+        return symoro_code
+    
+    def extract_theta_from_symoro_txt(self, file_path):
+        pat = re.compile("Dynamic inertia parameters" + '(.*?)' + "\*=\*", re.S)
+        with open(file_path, 'r') as f:
+            content = f.read()
+        symoro_theta = pat.findall(content)[-1]
+        symoro_theta_list = symoro_theta.splitlines()
+        
+        symoro_theta_list = symoro_theta_list[2:-1]
+        for i, line in enumerate(symoro_theta_list):
+            symoro_theta_list[i] = re.split("\s+", maxsplit=1, string=symoro_theta_list[i])[1].strip()
+        theta_list = []
+        for line in symoro_theta_list:
+            theta_list += re.split("\s+", string=line)
+        try:
+            while True:
+                theta_list.remove('0')
+        except ValueError:
+            pass
+        for i in range(1, self.robot.num_robotjoints+1):
+            theta_list += ["F{0}s".format(i), "F{0}v".format(i)]
+        return theta_list
 
 
 if __name__ == "__main__":
