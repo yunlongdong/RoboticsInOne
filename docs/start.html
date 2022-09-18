@@ -14,7 +14,8 @@
         <li><p><font color="#42855B">Export of modified DH parameters.</font></p></li>
         <li><p><font color="#42855B">Kinematics: python code generation of forward kinematics and Jacobian matrices.</font></p></li>
         <li><p><font color="#42855B">Dynamics: python code generation of the mass matrix M and inverse dynamics.</font></p></li>
-        <li><p><font color="#42855B">With a single click, you can check the correctness of the generated code with random input.</font></p></li>
+        <li><p><font color="#42855B">System identification: derive the minimum parameter set, generate C++ and Python codes for system identification.</font></p></li>
+        <li><p><font color="#42855B">With one single click, you can check the correctness of the generated code with random test samples.</font></p></li>
     </ol>
     <br>
     <br>
@@ -26,6 +27,7 @@
         <li><p>Modified D-H参数导出</p></li>
         <li><p>运动学：正运动学、Jacobian符号表达以及代码生成</p></li>
         <li><p>动力学：质量矩阵M、Inverse Dynamics符号表达以及代码生成</p></li>
+        <li><p>系统辨识：最小参数集导出，系统辨识C++、Python代码生成</p></li>
         <li><p>一键生成验证代码：随机生成测试样例，生成代码与pybullet的数值解进行对比验证</p></li>
     </ol>
     <h4>Instructions</h4>
@@ -52,32 +54,39 @@
             </tr>
             </thead>
             <tbody><tr>
-            <td>Forward Kinematics</td>
-            <td>local_pos(local position relative to the last joint frame); q(joint angles)</td>
-            <td>global coordinate</td>
-            <td>sympy</td>
-            <td>pybullet</td>
+                <td>Forward Kinematics</td>
+                <td>local_pos(local position relative to the last joint frame); q(joint angles)</td>
+                <td>global coordinate</td>
+                <td>sympy</td>
+                <td>pybullet</td>
             </tr>
             <tr>
-            <td>Jacobian</td>
-            <td>local_pos(local position relative to the last joint frame); q(joint angles)</td>
-            <td>Jacobian Matrix</td>
-            <td>sympy</td>
-            <td>pybullet</td>
+                <td>Jacobian</td>
+                <td>local_pos(local position relative to the last joint frame); q(joint angles)</td>
+                <td>Jacobian Matrix</td>
+                <td>sympy</td>
+                <td>pybullet</td>
             </tr>
             <tr>
-            <td>Mass Matrix</td>
-            <td>q(joint angles)</td>
-            <td>M(mass matrix)</td>
-            <td>symoro</td>
-            <td>pybullet</td>
+                <td>Mass Matrix</td>
+                <td>q(joint angles)</td>
+                <td>M(mass matrix)</td>
+                <td>symoro</td>
+                <td>pybullet</td>
             </tr>
             <tr>
-            <td>Inverse Dynamics</td>
-            <td>q(joint angles), dq(joint velocities), ddq(joint accelerations)</td>
-            <td>joint torques</td>
-            <td>symoro</td>
-            <td>pybullet</td>
+                <td>Inverse Dynamics</td>
+                <td>q(joint angles), dq(joint velocities), ddq(joint accelerations)</td>
+                <td>joint torques</td>
+                <td>symoro</td>
+                <td>pybullet</td>
+            </tr>
+            <tr>
+                <td>System Identification</td>
+                <td>q(joint angles), dq(joint velocities), ddq(joint accelerations)</td>
+                <td>Coefficient matrix A(q, dq, ddq)</td>
+                <td>symoro</td>
+                <td>pybullet</td>
             </tr>
             </tbody>
             </color>
@@ -96,32 +105,39 @@
         </tr>
         </thead>
         <tbody><tr>
-        <td>Forward Kinematics</td>
-        <td>相对于最后一个joint的局部坐标local_pos；关节角q</td>
-        <td>世界坐标</td>
-        <td>sympy</td>
-        <td>pybullet</td>
+            <td>Forward Kinematics</td>
+            <td>相对于最后一个joint的局部坐标local_pos；关节角q</td>
+            <td>世界坐标</td>
+            <td>sympy</td>
+            <td>pybullet</td>
         </tr>
         <tr>
-        <td>Jacobian</td>
-        <td>相对于最后一个joint的局部坐标local_pos；关节角q</td>
-        <td>Jacobian矩阵</td>
-        <td>sympy</td>
-        <td>pybullet</td>
+            <td>Jacobian</td>
+            <td>相对于最后一个joint的局部坐标local_pos；关节角q</td>
+            <td>Jacobian矩阵</td>
+            <td>sympy</td>
+            <td>pybullet</td>
         </tr>
         <tr>
-        <td>Mass Matrix</td>
-        <td>关节角q</td>
-        <td>质量矩阵M</td>
-        <td>symoro</td>
-        <td>pybullet</td>
+            <td>Mass Matrix</td>
+            <td>关节角q</td>
+            <td>质量矩阵M</td>
+            <td>symoro</td>
+            <td>pybullet</td>
         </tr>
         <tr>
-        <td>Inverse Dynamics</td>
-        <td>关节角q，关节速度dq，关节加速度ddq</td>
-        <td>关节力矩</td>
-        <td>symoro</td>
-        <td>pybullet</td>
+            <td>Inverse Dynamics</td>
+            <td>关节角q，关节速度dq，关节加速度ddq</td>
+            <td>关节力矩</td>
+            <td>symoro</td>
+            <td>pybullet</td>
+        </tr>
+        <tr>
+            <td>系统辨识</td>
+            <td>关节角q，关节速度dq，关节加速度ddq</td>
+            <td>辨识系数矩阵A(q, dq, ddq)</td>
+            <td>symoro</td>
+            <td>pybullet</td>
         </tr>
         </tbody></table>
         </li>

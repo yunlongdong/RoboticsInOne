@@ -216,7 +216,7 @@ class dyn_CODEGEN:
         new_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_regp.txt")
         shutil.move(old_file_path, new_file_path)
     
-    def systemID_python_codegen(self, write=True):
+    def systemID_python_codegen(self, write=False):
         dim_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_dim.txt")
         symoro_dim_code = self.extract_code_from_symoro_txt(dim_file_path, num_space=4)
         # replace theta

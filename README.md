@@ -13,10 +13,10 @@ RIO is committed to providing a standard and complete tool chain and ecology wit
 4. Exporting modified D-H parameters
 5. Kinematics: forward kinematics, Jacobian symbolic representation, and code generation
 6. Dynamics: mass matrix M, symbolic representation of Inverse Dynamics and code generation
-7. Verification code generation with one single click: randomly generate test samples so that users can verify the correctness by comparing the results of the generated codes with the numerical solution provided by pybullet.
+7. System identification: derive the minimum parameter set, generate C++ and Python codes for system identification
+8. Verification of the code generation with one single click: randomly generate test samples so that users can verify the correctness by comparing the results of the generated codes with the numerical solution provided by pybullet.
 ## TODO
 * Interface: symoro is currently used for rigid body dynamics derivation; The code verification process currently utilizes pybullet. In the future, we hope to provide more interfaces and leave enough room for extensions. We believe it would be owesome if users are allowed to write their own plugins to connect to any rigid body dynamics library.
-* Code generation: derive the minimum parameter set, generate C++ and Python codes for system identification; randomly generate test samples and calculate results
 * A series of tutorials (including websites, videos, blogs) should be produced.
 
 ## Remark
