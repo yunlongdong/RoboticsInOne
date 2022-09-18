@@ -182,7 +182,6 @@ class dyn_CODEGEN:
         content = content.replace("$m_index", self.return_aggregated_list([['m'], index_list]))
         content = content.replace("$q_index", self.return_aggregated_list([['q'], index_list]))
 
-        content = content.replace("$q_index", self.return_aggregated_list([['q'], index_list]))
         com_code = ""
         inertia_code = ""
         for i in range(self.robot.num_robotjoints):
