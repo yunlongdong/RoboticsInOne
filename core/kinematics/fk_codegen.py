@@ -15,16 +15,17 @@ class fk_CODEGEN:
             content = f.read()
         
         # 替换base link2world
-        first_joint = list(self.robot.robotjoints.values())[0]
-        base2world_rpy_string = "base2world_rpy = {0}".format(np.array2string(first_joint.rpy, separator=","))
+        root_joint = self.robot.return_root_joint()
+        leave_link = self.robot.return_leave_link()
+        base2world_rpy_string = "base2world_rpy = {0}".format(np.array2string(root_joint.rpy, separator=","))
         content = content.replace("base2world_rpy = []", base2world_rpy_string, 1)
-        base2world_xyz_string = "base2world_xyz = {0}".format(np.array2string(first_joint.xyz, separator=","))
+        base2world_xyz_string = "base2world_xyz = {0}".format(np.array2string(root_joint.xyz, separator=","))
         content = content.replace("base2world_xyz = []", base2world_xyz_string, 1)
         # 替换MDH参数
         MDHs_string = "MDHs = {0}".format(np.array2string(self.robot.MDH_params, separator=",").replace("\n", "\n\t\t\t"))
         content = content.replace("MDHs = [[]]", MDHs_string, 1)
         # local_pos默认替换为最后一个link的质心
-        CoM_string = "local_pos = {0}".format(np.array2string(list(self.robot.robotlinks.values())[-1].com_MDH, separator=","))
+        CoM_string = "local_pos = {0}".format(np.array2string(leave_link.com_MDH, separator=","))
         content = content.replace("local_pos = []", CoM_string, 1)
         return content
     
@@ -33,16 +34,17 @@ class fk_CODEGEN:
             content = f.read()
         
         # 替换base link2world
-        first_joint = list(self.robot.robotjoints.values())[0]
-        base2world_rpy_string = "base2world_rpy = {0}".format(np.array2string(first_joint.rpy, separator=","))
+        root_joint = self.robot.return_root_joint()
+        leave_link = self.robot.return_leave_link()
+        base2world_rpy_string = "base2world_rpy = {0}".format(np.array2string(root_joint.rpy, separator=","))
         content = content.replace("base2world_rpy = []", base2world_rpy_string, 1)
-        base2world_xyz_string = "base2world_xyz = {0}".format(np.array2string(first_joint.xyz, separator=","))
+        base2world_xyz_string = "base2world_xyz = {0}".format(np.array2string(root_joint.xyz, separator=","))
         content = content.replace("base2world_xyz = []", base2world_xyz_string, 1)
         # 替换MDH参数
         MDHs_string = "MDHs = {0}".format(np.array2string(self.robot.MDH_params, separator=",").replace("\n", "\n\t\t\t"))
         content = content.replace("MDHs = [[]]", MDHs_string, 1)
         # local_pos默认替换为最后一个link的质心
-        CoM_string = "local_pos = {0}".format(np.array2string(list(self.robot.robotlinks.values())[-1].com_MDH, separator=","))
+        CoM_string = "local_pos = {0}".format(np.array2string(leave_link.com_MDH, separator=","))
         content = content.replace("local_pos = []", CoM_string, 1)
         return content
 
@@ -51,7 +53,6 @@ class fk_CODEGEN:
             content = f.read()
         
         urdf_parser_path = osp.dirname(osp.abspath(osp.join(osp.abspath(__file__), "../")))
-        print(urdf_parser_path)
         content = content.replace("sys.path.append(r'../')", "sys.path.append(r'{0}')".format(urdf_parser_path))
         content = content.replace("$filename", self.robot.urdf_file)
         check_code_path = osp.dirname(self.robot.urdf_file)
@@ -65,7 +66,6 @@ class fk_CODEGEN:
             content = f.read()
         
         urdf_parser_path = osp.dirname(osp.abspath(osp.join(osp.abspath(__file__), "../")))
-        print(urdf_parser_path)
         content = content.replace("sys.path.append(r'../')", "sys.path.append(r'{0}')".format(urdf_parser_path))
         content = content.replace("$filename", self.robot.urdf_file)
         check_code_path = osp.dirname(self.robot.urdf_file)

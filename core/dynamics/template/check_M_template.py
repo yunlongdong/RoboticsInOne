@@ -11,9 +11,11 @@ def return_elements(inertia_matrix):
     return inertia_matrix[0, 0], inertia_matrix[0, 1], inertia_matrix[0, 2], inertia_matrix[1, 1], inertia_matrix[1, 2], inertia_matrix[2, 2]
 
 def return_M(qs, robot):
-    _, $m_index = [robotlink.mass for robotlink in list(robot.robotlinks.values())]
+    links_in_order = robot.return_links_in_order()
+    root_link = robot.return_root_link()
+    _, $m_index = [robotlink.mass for robotlink in links_in_order]
     $q_index = qs
-    inertia_list = [robotlink.inertia_MDH for robotlink in list(robot.robotlinks.values())]
+    inertia_list = [robotlink.inertia_MDH for robotlink in links_in_order]
     $com_code
     $inertia_code
 

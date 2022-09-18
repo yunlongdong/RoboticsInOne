@@ -255,7 +255,6 @@ class Robot:
                 current_link2visual = get_extrinsic_tf(self.robotlinks[node.id].rpy_visual_MDH, self.robotlinks[node.id].xyz_visual_MDH)
                 # print("error=", current_link2visual1 - current_link2visual)
                 self.robotlinks[node.id].abs_tf_visual_MDH = np.matmul(current_tf_world, current_link2visual)
-                # print("{0} com error=".format(node.id), self.robotlinks[node.id].abs_com_MDH - self.robotlinks[node.id].abs_com)
 
     def update_MDH_frame(self, MDH_tf_list, jointname_list):
         self.calculate_tfs_in_world_frame()
@@ -326,6 +325,9 @@ class Robot:
                 self.leave_link_node.remove(self.robotlinks[node.id].parent_linkname)
         if num_nodes_no_parent != 1:
             print("Error: Should only be one root link!!!")
+        
+        if len(self.leave_link_node) !=1:
+            print("The urdf file contains more than one leave link!!! Errors might happend...")
         
         # num of joints and links
         self.num_robotjoints = len(self.robotjoints)
@@ -421,6 +423,37 @@ class Robot:
         self.robotlinks[robotjoint.child_link].parent_linkname = robotjoint.parent_link
         self.robotlinks[robotjoint.child_link].parent_jointname = robotjoint.jointname
         return robotjoint
+
+    def return_leave_link(self):
+        try:
+            assert len(self.leave_link_node) ==1
+        except:
+            print("The urdf file contains {0} leave links!!! Errors might happend...".format(len(self.leave_link_node)))
+        return self.robotlinks[self.leave_link_node[0]]
+    
+    def return_root_link(self):
+        return self.robotlinks[self.root_link_node.id]
+
+    def return_root_joint(self):
+        num = 0
+        root_joint = None
+        for node in self.urdf_tree_nodes:
+            # find root joints
+            if node.parent == self.root_link_node:
+                root_joint = node
+                num += 1
+        try:
+            assert num == 1
+        except:
+            print("The urdf file contains {0} root joints!!! Errors might happend...".format(num))
+        return self.robotjoints[root_joint.id]
+
+    def return_links_in_order(self):
+        links_list_in_order = []
+        for node in LevelOrderIter(self.root_link_node):
+            if node.type == 'link':
+                links_list_in_order.append(self.robotlinks[node.id])
+        return links_list_in_order
 
 
 if __name__ == "__main__":

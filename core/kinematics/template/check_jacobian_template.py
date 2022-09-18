@@ -127,14 +127,18 @@ def check_jacobian(filename=''):
     robot.show_MDH_frame(log=True)
 
     # parameters
-    base2world_rpy = list(robot.robotjoints.values())[0].rpy_MDH
-    base2world_xyz = list(robot.robotjoints.values())[0].xyz_MDH
-    local_pos = list(robot.robotlinks.values())[-1].com_MDH
+    root_joint = robot.return_root_joint()
+    leave_link = robot.return_leave_link()
+    base2world_rpy = root_joint.rpy_MDH
+    base2world_xyz = root_joint.xyz_MDH
+    local_pos = leave_link.com_MDH
     MDHs = robot.MDH_params
     jac = JAC_SYM(base2world_rpy, base2world_xyz, MDHs)
+    
     # randomly set joint angles
     qs = list(random(jac.num_joints)) # [0.] * jac.num_joints#
     print("set random joint angle=", qs)
+
     # calculated by jac
     jacobian = jac.return_jacobian(qs, local_pos)
     print("generated jacobian =", jacobian)

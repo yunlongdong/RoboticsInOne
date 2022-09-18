@@ -3,24 +3,26 @@ Robotics In One (RIO) Studio
 
 [Chinese README](./README_CH.md)
 ## Introduction
-RIO is committed to providing a standard and complete tool chain and ecology for the robot community, and providing a graphical operation interface. RIO realizes 3D visualization of robot Link, Joint and Center of Mass (CoM) by opening URDF file, and realizes robot kinematics/dynamics code generation via URDF ->MDH ->Kinematics ->Jacobian ->Dynamics.
+RIO is committed to providing a standard and complete tool chain and ecology with a graphical operation interface for the robot community. RIO implements 3D visualization of robot links, joints and center of mass (CoM) by specifying a URDF file, and generates kinematics/dynamics codes via URDF ->MDH ->Kinematics ->Jacobian ->Dynamics.
 
 ![](./docs/res/urdf_view3d.jpg)
 ## Features
 1. URDF file visualization, including Link (adjustable transparency), Axis, CoM, etc
 2. Joints Control
-3. Invert Joint Z-Axis can be manually adjusted to achieve joint configuration consistent with the real robot
-4. Modified D-H exporting
+3. Invert Joint Z-Axis: z axis of any joint can be manually adjusted to achieve joint configuration consistent with the real robot
+4. Exporting modified D-H parameters
 5. Kinematics: forward kinematics, Jacobian symbolic representation, and code generation
-6. Dynamics: quality matrix M, symbolic representation of Inverse Dynamics and code generation
-7. One click generation of verification code: randomly generate test samples, and compare the generated code with the numerical solution of pybullet for verification
+6. Dynamics: mass matrix M, symbolic representation of Inverse Dynamics and code generation
+7. Verification code generation with one single click: randomly generate test samples so that users can verify the correctness by comparing the results of the generated codes with the numerical solution provided by pybullet.
 ## TODO
-* Interface: symoro is currently used for rigid body dynamics derivation; The code verification currently uses pybullet. In the future, we hope to provide more interfaces and leave room for expansion. It is better to expose some interfaces to allow users to write plug-ins to connect to any rigid body dynamics library.
-* Code generation: derive the minimum parameter set, generate C++ and Python code for system identification, randomly generate test samples and calculate results
+* Interface: symoro is currently used for rigid body dynamics derivation; The code verification process currently utilizes pybullet. In the future, we hope to provide more interfaces and leave enough room for extensions. We believe it would be owesome if users are allowed to write their own plugins to connect to any rigid body dynamics library.
+* Code generation: derive the minimum parameter set, generate C++ and Python codes for system identification; randomly generate test samples and calculate results
+* A series of tutorials (including websites, videos, blogs) should be produced.
 
-## Noted
+## Remark
 1. URDF Joints Axis should be [0, 0, 1]
-2. Currently, only URDF code generation with 1 subtree is supported
+2. The urdf file contains only revolute joints
+3. Currently, only URDF code generation with 1 subtree is supported
 
-## Communication
+## Contact us
 RoboticsInOne QQ Chat Group：179412348

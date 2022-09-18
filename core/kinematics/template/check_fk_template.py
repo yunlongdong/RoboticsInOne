@@ -91,21 +91,26 @@ def check_fk(filename=''):
     robot.show_MDH_frame(log=True)
 
     # parameters
-    base2world_rpy = list(robot.robotjoints.values())[0].rpy_MDH
-    base2world_xyz = list(robot.robotjoints.values())[0].xyz_MDH
-    local_pos = list(robot.robotlinks.values())[-1].com_MDH
+    root_joint = robot.return_root_joint()
+    leave_link = robot.return_leave_link()
+    base2world_rpy = root_joint.rpy_MDH
+    base2world_xyz = root_joint.xyz_MDH
+    local_pos = leave_link.com_MDH
     print("local_pos=", local_pos)
     MDHs = robot.MDH_params
     fk = FK_SYM(base2world_rpy, base2world_xyz, MDHs)
+
     # randomly set joint angles
     qs = list(random(fk.num_joints))
     print("set random joint angle=", qs)
     robot.set_joint_angle(qs)
+
     # calculated by fk
     global_pos = fk.return_global_pos(qs, local_pos)
     print("fk global_pos=", global_pos)
+    
     # calculated by RIO
-    print("RIO global_pos=", list(robot.robotlinks.values())[-1].abs_com)
+    print("RIO global_pos=", robot.return_leave_link().abs_com)
 
     # calculated with pybullet
     phy_Client = p.connect(p.DIRECT)
@@ -114,9 +119,11 @@ def check_fk(filename=''):
     for _ in range(100):
         p.setJointMotorControlArray(p_robot, range(fk.num_joints), p.POSITION_CONTROL, targetPositions=qs)
         p.stepSimulation()
-    link_pos, link_ori, com_pos, com_ori, world_link_pos, world_link_ori = p.getLinkState(p_robot, fk.num_joints-1, computeForwardKinematics=True)
+    link_pos, _, _, _, _, _ = p.getLinkState(p_robot, fk.num_joints-1, computeForwardKinematics=True)
     print("pybullet global_pos=", np.array(link_pos))
     print("pos error=", np.sum(np.abs(np.array(link_pos) - global_pos)))
     p.disconnect()
+
+
 if __name__ == "__main__":
     check_fk(filename=r'$filename')

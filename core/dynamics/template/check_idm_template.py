@@ -11,16 +11,18 @@ def return_elements(inertia_matrix):
     return inertia_matrix[0, 0], inertia_matrix[0, 1], inertia_matrix[0, 2], inertia_matrix[1, 1], inertia_matrix[1, 2], inertia_matrix[2, 2]
 
 def return_jointtorque(qs, dqs, ddqs, robot):
-    _, $m_index = [robotlink.mass for robotlink in list(robot.robotlinks.values())]
+    links_in_order = robot.return_links_in_order()
+    root_link = robot.return_root_link()
+    _, $m_index = [robotlink.mass for robotlink in links_in_order]
     $q_index = qs
     $dq_index = dqs
     $ddq_index = ddqs
     g = -9.81
-    base_rotation = get_extrinsic_rotation(list(robot.robotlinks.values())[0].rpy_MDH)[:3, :3]
+    base_rotation = get_extrinsic_rotation(root_link.rpy_MDH)[:3, :3]
     gx, gy, gz = np.matmul(base_rotation.T, np.array([0, 0, g]))
     $set_Fs
     $set_Fv
-    inertia_list = [robotlink.inertia_MDH for robotlink in list(robot.robotlinks.values())]
+    inertia_list = [robotlink.inertia_MDH for robotlink in links_in_order]
     $com_code
     $inertia_code
 

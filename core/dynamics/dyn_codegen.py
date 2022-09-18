@@ -50,13 +50,15 @@ class dyn_CODEGEN:
             content = f.read()
         index_list = [str(i+1) for i in range(self.robot.num_robotjoints)]
 
-        mass_list_from_robot = np.array([robotlink.mass for robotlink in list(self.robot.robotlinks.values())])
+        links_in_order = self.robot.return_links_in_order()
+        root_link = self.robot.return_root_link()
+        mass_list_from_robot = np.array([robotlink.mass for robotlink in links_in_order])
         # 替换数值
         content = content.replace("$mass_list_from_robot", np.array2string(mass_list_from_robot, separator=', '))
-        inertia_list_from_robot = ["np.array("+np.array2string(robotlink.inertia_MDH, separator=', ').replace('\n', '\n'+' '*8)+")" for robotlink in list(self.robot.robotlinks.values())]
+        inertia_list_from_robot = ["np.array("+np.array2string(robotlink.inertia_MDH, separator=', ').replace('\n', '\n'+' '*8)+")" for robotlink in links_in_order]
         inertia_list_from_robot = "[" + ', '.join(inertia_list_from_robot) + "]"
         content = content.replace("$inertia_list_from_robot", inertia_list_from_robot)
-        base_rotation = get_extrinsic_rotation(list(self.robot.robotlinks.values())[0].rpy_MDH)[:3, :3]
+        base_rotation = get_extrinsic_rotation(root_link.rpy_MDH)[:3, :3]
         content = content.replace("$base_rotation", "np.array("+np.array2string(base_rotation, separator=', ').replace("\n", "\n"+' '*8)+")")
 
         # 替换数值
@@ -73,7 +75,7 @@ class dyn_CODEGEN:
         com_code = ""
         inertia_code = ""
         for i in range(self.robot.num_robotjoints):
-            com_code += "c{0}x, c{0}y, c{0}z = {1}\n    ".format(i+1, np.array2string(list(self.robot.robotlinks.values())[i].com_MDH, separator=', '))
+            com_code += "c{0}x, c{0}y, c{0}z = {1}\n    ".format(i+1, np.array2string(links_in_order[i].com_MDH, separator=', '))
             inertia_code += "I{0}xx, I{0}xy, I{0}xz, I{0}yy, I{0}yz, I{0}zz = return_elements(inertia_list[{0}])\n    ".format(i+1)
         content = content.replace("$com_code", com_code)
         content = content.replace("$inertia_code", inertia_code)
@@ -110,7 +112,7 @@ class dyn_CODEGEN:
         com_code = ""
         inertia_code = ""
         for i in range(self.robot.num_robotjoints):
-            com_code += "c{0}x, c{0}y, c{0}z = list(robot.robotlinks.values())[{0}].com_MDH\n    ".format(i+1)
+            com_code += "c{0}x, c{0}y, c{0}z = links_in_order[{0}].com_MDH\n    ".format(i+1)
             inertia_code += "I{0}xx, I{0}xy, I{0}xz, I{0}yy, I{0}yz, I{0}zz = return_elements(inertia_list[{0}])\n    ".format(i+1)
         content = content.replace("$com_code", com_code)
         content = content.replace("$inertia_code", inertia_code)
@@ -135,9 +137,11 @@ class dyn_CODEGEN:
             content = f.read()
         index_list = [str(i+1) for i in range(self.robot.num_robotjoints)]
 
-        mass_list_from_robot = np.array([robotlink.mass for robotlink in list(self.robot.robotlinks.values())])
+        links_in_order = self.robot.return_links_in_order()
+        root_joint = self.robot.return_root_joint()
+        mass_list_from_robot = np.array([robotlink.mass for robotlink in links_in_order])
         content = content.replace("$mass_list_from_robot", np.array2string(mass_list_from_robot, separator=', '))
-        inertia_list_from_robot = ["np.array("+np.array2string(robotlink.inertia_MDH, separator=', ').replace('\n', '\n'+' '*8)+")" for robotlink in list(self.robot.robotlinks.values())]
+        inertia_list_from_robot = ["np.array("+np.array2string(robotlink.inertia_MDH, separator=', ').replace('\n', '\n'+' '*8)+")" for robotlink in links_in_order]
         inertia_list_from_robot = "[" + ', '.join(inertia_list_from_robot) + "]"
         content = content.replace("$inertia_list_from_robot", inertia_list_from_robot)
 
@@ -147,7 +151,7 @@ class dyn_CODEGEN:
         com_code = ""
         inertia_code = ""
         for i in range(self.robot.num_robotjoints):
-            com_code += "c{0}x, c{0}y, c{0}z = {1}\n    ".format(i+1, np.array2string(list(self.robot.robotlinks.values())[i].com_MDH, separator=', '))
+            com_code += "c{0}x, c{0}y, c{0}z = {1}\n    ".format(i+1, np.array2string(links_in_order[i].com_MDH, separator=', '))
             inertia_code += "I{0}xx, I{0}xy, I{0}xz, I{0}yy, I{0}yz, I{0}zz = return_elements(inertia_list[{0}])\n    ".format(i+1)
         content = content.replace("$com_code", com_code)
         content = content.replace("$inertia_code", inertia_code)
@@ -182,7 +186,7 @@ class dyn_CODEGEN:
         com_code = ""
         inertia_code = ""
         for i in range(self.robot.num_robotjoints):
-            com_code += "c{0}x, c{0}y, c{0}z = list(robot.robotlinks.values())[{0}].com_MDH\n    ".format(i+1)
+            com_code += "c{0}x, c{0}y, c{0}z = links_in_order[{0}].com_MDH\n    ".format(i+1)
             inertia_code += "I{0}xx, I{0}xy, I{0}xz, I{0}yy, I{0}yz, I{0}zz = return_elements(inertia_list[{0}])\n    ".format(i+1)
         content = content.replace("$com_code", com_code)
         content = content.replace("$inertia_code", inertia_code)
@@ -213,7 +217,6 @@ class dyn_CODEGEN:
         alpha = np.array2string(self.robot.MDH_params[:, 0], separator=',').replace(" ", "")[1:-1]
         d = np.array2string(self.robot.MDH_params[:, 1], separator=',').replace(" ", "")[1:-1]
         theta_value = self.robot.MDH_params[:, 2].tolist()
-        print(theta_value)
         theta_value = list(map(str, theta_value))
         theta = self.return_aggregated_list([theta_value, ['+q'],index_list])
         r = np.array2string(self.robot.MDH_params[:, 3], separator=',').replace(" ", "")[1:-1]
@@ -272,7 +275,6 @@ class dyn_CODEGEN:
                     else:
                         matrix_string[max_ij-1, min_ij-1] = header+str(max_ij)+str(min_ij)
                         matrix_string[min_ij-1, max_ij-1] = header+str(max_ij)+str(min_ij)
-        # print(matrix_string)
         return np.array2string(matrix_string, separator=', ').replace("'", "")
 
 

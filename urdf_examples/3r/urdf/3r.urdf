@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+<!-- created with Phobos 1.0.1 "Capricious Choutengan" -->
+  <robot name="3r">
+    <link name="1">
+      <inertial>
+        <origin xyz="0 0 0.1" rpy="0 0 0"/>
+        <mass value="20.0"/>
+        <inertia ixx="2e-05" ixy="0" ixz="0" iyy="2e-05" iyz="0" izz="2e-05"/>
+      </inertial>
+      <visual name="base-Body">
+        <origin xyz="0 0 0.2" rpy="1.5708 0 1.5708"/>
+        <geometry>
+          <mesh filename="..\meshes\stl\base-Body.004.stl" scale="1.0 1.0 1.0"/>
+        </geometry>
+      </visual>
+    </link>
+
+    <link name="2">
+      <inertial>
+        <origin xyz="0.4 0 0.11464" rpy="0 0 0"/>
+        <mass value="20.0"/>
+        <inertia ixx="0.17879" ixy="0" ixz="0" iyy="1.95001" iyz="0" izz="1.84613"/>
+      </inertial>
+      <visual name="arm-Body">
+        <origin xyz="0 0 0.18187" rpy="1.5708 0 0"/>
+        <geometry>
+          <mesh filename="..\meshes\stl\arm-Body.005.stl" scale="1.0 1.0 1.0"/>
+        </geometry>
+      </visual>
+    </link>
+
+    <link name="3">
+      <inertial>
+        <origin xyz="0.4 0 0.1622" rpy="0 0 0"/>
+        <mass value="20.0"/>
+        <inertia ixx="0.18251" ixy="0" ixz="0" iyy="4.86135" iyz="0" izz="4.75376"/>
+      </inertial>
+      <visual name="arm2-Body">
+        <origin xyz="0 0 0.22" rpy="1.5708 0 0"/>
+        <geometry>
+          <mesh filename="..\meshes\stl\arm2-Body.004.stl" scale="1.0 1.0 1.0"/>
+        </geometry>
+      </visual>
+    </link>
+
+    <link name="world">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="0.001"/>
+            <inertia ixx="2e-05" ixy="0" ixz="0" iyy="2e-05" iyz="0" izz="4e-05"/>
+        </inertial>
+        <visual name="world-Body">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+            <mesh filename="..\meshes\stl\world-Body.003.stl" scale="1.0 1.0 1.0"/>
+            </geometry>
+        </visual>
+    </link>
+
+    <link name="tool">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="1e-05"/>
+        <inertia ixx="2e-05" ixy="0" ixz="0" iyy="2e-05" iyz="0" izz="2e-05"/>
+      </inertial>
+      <visual name="tool-Body">
+        <origin xyz="0 0 0.01881" rpy="1.5708 0 0"/>
+        <geometry>
+          <mesh filename="..\meshes\stl\tool-Body.stl" scale="1.0 1.0 1.0"/>
+        </geometry>
+      </visual>
+    </link>
+
+    <joint name="j1" type="revolute">
+      <origin xyz="0 0 0.2" rpy="0 0 0"/>
+      <parent link="world"/>
+      <child link="1"/>
+      <axis xyz="0 0 1.0"/>
+      <limit lower="-3.14" upper="3.14" effort="100" velocity="10"/>
+    </joint>
+
+    <joint name="j2" type="revolute">
+      <origin xyz="0 0.16666 0.2" rpy="-1.5708 0 0"/>
+      <parent link="1"/>
+      <child link="2"/>
+      <axis xyz="0 0 1.0"/>
+      <limit lower="-3.14" upper="3.14" effort="100" velocity="10"/>
+    </joint>
+
+    <joint name="j3" type="revolute">
+      <origin xyz="0.8 0 0.13334" rpy="0 0 0"/>
+      <parent link="2"/>
+      <child link="3"/>
+      <axis xyz="0 0 1.0"/>
+      <limit lower="-3.14" upper="3.14" effort="100" velocity="10"/>
+    </joint>
+
+    <joint name="jtool" type="revolute">
+      <origin xyz="0.82 0 0.15" rpy="1.5708 0 1.5708"/>
+      <parent link="3"/>
+      <child link="tool"/>
+      <axis xyz="0 0 1.0"/>
+      <limit lower="-3.14" upper="3.14" effort="100" velocity="10"/>
+    </joint>
+
+  </robot>
