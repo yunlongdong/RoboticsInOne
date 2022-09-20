@@ -1,6 +1,6 @@
 import numpy as np
 import os.path as osp
-import shutil, re
+import shutil, re, copy
 
 import sys
 sys.path.append("../../")
@@ -19,14 +19,14 @@ class dyn_CODEGEN:
         self.symoro_par_gen()
         # 使用symoro计算inm和idm
         self.symoro_dyn_M()
-        self.idm_code = self.idm_python_codegen()
-        self.M_code = self.M_python_codegen()
+        self.idm_code = self.symoro_idm_codegen()
+        self.M_code = self.symoro_M_codegen()
         self.check_idm_code = self.check_idm_codegen()
         self.check_M_code = self.check_M_codegen()
         # 使用symoro推导base parameter和系数矩阵
         self.symoro_basePara()
         self.symoro_systemID()
-        self.systemID_code = self.systemID_python_codegen()
+        self.systemID_code = self.symoro_systemID_codegen()
         self.check_systemID_code = self.check_systemID_codegen()
 
 
@@ -44,15 +44,11 @@ class dyn_CODEGEN:
         new_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_idm.txt")
         shutil.move(old_file_path, new_file_path)
 
-    def idm_python_codegen(self, write=False):
+    def symoro_idm_codegen(self, write=False):
         idm_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_idm.txt")
-        pat = re.compile("Equations:"+'(.*?)'+"\*=\*", re.S)
-        with open(idm_file_path, 'r') as f:
-            idm_content = f.read()
-        symoro_idm_code = pat.findall(idm_content)[0].replace(";", "")
-        symoro_idm_code = symoro_idm_code.replace("\n", "\n    ")
+        symoro_idm_code = self.extract_code_from_symoro_txt(idm_file_path, num_space=4)
         # 替换
-        with open(osp.join(self.file_full_path, 'template/inv_dyn_python_template.py'),'r',encoding='utf-8') as f:
+        with open(osp.join(self.file_full_path, 'template/inv_dyn_template.py'),'r',encoding='utf-8') as f:
             content = f.read()
         index_list = [str(i+1) for i in range(self.robot.num_robotjoints)]
 
@@ -126,16 +122,12 @@ class dyn_CODEGEN:
                 f.write(content)
         return content
     
-    def M_python_codegen(self, write=False):
+    def symoro_M_codegen(self, write=False):
         inm_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_inm.txt")
-        pat = re.compile("Equations:"+'(.*?)'+"\*=\*", re.S)
-        with open(inm_file_path, 'r') as f:
-            inm_content = f.read()
-        symoro_M_code = pat.findall(inm_content)[0].replace(";", "")
-        symoro_M_code = symoro_M_code.replace("\n", "\n    ")
+        symoro_M_code = self.extract_code_from_symoro_txt(inm_file_path, num_space=4)
         
         # 替换
-        with open(osp.join(self.file_full_path, 'template/M_python_template.py'),'r',encoding='utf-8') as f:
+        with open(osp.join(self.file_full_path, 'template/M_template.py'),'r',encoding='utf-8') as f:
             content = f.read()
         index_list = [str(i+1) for i in range(self.robot.num_robotjoints)]
 
@@ -216,7 +208,7 @@ class dyn_CODEGEN:
         new_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_regp.txt")
         shutil.move(old_file_path, new_file_path)
     
-    def systemID_python_codegen(self, write=False):
+    def symoro_systemID_codegen(self, write=False):
         dim_file_path = osp.join(osp.dirname(self.par_filename), "generated_"+self.robotname+"_dim.txt")
         symoro_dim_code = self.extract_code_from_symoro_txt(dim_file_path, num_space=4)
         # replace theta
@@ -432,6 +424,4 @@ if __name__ == "__main__":
     robot = Robot(fileName=osp.join(file_full_path, '../../urdf_examples/kuka iiwa/model.urdf'))
     code_gen = dyn_CODEGEN(robot)
     code_gen.check_M_codegen()
-    code_gen.M_codegen()
-    code_gen.check_dyn_codegen()
-    code_gen.inv_dyn_codegen()
+    code_gen.symoro_M_codegen()
