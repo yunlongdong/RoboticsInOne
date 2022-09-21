@@ -8,36 +8,15 @@ sys.path.append('../../')
 from core.kinematics.fk_codegen import fk_CODEGEN
 from core.dynamics.dyn_codegen import dyn_CODEGEN
 
+
 from io import StringIO
 from contextlib import redirect_stdout
-
-import ctypes
-import inspect
 import threading
 
 
 
 dir_abs_path = osp.dirname(osp.abspath(__file__))
 
-def _async_raise(tid, exctype):
-    """raises the exception, performs cleanup if needed"""
-    tid = ctypes.c_long(tid)
-
-    if not inspect.isclass(exctype):
-        exctype = type(exctype)
-    res = ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, ctypes.py_object(exctype))
-    if res == 0:
-        # raise ValueError("invalid thread id")
-        print("stop invalid thread id:", tid)
-    elif res != 1:
-        # """if it returns a number greater than one, you're in trouble,
-        # and you should call it again with exc=NULL to revert the effect"""
-        ctypes.pythonapi.PyThreadState_SetAsyncExc(tid, None)
-        # raise SystemError("PyThreadState_SetAsyncExc failed")
-        print("PyThreadState_SetAsyncExc failed")
- 
-def stop_thread(thread):
-    _async_raise(thread.ident, SystemExit)
 
 class JointController(wx.lib.scrolledpanel.ScrolledPanel):
     def __init__(self, parent, joint_names):
@@ -209,7 +188,7 @@ class DynamicsFrame(wx.Frame):
 
         bSizer1_1.Add( self.m_staticText3, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
 
-        m_choice_dynamicsChoices = [u"Mass Matrix", u"Inverse Dynamics", u"System ID"]
+        m_choice_dynamicsChoices = [u"Mass Matrix", u"Inverse Dynamics", u"Base Inertia Parameters"]
         self.m_choice_dynamics = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, m_choice_dynamicsChoices, 0 )
         self.m_choice_dynamics.SetSelection( 0 )
         bSizer1_1.Add(self.m_choice_dynamics, 0, wx.ALL, 5)
@@ -325,10 +304,5 @@ class DynamicsFrame(wx.Frame):
         self.m_textCtrl_results.SetValue(result)
 
 
-if __name__ == "__main__":
-    App = wx.App()
-    frame = KinematicsFrame(None, size=(512, 512))
-    frame.m_fk_stc.SetValue("""import numpy as np""")
-    frame.m_jacobian_stc.SetValue("""import numpy as np""")
-    frame.Show()
-    App.MainLoop()
+
+

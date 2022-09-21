@@ -15,6 +15,7 @@ from ..s3d.window.base import BaseWindow
 from ..s3d.renderables import Mesh, Lines, Spherecloud
 
 from .custom_widget import JointController, KinematicsFrame, DynamicsFrame
+from .sysid_frame import SystemIDFrame
 
 dir_abs_path = osp.dirname(osp.abspath(__file__))
 
@@ -64,6 +65,7 @@ class Window(BaseWindow):
             self.m_button_mdh = wx.Button(self, wx.ID_ANY, "Save MDH")
             self.m_button_kine = wx.Button( self, wx.ID_ANY, 'Kinematics')
             self.m_button_dyn = wx.Button( self, wx.ID_ANY, 'Dynamics')
+            self.m_button_sysid = wx.Button( self, wx.ID_ANY, 'Identification')
 
             bSizer2_1.Add( text1, -1, wx.ALL, 0)
             bSizer2_1.Add( self.m_checklist_invert_j , 1,  wx.EXPAND|wx.ALL, 0)
@@ -72,6 +74,7 @@ class Window(BaseWindow):
             bSizer2_1.Add( self.m_button_mdh , 0,  wx.EXPAND|wx.ALL, 0)
             bSizer2_1.Add( self.m_button_kine , 0,  wx.EXPAND|wx.ALL, 0)
             bSizer2_1.Add( self.m_button_dyn , 0,  wx.EXPAND|wx.ALL, 0)
+            bSizer2_1.Add( self.m_button_sysid , 0,  wx.EXPAND|wx.ALL, 0)
 
 
             
@@ -138,6 +141,7 @@ class Window(BaseWindow):
             self.Bind(wx.EVT_BUTTON, self.OnButtonSaveMDH, self.m_button_mdh)
             self.Bind(wx.EVT_BUTTON, self.OnButtonKin, self.m_button_kine)
             self.Bind(wx.EVT_BUTTON, self.OnButtonDyn, self.m_button_dyn)
+            self.Bind(wx.EVT_BUTTON, self.OnButtonSysid, self.m_button_sysid)
 
             for i in self.joint_control.joint_controller_sliders:
                 self.Bind(wx.EVT_COMMAND_SCROLL_THUMBTRACK, self.OnSliderControl, i)
@@ -171,6 +175,11 @@ class Window(BaseWindow):
             frame = DynamicsFrame(self, self.robot)
             frame.Show()
             return 
+
+        def OnButtonSysid(self, e):
+            frame = SystemIDFrame(self, self.robot)
+            frame.Show()
+            return
 
         def OnColor(self, e):
             self.show_all_link()
