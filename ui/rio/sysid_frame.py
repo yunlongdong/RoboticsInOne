@@ -1,6 +1,6 @@
 import wx
 from wx import grid
-from wx import aui
+import wx.lib.agw.aui as aui
 import os.path as osp
 import numpy as np
 import matplotlib
@@ -20,7 +20,7 @@ dir_abs_path = osp.dirname(osp.abspath(__file__))
 class MyPlot(wx.Panel):
     def __init__(self, parent, id=-1, dpi=None, **kwargs):
         wx.Panel.__init__(self, parent, id=id, **kwargs)
-        self.figure = Figure()
+        self.figure = Figure(figsize=(2, 2))
         self.canvas = FigureCanvas(self, -1, self.figure)
         self.toolbar = NavigationToolbar(self.canvas)
         self.toolbar.Realize()
@@ -28,7 +28,6 @@ class MyPlot(wx.Panel):
         sizer.Add(self.canvas, 1, wx.EXPAND)
         sizer.Add(self.toolbar, 0, wx.LEFT | wx.EXPAND)
         self.SetSizer(sizer)
-
 
 
 class MyPlotNotebook(wx.Panel):
