@@ -1,5 +1,6 @@
 import wx
 from wx import grid
+from wx import aui
 import os.path as osp
 import numpy as np
 import matplotlib
@@ -7,43 +8,55 @@ matplotlib.use('wxagg')
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
-from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar2Wx
+from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar
 import threading
+import sys
+sys.path.append('../../')
+from core.dynamics.dyn_codegen import dyn_CODEGEN
 
-class PlotPanel(wx.Panel):
-    def __init__(self, parent):
-        wx.Panel.__init__(self, parent)
-        self.CreateCtrls()
-        self.DoLayout()
 
-    def CreateCtrls(self):
-        
+dir_abs_path = osp.dirname(osp.abspath(__file__))
+
+class MyPlot(wx.Panel):
+    def __init__(self, parent, id=-1, dpi=None, **kwargs):
+        wx.Panel.__init__(self, parent, id=id, **kwargs)
         self.figure = Figure()
-        self.axes = self.figure.add_subplot(111)
         self.canvas = FigureCanvas(self, -1, self.figure)
-
-        self.toolbar = NavigationToolbar2Wx(self.canvas)
+        self.toolbar = NavigationToolbar(self.canvas)
         self.toolbar.Realize()
-
-    def DoLayout(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
+        sizer.Add(self.canvas, 1, wx.EXPAND)
         sizer.Add(self.toolbar, 0, wx.LEFT | wx.EXPAND)
         self.SetSizer(sizer)
-        self.Fit()
+
+
+
+class MyPlotNotebook(wx.Panel):
+    def __init__(self, parent, id=-1):
+        wx.Panel.__init__(self, parent, id=id)
+        self.nb = aui.AuiNotebook(self)
+        sizer = wx.BoxSizer()
+        sizer.Add(self.nb, 1, wx.EXPAND)
+        self.SetSizer(sizer)
+
+    #-----------------------------------------------------------------------
+    def Add(self, name="plot"):    
+        page = MyPlot(self.nb)
+        self.nb.AddPage(page, name)
+        return page.figure
 
 class PlotFrame(wx.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, size=(300, 300)):
         dw, dh = wx.DisplaySize()
-        wx.Frame.__init__(self, parent, -1, 'visualization', size=(300, 300), pos = (dw//2-150, dh//2-150))
-        self.panel = PlotPanel(self)
-
+        wx.Frame.__init__(self, parent, -1, 'visualization', size=size, pos = (dw//2-150, dh//2-150))
+        self.panel = MyPlotNotebook(self)
 
 class SystemIDFrame ( wx.Frame ):
 
     def __init__( self, parent , robot):
         wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = "System Identification", pos = wx.DefaultPosition, size = wx.Size( 800,600 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
         self.robot = robot
+        self.codegen = dyn_CODEGEN(robot)
         self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
         self.SetBackgroundColour( wx.Colour( 255, 255, 255 ) )
         bSizer1 = wx.BoxSizer( wx.VERTICAL )
@@ -78,10 +91,18 @@ class SystemIDFrame ( wx.Frame ):
         self.Layout()
 
         self.Centre( wx.BOTH )
+        icon = wx.Icon()
+        icon.CopyFromBitmap(wx.Bitmap(osp.join(dir_abs_path, "../icons/sysid.bmp"), wx.BITMAP_TYPE_ANY))
+        self.SetIcon(icon)
 
         self.Bind(wx.EVT_BUTTON, self.OnOpen, self.m_button_open)
         self.Bind(wx.EVT_BUTTON, self.OnPlot, self.m_button_plot)
         self.Bind(wx.EVT_BUTTON, self.OnStart, self.m_button_start)
+
+        self.timer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.show_sysid)
+        self.timer.Start(10)  
+        self.id_done = 0
     
     def OnOpen(self, e):
         with wx.FileDialog(self, "Open URDF file", wildcard="txt files (*.txt)|*.txt",
@@ -141,24 +162,83 @@ class SystemIDFrame ( wx.Frame ):
         cols = self.m_grid1.GetSelectedCols()
         if len(cols):
             plot_frame = PlotFrame(self)
+            axes = plot_frame.panel.Add('Visualization').gca()
             for col in cols:
-                plot_frame.panel.axes.plot(self.data[:, col], label=self.m_grid1.GetColLabelValue(col))
-            plot_frame.panel.axes.legend() 
+                axes.plot(self.data[:, col], label=self.m_grid1.GetColLabelValue(col))
+            axes.legend() 
             plot_frame.Show()
     
     def OnStart(self, e):
-        self.thread_run = threading.Thread(target=self.run)
-        
+        self.thread_run = threading.Thread(target=self.run) 
         self.thread_run.start()
+        self.plot_frame = PlotFrame(self, size=(400,300))
+
+    def show_sysid(self, e):
+        # for i in range(6):
+        #     axes = self.plot_frame.panel.Add('tau{}'.format(i+1)).gca()
+        #     axes.plot(self.pred_tau[:, i], 'r', label='pred')
+        #     axes.plot(self.true_tau[:, i], 'b-.', label='true')
+        #     axes.legend()
+        # axes = self.plot_frame.panel.Add('Visualization').gca()
+        # axes.plot(self.data[:, 0])
+        # self.plot_frame.Show()
+        if self.id_done:
+            self.id_done = 0
+            for i in range(self.dof):
+                axes = self.plot_frame.panel.Add('tau{}'.format(i+1)).gca()
+                axes.plot(self.pred_tau[:, i], 'r', label='pred')
+                axes.plot(self.true_tau[:, i], 'b-.', label='true')
+                axes.legend()
+            self.plot_frame.Show()
+
 
     def run(self):
         self.m_button_start.Disable()
+        fp = open(osp.join(dir_abs_path, 'returnA.py'), 'w')
+        fp.write(self.codegen.systemID_code)
+        fp.close()
+        
+        from .returnA import returnA
+
         dof = self.dof
         q = self.data[:, :dof]
         qd = self.data[:, dof:2*dof]
         qdd = self.data[:, 2*dof:3*dof]
         tau = self.data[:, 3*dof:4*dof]
 
-        for i in range(100):
-            self.m_textCtrl_results.write('{}\n'.format(i))
+        A_set = []
+        tau_set = []
+
+
+        for i in range(len(qdd)):      
+            A = returnA(q[i, :], qd[i, :], qdd[i, :])
+
+            # joint friction
+            # friction = np.ones((A.shape[0], 1))
+            # damping = qd[0, :][:, None]
+            # A = np.concatenate([A, friction, damping], axis=-1)
+            A_set.append(A)  
+            tau_set.append(tau[i, :])
+
+            if i%100 == 1:
+                self.m_textCtrl_results.write('{}/{}\n'.format(i, len(qdd)))
+
+        A_serial = np.concatenate(A_set, axis=0)
+        tau_serial = np.concatenate(tau_set)
+        theta = np.linalg.pinv(A_serial).dot(tau_serial)
+        pred_tau = []
+        true_tau = []
+        for i in range(len(qdd)):
+            # A = my_systemID.returnA(j_pos[i, :], j_vel[i, :], j_acc[i, :])
+            A = A_set[i]
+            pred_tau.append(np.matmul(A, theta))
+            true_tau.append(tau[i, :])
+
+        self.pred_tau = np.asarray(pred_tau)
+        self.true_tau = np.asarray(true_tau)
+
+        
         self.m_button_start.Enable()
+        self.id_done = 1
+        
+        
