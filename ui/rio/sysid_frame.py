@@ -79,12 +79,16 @@ class SystemIDFrame ( wx.Frame ):
 
         bSizer1.Add( self.m_staticText1, 0, wx.ALL, 5 )
 
-        self.m_textCtrl_results = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE )
-        bSizer1.Add( self.m_textCtrl_results, 1, wx.ALL|wx.EXPAND, 3 )
-        
-        self.m_grid1 = grid.Grid( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, 0 )
-        bSizer1.Add( self.m_grid1, 1, wx.ALL|wx.EXPAND, 5 )
+        bSizer1_2 = wx.BoxSizer( wx.HORIZONTAL )
 
+        self.m_grid1 = grid.Grid( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_2.Add( self.m_grid1, 5, wx.ALL|wx.EXPAND, 3 )
+
+
+        self.m_textCtrl_results = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE )
+        bSizer1_2.Add( self.m_textCtrl_results, 1, wx.ALL|wx.EXPAND, 3 )
+        
+        bSizer1.Add( bSizer1_2, 1, wx.EXPAND, 5 )
         
         self.SetSizer( bSizer1 )
         self.Layout()
@@ -208,7 +212,7 @@ class SystemIDFrame ( wx.Frame ):
         A_set = []
         tau_set = []
 
-
+        self.m_textCtrl_results.write('Start...\n')
         for i in range(len(qdd)):      
             A = returnA(q[i, :], qd[i, :], qdd[i, :])
 
@@ -220,7 +224,7 @@ class SystemIDFrame ( wx.Frame ):
             tau_set.append(tau[i, :])
 
             if i%100 == 1:
-                self.m_textCtrl_results.write('{}/{}\n'.format(i, len(qdd)))
+                self.m_textCtrl_results.write('>>>{}/{}\n'.format(i, len(qdd)))
 
         A_serial = np.concatenate(A_set, axis=0)
         tau_serial = np.concatenate(tau_set)
