@@ -81,7 +81,7 @@ class SystemIDFrame ( wx.Frame ):
 
         bSizer1_2 = wx.BoxSizer( wx.HORIZONTAL )
 
-        self.m_grid1 = grid.Grid( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_grid1 = grid.Grid( self, wx.ID_ANY, wx.DefaultPosition, wx.Size(1,-1), 0 )
         bSizer1_2.Add( self.m_grid1, 5, wx.ALL|wx.EXPAND, 3 )
 
 
