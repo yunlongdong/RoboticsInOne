@@ -1,54 +1,20 @@
 import wx
 from wx import grid
-import wx.lib.agw.aui as aui
 import os.path as osp
 import numpy as np
-import matplotlib
-matplotlib.use('wxagg')
-from matplotlib import pyplot as plt
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
-from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar
+
 import threading
 import sys
 sys.path.append('../../')
+
 from core.dynamics.dyn_codegen import dyn_CODEGEN
+from .custom_widget import PlotFrame
 
 
 dir_abs_path = osp.dirname(osp.abspath(__file__))
 
-class MyPlot(wx.Panel):
-    def __init__(self, parent, id=-1, dpi=None, **kwargs):
-        wx.Panel.__init__(self, parent, id=id, **kwargs)
-        self.figure = Figure(figsize=(2, 2))
-        self.canvas = FigureCanvas(self, -1, self.figure)
-        self.toolbar = NavigationToolbar(self.canvas)
-        self.toolbar.Realize()
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.canvas, 1, wx.EXPAND)
-        sizer.Add(self.toolbar, 0, wx.LEFT | wx.EXPAND)
-        self.SetSizer(sizer)
 
 
-class MyPlotNotebook(wx.Panel):
-    def __init__(self, parent, id=-1):
-        wx.Panel.__init__(self, parent, id=id)
-        self.nb = aui.AuiNotebook(self)
-        sizer = wx.BoxSizer()
-        sizer.Add(self.nb, 1, wx.EXPAND)
-        self.SetSizer(sizer)
-
-    #-----------------------------------------------------------------------
-    def Add(self, name="plot"):    
-        page = MyPlot(self.nb)
-        self.nb.AddPage(page, name)
-        return page.figure
-
-class PlotFrame(wx.Frame):
-    def __init__(self, parent, size=(300, 300)):
-        dw, dh = wx.DisplaySize()
-        wx.Frame.__init__(self, parent, -1, 'visualization', size=size, pos = (dw//2-150, dh//2-150))
-        self.panel = MyPlotNotebook(self)
 
 class SystemIDFrame ( wx.Frame ):
 
@@ -197,11 +163,11 @@ class SystemIDFrame ( wx.Frame ):
 
     def run(self):
         self.m_button_start.Disable()
-        fp = open(osp.join(dir_abs_path, 'returnA.py'), 'w')
+        fp = open(osp.join(dir_abs_path, 'tmp_returnA.py'), 'w')
         fp.write(self.codegen.systemID_code)
         fp.close()
         
-        from .returnA import returnA
+        from .tmp_returnA import returnA
 
         dof = self.dof
         q = self.data[:, :dof]

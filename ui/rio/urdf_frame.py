@@ -14,8 +14,11 @@ from ..s3d.scenes import Scene
 from ..s3d.window.base import BaseWindow
 from ..s3d.renderables import Mesh, Lines, Spherecloud
 
-from .custom_widget import JointController, KinematicsFrame, DynamicsFrame
 from .sysid_frame import SystemIDFrame
+from .dynamics_frame import DynamicsFrame
+from .kinematics_frame import KinematicsFrame
+from .trajectory_frame import TrajectoryFrame
+from .custom_widget import JointController
 
 dir_abs_path = osp.dirname(osp.abspath(__file__))
 
@@ -66,6 +69,7 @@ class Window(BaseWindow):
             self.m_button_kine = wx.Button( self, wx.ID_ANY, 'Kinematics')
             self.m_button_dyn = wx.Button( self, wx.ID_ANY, 'Dynamics')
             self.m_button_sysid = wx.Button( self, wx.ID_ANY, 'Identification')
+            self.m_button_traj_gen = wx.Button( self, wx.ID_ANY, 'Trajectory')
 
             bSizer2_1.Add( text1, -1, wx.ALL, 0)
             bSizer2_1.Add( self.m_checklist_invert_j , 1,  wx.EXPAND|wx.ALL, 0)
@@ -75,6 +79,7 @@ class Window(BaseWindow):
             bSizer2_1.Add( self.m_button_kine , 0,  wx.EXPAND|wx.ALL, 0)
             bSizer2_1.Add( self.m_button_dyn , 0,  wx.EXPAND|wx.ALL, 0)
             bSizer2_1.Add( self.m_button_sysid , 0,  wx.EXPAND|wx.ALL, 0)
+            bSizer2_1.Add( self.m_button_traj_gen , 0,  wx.EXPAND|wx.ALL, 0)
 
 
             
@@ -142,6 +147,7 @@ class Window(BaseWindow):
             self.Bind(wx.EVT_BUTTON, self.OnButtonKin, self.m_button_kine)
             self.Bind(wx.EVT_BUTTON, self.OnButtonDyn, self.m_button_dyn)
             self.Bind(wx.EVT_BUTTON, self.OnButtonSysid, self.m_button_sysid)
+            self.Bind(wx.EVT_BUTTON, self.OnButtonTrajGen, self.m_button_traj_gen)
 
             for i in self.joint_control.joint_controller_sliders:
                 self.Bind(wx.EVT_COMMAND_SCROLL_THUMBTRACK, self.OnSliderControl, i)
@@ -173,6 +179,11 @@ class Window(BaseWindow):
         
         def OnButtonDyn(self, e):
             frame = DynamicsFrame(self, self.robot)
+            frame.Show()
+            return 
+        
+        def OnButtonTrajGen(self, e):
+            frame = TrajectoryFrame(self, self.robot)
             frame.Show()
             return 
 
