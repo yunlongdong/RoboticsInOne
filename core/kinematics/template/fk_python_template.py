@@ -76,7 +76,6 @@ class FK_SYM:
         )
 
     def gencpp(self):
-        # print(self.global_pos)
         [(c_name, c_code), (h_name, c_header)] = codegen(('fk', self.global_pos), 'c89')
         return c_code, c_header
 

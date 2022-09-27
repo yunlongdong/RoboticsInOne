@@ -126,7 +126,7 @@ class KinematicsFrame(wx.Frame):
                 exec(self.codegen.fk_code.replace(old_str, new_str).replace('print', '# print')+'\n    print(fk.gencpp()[0]), print("@@@"), print(fk.gencpp()[1])', globals())
             # jacobian
             else:     
-                exec(self.codegen.jacobian_code.replace(old_str, new_str), globals())
+                exec(self.codegen.jacobian_code.replace(old_str, new_str).replace('print', '# print')+'\n    print(jac.gencpp()[0]), print("@@@"), print(jac.gencpp()[1])', globals())
                 
             result = str(sys.stdout.getvalue().strip())
             code, header = result.split('@@@')

@@ -1,5 +1,6 @@
 from sympy import symbols, sin, cos, lambdify, zeros
 from sympy.matrices import Matrix, eye
+from sympy.utilities.codegen import codegen
 
 
 class JAC_SYM:
@@ -114,6 +115,9 @@ class JAC_SYM:
             [0.0, 0.0, 1.0]]
         )
    
+    def gencpp(self):
+        [(c_name, c_code), (h_name, c_header)] = codegen(('jac', self.jacobian), 'c89')
+        return c_code, c_header
 
 if __name__ == "__main__":
     base2world_rpy = []
