@@ -83,6 +83,7 @@ class KinematicsFrame(wx.Frame):
 
     
     def OnCode(self, e):
+        self.m_button_run.Enable()
         self.code_type = "code"
         mode = self.m_choice_kinematics.GetCurrentSelection()
         # choose FK
@@ -92,6 +93,7 @@ class KinematicsFrame(wx.Frame):
             self.python_codepad.SetValue(self.codegen.jacobian_code)
 
     def OnCheck(self, e):
+        self.m_button_run.Enable()
         self.code_type = "check"
         mode = self.m_choice_kinematics.GetCurrentSelection()
         # choose FK
@@ -101,7 +103,40 @@ class KinematicsFrame(wx.Frame):
             self.python_codepad.SetValue(self.codegen.check_jacobian_code)
 
     def OnCpp(self, e):
-        self.python_codepad.SetValue("# Coming soon...")
+        self.thread_run_gen = threading.Thread(target=self.runGenCPP)
+        if self.running_state == 0:
+            self.thread_run_gen.start()
+        
+    def runGenCPP(self):
+        self.m_button_run.Disable()
+        self.running_state = 1
+        old_str = "__main__"
+        new_str = "ui.rio.kinematics_frame"
+        #keep a named handle on the prior stdout 
+        old_stdout = sys.stdout 
+        #keep a named handle on io.StringIO() buffer 
+        new_stdout = StringIO() 
+        #Redirect python stdout into the builtin io.StringIO() buffer 
+        sys.stdout = new_stdout
+
+        mode = self.m_choice_kinematics.GetCurrentSelection()
+        try:
+            # choose FK
+            if mode == 0:
+                exec(self.codegen.fk_code.replace(old_str, new_str).replace('print', '# print')+'\n    print(fk.gencpp()[0]), print("@@@"), print(fk.gencpp()[1])', globals())
+            # jacobian
+            else:     
+                exec(self.codegen.jacobian_code.replace(old_str, new_str), globals())
+                
+            result = str(sys.stdout.getvalue().strip())
+            code, header = result.split('@@@')
+        except:
+            result = "error..."
+        sys.stdout = old_stdout
+        self.python_codepad.SetValue(header)
+        self.m_textCtrl_results.SetValue(code)
+        self.running_state = 0
+        
 
     def OnRun(self, e):
         self.thread_run = threading.Thread(target=self.run)

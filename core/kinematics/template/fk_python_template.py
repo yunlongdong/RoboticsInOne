@@ -1,5 +1,6 @@
 from sympy import symbols, sin, cos, lambdify
 from sympy.matrices import Matrix, eye
+from sympy.utilities.codegen import codegen
 
 class FK_SYM:
     def __init__(self, base2world_rpy, base2world_xyz, MDHs) -> None:
@@ -41,7 +42,7 @@ class FK_SYM:
             self.global_tf_list.append(last_global_tf * self.tf(i))
             last_global_tf = self.global_tf_list[-1]
         self.global_pos = self.global_tf_list[-1] * Matrix([symbols('x'), symbols('y'), symbols('z'), 1.])
-        self.global_pos = self.global_pos[0:3]
+        # self.global_pos = self.global_pos[0:3]    
         return_global_pos = lambdify([self.qs, ['x', 'y', 'z']], self.global_pos, "numpy")
         return return_global_pos
     
@@ -74,6 +75,10 @@ class FK_SYM:
             [0.0, 0.0, 1.0]]
         )
 
+    def gencpp(self):
+        # print(self.global_pos)
+        [(c_name, c_code), (h_name, c_header)] = codegen(('fk', self.global_pos), 'c89')
+        return c_code, c_header
 
 if __name__ == "__main__":
     base2world_rpy = []
