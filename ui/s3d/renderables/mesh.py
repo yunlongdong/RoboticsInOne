@@ -342,8 +342,8 @@ class Mesh(MeshBase):
             depth=2,
             orthographic_depth=3
         )
-        if self._prog:
-            self._prog["mode"] = modes[self._mode]
+        # if self._prog:
+        #     self._prog["mode"] = modes[self._mode]
 
     @property
     def max_depth(self):
@@ -352,8 +352,8 @@ class Mesh(MeshBase):
     @max_depth.setter
     def max_depth(self, new_max_depth):
         self._max_depth = new_max_depth
-        if self._prog:
-            self._prog["max_depth"] = self._max_depth
+        # if self._prog:
+        #     self._prog["max_depth"] = self._max_depth
 
     def sort_triangles(self, point):
         """Sort the triangles such that the first is furthest from `point` and

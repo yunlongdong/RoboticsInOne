@@ -4,8 +4,36 @@ Robotics In One (RIO) Studio
 [Chinese README](./README_CH.md)
 ## Introduction
 RIO is committed to providing a standard and complete tool chain and ecology with a graphical operation interface for the robot community. RIO implements 3D visualization of robot links, joints and center of mass (CoM) by specifying a URDF file, and generates kinematics/dynamics codes via URDF ->MDH ->Kinematics ->Jacobian ->Dynamics.
-
 ![](./docs/res/RIO_instruction.gif)
+
+## Getting Started
+* For windows users, you can 
+  * directly download a release version, double click the bat file to run;
+  * or clone the source code (usually newer)
+    ```bash
+    git clone https://github.com/yunlongdong/RoboticsInOne.git
+    cd RoboticsInOne
+    pip install -r requirements.txt
+    python RIO.py
+    ```
+
+* For ubuntu users, firstly you should install wxPython following [here](https://wxpython.org/pages/downloads/index.html)
+    ```bash
+    # notice that you should replace ubuntu-22.04 with your own ubuntu version
+    pip install -U -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04 wxPython
+    ```
+
+    Then, use the following commands to install other packages
+    ```bash
+    git clone https://github.com/yunlongdong/RoboticsInOne.git
+    cd RoboticsInOne
+    # install other packages
+    pip install matplotlib sympy plyfile numpy scipy pandas pyrr pybullet anytree
+    # install moderngl
+    pip install moderngl==5.5.4
+    python RIO.py
+    ```
+
 ## Features
 1. URDF file visualization, including Link (adjustable transparency), Axis, CoM, etc
 2. Joints Control
