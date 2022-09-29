@@ -27,6 +27,7 @@ RIO is committed to providing a standard and complete tool chain and ecology wit
     ```bash
     git clone https://github.com/yunlongdong/RoboticsInOne.git
     cd RoboticsInOne
+    git checkout ubuntu
     # install other packages
     pip install matplotlib sympy plyfile numpy scipy pandas pyrr pybullet anytree
     # install moderngl
