@@ -8,7 +8,7 @@ RIO is committed to providing a standard and complete tool chain and ecology wit
 
 ## Getting Started
 * For windows users, you can 
-  * directly download a release version, double click the bat file to run;
+  * directly download a release version and double click the bat file to run;
   * or clone the source code (usually newer)
     ```bash
     git clone https://github.com/yunlongdong/RoboticsInOne.git
@@ -19,7 +19,7 @@ RIO is committed to providing a standard and complete tool chain and ecology wit
 
 * For ubuntu users, firstly you should install wxPython following [here](https://wxpython.org/pages/downloads/index.html)
     ```bash
-    # notice that you should replace ubuntu-22.04 with your own ubuntu version
+    # note that you should replace ubuntu-22.04 with your own ubuntu version
     pip install -U -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04 wxPython
     ```
 
@@ -34,6 +34,8 @@ RIO is committed to providing a standard and complete tool chain and ecology wit
     pip install moderngl==5.5.4
     python RIO.py
     ```
+
+    In Ubuntu 16.04 if 'error: GLSL 3.30 is not supported' occurs, by export MESA_GL_VERSION_OVERRIDE=3.3 and then python RIO.py
 
 ## Features
 1. URDF file visualization, including Link (adjustable transparency), Axis, CoM, etc
