@@ -33,9 +33,8 @@ RIO is committed to providing a standard and complete tool chain and ecology wit
     pip install moderngl==5.5.4
     python RIO.py
     ```
-
-    In Ubuntu 16.04 if 'error: GLSL 3.30 is not supported' occurs, use the command `export MESA_GL_VERSION_OVERRIDE=3.3` and then run `python RIO.py`.
-
+## Troubleshooting
+* In ubuntu 16.04 if 'error: GLSL 3.30 is not supported' occurs, use the command `export MESA_GL_VERSION_OVERRIDE=3.3` and then run `python RIO.py`.
 ## Features
 1. URDF file visualization, including Link (adjustable transparency), Axis, CoM, etc
 2. Joints Control
