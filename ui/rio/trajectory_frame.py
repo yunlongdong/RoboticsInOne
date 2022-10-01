@@ -73,11 +73,14 @@ class TrajectoryFrame ( wx.Frame ):
         self.joints_traj[index] = self.m_textCtrl_expression.GetValue()
 
     def OnPlot(self, e):
-        fp = open(osp.join(dir_abs_path, 'generated_fk.py'), 'w')
+        urdf_abs_path = osp.dirname(self.robot.urdf_file)
+        fp = open(osp.join(urdf_abs_path, 'generated_fk.py'), 'w')
         code = self.codegen.fk_code.replace('__name__ == "__main__"', 'True')
         fp.write(self.codegen.fk_code)
         fp.close()
-        from .generated_fk import FK_SYM
+
+        sys.path.append(urdf_abs_path)
+        from generated_fk import FK_SYM
 
 
         self.plot_panel.Clear()

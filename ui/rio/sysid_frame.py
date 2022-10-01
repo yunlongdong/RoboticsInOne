@@ -70,12 +70,11 @@ class SystemIDFrame ( wx.Frame ):
 
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.show_sysid)
-        self.timer.Start(10)  
+        self.timer.Start(15)  
         self.id_done = 0
     
     def OnOpen(self, e):
-        with wx.FileDialog(self, "Open URDF file", wildcard="txt files (*.txt)|*.txt",
-                       style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
+        with wx.FileDialog(self, "Open URDF file", wildcard="txt files (*.txt)|*.txt", style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
 
             if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return    
@@ -92,10 +91,6 @@ class SystemIDFrame ( wx.Frame ):
             self.m_grid1.SetMargins( 0, 0 )
 
             # Columns
-            # self.m_grid1.SetColSize( 0, 85 )
-            # self.m_grid1.SetColSize( 1, 85 )
-            # self.m_grid1.SetColSize( 2, 80 )
-            # self.m_grid1.SetColSize( 3, 80 )
             self.m_grid1.EnableDragColMove( False )
             self.m_grid1.EnableDragColSize( True )
 
@@ -153,16 +148,19 @@ class SystemIDFrame ( wx.Frame ):
             # 辨识代价函数变化曲线
             axes = self.plot_frame.panel.Add('J').gca()
             axes.plot(self.J, 'r')
+            axes.set_title("loss v.s. time")
             self.plot_frame.Show()
 
 
     def run(self):
         self.m_button_start.Disable()
-        fp = open(osp.join(dir_abs_path, 'generated_returnA.py'), 'w')
+        urdf_abs_path = osp.dirname(self.robot.urdf_file)
+        fp = open(osp.join(urdf_abs_path, 'generated_returnA.py'), 'w')
         fp.write(self.codegen.systemID_code)
         fp.close()
         
-        from .generated_returnA import returnA, RLS
+        sys.path.append(urdf_abs_path)
+        from generated_returnA import returnA, RLS
 
         try:
             dof = self.dof

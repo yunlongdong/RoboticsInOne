@@ -327,7 +327,7 @@ class Robot:
             print("Error: Should only be one root link!!!")
         
         if len(self.leave_link_node) !=1:
-            print("The urdf file contains more than one leave link!!! Errors might happend...")
+            print("The urdf file contains more than one leave link!!! Errors might happen...")
         
         # num of joints and links
         self.num_robotjoints = len(self.robotjoints)

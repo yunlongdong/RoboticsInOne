@@ -317,8 +317,6 @@ class Window(BaseWindow):
             return
 
         def OnCheckerInvJ(self, e):
-            # print('On Checker Invert J', self.m_checklist_invert_j.GetCheckedStrings())
-            
             robot = self._window.robot
             # reset robot
             robot.set_joint_angle(np.zeros(robot.num_robotjoints))
