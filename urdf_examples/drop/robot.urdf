@@ -85,7 +85,7 @@
     </collision>
   </link>
   <joint
-    name="first_Jiont"
+    name="first_Joint"
     type="revolute">
     <origin
       xyz="0 0 0.1081"
@@ -139,7 +139,7 @@
     </collision>
   </link>
   <joint
-    name="second_Jiont"
+    name="second_Joint"
     type="revolute">
     <origin
       xyz="0 0 0.045"
