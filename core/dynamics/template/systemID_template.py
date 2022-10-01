@@ -7,7 +7,7 @@ from numpy.random import randn
 class RLS:
     # tau=A*theta, solve for theta
     # tau: num_tau; A: (sample_num*num_tau)*num_vars; theta: num_vars
-    def __init__(self, num_vars, delta=1):
+    def __init__(self, num_vars=$num_theta, delta=1):
         '''
         num_vars: number of variables including constant
         lam: forgetting factor, usually very close to 1.
@@ -35,9 +35,9 @@ class RLS:
         num_tau = A.shape[0]
         for row in range(num_tau):
             x = A[row,:]
-            tau = A[row]
+            tau_row = tau[row]
             s = float(np.matmul(np.matmul(x, self.P), x.T)) + 1.0
-            Inn = tau - np.matmul(x, self.theta)
+            Inn = tau_row - np.matmul(x, self.theta)
             K = np.matmul(self.P, x) / s
             self.P -= np.matmul(K.T, K) * s
             self.theta += np.squeeze(np.asarray(K)) * Inn
