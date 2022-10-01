@@ -21,7 +21,7 @@ RIO致力于为机器人社区提供标准且完备的工具链与生态，并�
     pip install -U -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04 wxPython
     ```
 
-    然后，使用下面的命令安装其他python包 other packages
+    然后，使用下面的命令安装其他python包
     ```bash
     git clone https://github.com/yunlongdong/RoboticsInOne.git
     cd RoboticsInOne
