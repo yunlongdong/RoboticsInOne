@@ -80,6 +80,9 @@ class DynamicsFrame(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.OnRun, self.m_button_run)
         self.code_type = "code"
 
+        self.running_state = 0
+        self.result = ""
+
     def OnCode(self, e):
         self.code_type = "code"
         mode = self.m_choice_dynamics.GetCurrentSelection()
@@ -107,9 +110,17 @@ class DynamicsFrame(wx.Frame):
             self.python_codepad.SetValue(self.codegen.check_systemID_code)
 
     def OnCpp(self, e):
+        self.code_type = "cpp"
         self.python_codepad.SetValue("# Coming soon...")
 
     def OnRun(self, e):
+        self.thread_run = threading.Thread(target=self.run)
+        if self.running_state == 0:
+            self.m_button_run.Disable()
+            self.thread_run.start()
+    
+    def run(self):
+        self.running_state = 1
         old_str = "__main__"
         new_str = "ui.rio.dynamics_frame"
         #keep a named handle on the prior stdout 
@@ -127,19 +138,30 @@ class DynamicsFrame(wx.Frame):
                     exec(self.codegen.M_code.replace(old_str, new_str), globals())
                 elif self.code_type == "check":
                     exec(self.codegen.check_M_code.replace(old_str, new_str), globals())
+                elif self.code_type == "cpp":
+                    exec("print('Running cpp code is not supported now...')")
             # choose idm
             elif mode == 1:
                 if self.code_type == "code":
                     exec(self.codegen.idm_code.replace(old_str, new_str), globals())
                 elif self.code_type == "check":
                     exec(self.codegen.check_idm_code.replace(old_str, new_str), globals())
+                elif self.code_type == "cpp":
+                    exec("print('Running cpp code is not supported now...')")
             elif mode == 2:
                 if self.code_type == "code":
                     exec(self.codegen.systemID_code.replace(old_str, new_str), globals())
                 elif self.code_type == "check":
                     exec(self.codegen.check_systemID_code.replace(old_str, new_str), globals())
-            result = str(sys.stdout.getvalue().strip())
+                elif self.code_type == "cpp":
+                    exec("print('Running cpp code is not supported now...')")
+            self.result = str(sys.stdout.getvalue().strip())
         except:
-            result = "error..."
+            self.result = "error..."
         sys.stdout = old_stdout
-        self.m_textCtrl_results.SetValue(result)
+        self.running_state = 0
+        wx.CallAfter(self.afterRun)
+    
+    def afterRun(self):
+        self.m_textCtrl_results.SetValue(self.result)
+        self.m_button_run.Enable()

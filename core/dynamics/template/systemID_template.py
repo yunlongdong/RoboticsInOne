@@ -1,13 +1,13 @@
 import os.path as osp
 import numpy as np
-from numpy import sin, cos, sign
+from numpy import sin, cos, sign, sqrt
 from numpy.random import randn
 
 
 class RLS:
     # tau=A*theta, solve for theta
     # tau: num_tau; A: (sample_num*num_tau)*num_vars; theta: num_vars
-    def __init__(self, num_vars=$num_theta, delta=1):
+    def __init__(self, num_vars=$num_theta, delta=1, lam=0.98):
         '''
         num_vars: number of variables including constant
         lam: forgetting factor, usually very close to 1.
@@ -17,10 +17,13 @@ class RLS:
         # delta controls the initial state.
         self.P = delta*np.matrix(np.identity(self.num_vars))
         self.theta = np.zeros(self.num_vars)
+
+        # forgetting factor
+        self.lam_inv = lam**(-1)
+        self.sqrt_lam_inv = sqrt(self.lam_inv)
         
         # error
         self.J = 0.
-        self.meanJ = 0.
         self.meanJ_list = []
         
         # Count of number of observations added
@@ -36,7 +39,7 @@ class RLS:
         for row in range(num_tau):
             x = A[row,:]
             tau_row = tau[row]
-            s = float(np.matmul(np.matmul(x, self.P), x.T)) + 1.0
+            s = self.lam_inv*float(np.matmul(np.matmul(x, self.P), x.T)) + 1.0
             Inn = tau_row - np.matmul(x, self.theta)
             K = np.matmul(self.P, x) / s
             self.P -= np.matmul(K.T, K) * s
@@ -44,8 +47,8 @@ class RLS:
             self.J += Inn**2/s
             
         self.num_obs += 1
-        self.meanJ = self.J / self.num_obs
-        self.meanJ_list.append(self.meanJ)
+        meanJ = self.J / self.num_obs
+        self.meanJ_list.append(meanJ)
 
     def cal_theta_err(self, real_theta):
         return np.linalg.norm(self.theta-real_theta)
