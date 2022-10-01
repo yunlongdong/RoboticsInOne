@@ -27,15 +27,14 @@ RIO is committed to providing a standard and complete tool chain and ecology wit
     ```bash
     git clone https://github.com/yunlongdong/RoboticsInOne.git
     cd RoboticsInOne
-    git checkout ubuntu
     # install other packages
     pip install matplotlib sympy plyfile numpy scipy pandas pyrr pybullet anytree
     # install moderngl
     pip install moderngl==5.5.4
     python RIO.py
     ```
-    
-    In Ubuntu 16.04 if 'error: GLSL 3.30 is not supported' occurs, by export MESA_GL_VERSION_OVERRIDE=3.3 and then python RIO.py
+
+    In Ubuntu 16.04 if 'error: GLSL 3.30 is not supported' occurs, use the command `export MESA_GL_VERSION_OVERRIDE=3.3` and then run `python RIO.py`.
 
 ## Features
 1. URDF file visualization, including Link (adjustable transparency), Axis, CoM, etc

@@ -73,11 +73,11 @@ class TrajectoryFrame ( wx.Frame ):
         self.joints_traj[index] = self.m_textCtrl_expression.GetValue()
 
     def OnPlot(self, e):
-        fp = open(osp.join(dir_abs_path, 'tmp_fk.py'), 'w')
+        fp = open(osp.join(dir_abs_path, 'generated_fk.py'), 'w')
         code = self.codegen.fk_code.replace('__name__ == "__main__"', 'True')
         fp.write(self.codegen.fk_code)
         fp.close()
-        from .tmp_fk import FK_SYM
+        from .generated_fk import FK_SYM
 
 
         self.plot_panel.Clear()

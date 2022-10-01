@@ -80,10 +80,10 @@ class KinematicsFrame(wx.Frame):
 
         
         self.running_state = 0
+        self.result = ""
 
     
     def OnCode(self, e):
-        self.m_button_run.Enable()
         self.code_type = "code"
         mode = self.m_choice_kinematics.GetCurrentSelection()
         # choose FK
@@ -93,7 +93,6 @@ class KinematicsFrame(wx.Frame):
             self.python_codepad.SetValue(self.codegen.jacobian_code)
 
     def OnCheck(self, e):
-        self.m_button_run.Enable()
         self.code_type = "check"
         mode = self.m_choice_kinematics.GetCurrentSelection()
         # choose FK
@@ -103,12 +102,13 @@ class KinematicsFrame(wx.Frame):
             self.python_codepad.SetValue(self.codegen.check_jacobian_code)
 
     def OnCpp(self, e):
+        self.code_type = "cpp"
         self.thread_run_gen = threading.Thread(target=self.runGenCPP)
         if self.running_state == 0:
+            self.m_button_run.Disable()
             self.thread_run_gen.start()
         
     def runGenCPP(self):
-        self.m_button_run.Disable()
         self.running_state = 1
         old_str = "__main__"
         new_str = "ui.rio.kinematics_frame"
@@ -136,15 +136,16 @@ class KinematicsFrame(wx.Frame):
         self.python_codepad.SetValue(header)
         self.m_textCtrl_results.SetValue(code)
         self.running_state = 0
+        wx.CallAfter(self.afterRun)
         
 
     def OnRun(self, e):
         self.thread_run = threading.Thread(target=self.run)
         if self.running_state == 0:
+            self.m_button_run.Disable()
             self.thread_run.start()
 
     def run(self):
-        self.m_button_run.Disable()
         self.running_state = 1
         old_str = "__main__"
         new_str = "ui.rio.kinematics_frame"
@@ -163,16 +164,24 @@ class KinematicsFrame(wx.Frame):
                     exec(self.codegen.fk_code.replace(old_str, new_str), globals())
                 elif self.code_type == "check":
                     exec(self.codegen.check_fk_code.replace(old_str, new_str), globals())
+                elif self.code_type == "cpp":
+                    exec("print('Running cpp code is not supported now...')")
             # jacobian
             else:
                 if self.code_type == "code":
                     exec(self.codegen.jacobian_code.replace(old_str, new_str), globals())
                 elif self.code_type == "check":
                     exec(self.codegen.check_jacobian_code.replace(old_str, new_str), globals())
-            result = str(sys.stdout.getvalue().strip())
+                elif self.code_type == "cpp":
+                    exec("print('Running cpp code is not supported now...')")
+            self.result = str(sys.stdout.getvalue().strip())
         except:
-            result = "error..."
+            self.result = "error..."
         sys.stdout = old_stdout
-        self.m_textCtrl_results.SetValue(result)
+        
         self.running_state = 0
+        wx.CallAfter(self.afterRun)
+        
+    def afterRun(self):
+        self.m_textCtrl_results.SetValue(self.result)
         self.m_button_run.Enable()

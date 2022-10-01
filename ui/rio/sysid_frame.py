@@ -143,14 +143,6 @@ class SystemIDFrame ( wx.Frame ):
         self.plot_frame = PlotFrame(self, size=(400,300))
 
     def show_sysid(self, e):
-        # for i in range(6):
-        #     axes = self.plot_frame.panel.Add('tau{}'.format(i+1)).gca()
-        #     axes.plot(self.pred_tau[:, i], 'r', label='pred')
-        #     axes.plot(self.true_tau[:, i], 'b-.', label='true')
-        #     axes.legend()
-        # axes = self.plot_frame.panel.Add('Visualization').gca()
-        # axes.plot(self.data[:, 0])
-        # self.plot_frame.Show()
         if self.id_done:
             self.id_done = 0
             for i in range(self.dof):
@@ -158,54 +150,52 @@ class SystemIDFrame ( wx.Frame ):
                 axes.plot(self.pred_tau[:, i], 'r', label='pred')
                 axes.plot(self.true_tau[:, i], 'b-.', label='true')
                 axes.legend()
+            # 辨识代价函数变化曲线
+            axes = self.plot_frame.panel.Add('J').gca()
+            axes.plot(self.J, 'r')
             self.plot_frame.Show()
 
 
     def run(self):
         self.m_button_start.Disable()
-        fp = open(osp.join(dir_abs_path, 'tmp_returnA.py'), 'w')
+        fp = open(osp.join(dir_abs_path, 'generated_returnA.py'), 'w')
         fp.write(self.codegen.systemID_code)
         fp.close()
         
-        from .tmp_returnA import returnA
+        from .generated_returnA import returnA, RLS
 
-        dof = self.dof
-        q = self.data[:, :dof]
-        qd = self.data[:, dof:2*dof]
-        qdd = self.data[:, 2*dof:3*dof]
-        tau = self.data[:, 3*dof:4*dof]
+        try:
+            dof = self.dof
+            q = self.data[:, :dof]
+            qd = self.data[:, dof:2*dof]
+            qdd = self.data[:, 2*dof:3*dof]
+            tau = self.data[:, 3*dof:4*dof]
+        except:
+            self.m_textCtrl_results.write('No available data...\n')
+            return
 
-        A_set = []
-        tau_set = []
-
-        self.m_textCtrl_results.write('Start...\n')
-        for i in range(len(qdd)):      
+        self.m_textCtrl_results.write('Starting...\n')
+        pred_tau = []
+        true_tau = []
+        my_rls = RLS()
+        for i in range(len(qdd)):
             A = returnA(q[i, :], qd[i, :], qdd[i, :])
-
-            # joint friction
-            # friction = np.ones((A.shape[0], 1))
-            # damping = qd[0, :][:, None]
-            # A = np.concatenate([A, friction, damping], axis=-1)
-            A_set.append(A)  
-            tau_set.append(tau[i, :])
+            my_rls.add_obs(A, tau[i, :])
+            true_tau.append(tau[i, :])
 
             if i%100 == 1:
                 self.m_textCtrl_results.write('>>>{}/{}\n'.format(i, len(qdd)))
 
-        A_serial = np.concatenate(A_set, axis=0)
-        tau_serial = np.concatenate(tau_set)
-        theta = np.linalg.pinv(A_serial).dot(tau_serial)
-        pred_tau = []
-        true_tau = []
+        self.m_textCtrl_results.write('Plotting...\n')
+        
         for i in range(len(qdd)):
-            # A = my_systemID.returnA(j_pos[i, :], j_vel[i, :], j_acc[i, :])
-            A = A_set[i]
-            pred_tau.append(np.matmul(A, theta))
-            true_tau.append(tau[i, :])
-
+            A = returnA(q[i, :], qd[i, :], qdd[i, :])
+            pred_tau.append(np.matmul(A, my_rls.theta))
+            
         self.pred_tau = np.asarray(pred_tau)
         self.true_tau = np.asarray(true_tau)
 
+        self.J = my_rls.meanJ_list
         
         self.m_button_start.Enable()
         self.id_done = 1
