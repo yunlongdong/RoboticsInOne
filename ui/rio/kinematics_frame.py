@@ -129,14 +129,13 @@ class KinematicsFrame(wx.Frame):
                 exec(self.codegen.jacobian_code.replace(old_str, new_str).replace('print', '# print')+'\n    print(jac.gencpp()[0]), print("@@@"), print(jac.gencpp()[1])', globals())
                 
             result = str(sys.stdout.getvalue().strip())
-            code, header = result.split('@@@')
+            self.code, self.header = result.split('@@@')
         except:
             result = "error..."
         sys.stdout = old_stdout
-        self.python_codepad.SetValue(header)
-        self.m_textCtrl_results.SetValue(code)
+        
         self.running_state = 0
-        wx.CallAfter(self.afterRun)
+        wx.CallAfter(self.afterGen)
         
 
     def OnRun(self, e):
@@ -184,4 +183,9 @@ class KinematicsFrame(wx.Frame):
         
     def afterRun(self):
         self.m_textCtrl_results.SetValue(self.result)
+        self.m_button_run.Enable()
+    
+    def afterGen(self):
+        self.python_codepad.SetValue(self.header)
+        self.m_textCtrl_results.SetValue(self.code)
         self.m_button_run.Enable()
