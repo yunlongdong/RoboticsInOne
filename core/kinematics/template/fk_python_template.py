@@ -10,7 +10,7 @@ class FK_SYM:
         self.global_tf_list = []
         self.global_tf_list.append(self.get_extrinsic_tf(base2world_rpy, base2world_xyz)*self.tf(0))
         self.global_pos = None
-        # self.return_global_pos =  self.calulate_global_pos()
+        self.return_global_pos =  self.calulate_global_pos()
         self.return_global_pos_rot = self.calculate_global_pos_rot()
 
     def tf(self, index):
@@ -90,7 +90,7 @@ class FK_SYM:
         )
 
     def gencpp(self):
-        [(c_name, c_code), (h_name, c_header)] = codegen(('fk', self.global_pos), 'c89')
+        [(c_name, c_code), (h_name, c_header)] = codegen(('fk', self.global_pos_rot), 'c89')
         return c_code, c_header
 
 if __name__ == "__main__":
