@@ -171,7 +171,7 @@ class Window(BaseWindow):
             # self.Bind(wx.EVT_BUTTON, self.OnButtonTrajGen, self.m_button_traj_gen)
             #  menu event
             self.Bind(wx.EVT_MENU, self.OnButtonSave, self.save_urdf_item)
-            self.Bind(wx.EVT_MENU, self.OnButtonSaveMDH, self.save_urdf_item)
+            self.Bind(wx.EVT_MENU, self.OnButtonSaveMDH, self.save_MDH_item)
             self.Bind(wx.EVT_MENU, self.OnButtonKin, self.menu_kin)
             self.Bind(wx.EVT_MENU, self.OnButtonDyn, self.menu_dyn)
             self.Bind(wx.EVT_MENU, self.OnButtonSysid, self.menu_sysid)

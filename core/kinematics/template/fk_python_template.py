@@ -10,7 +10,8 @@ class FK_SYM:
         self.global_tf_list = []
         self.global_tf_list.append(self.get_extrinsic_tf(base2world_rpy, base2world_xyz)*self.tf(0))
         self.global_pos = None
-        self.return_global_pos =  self.calulate_global_pos()
+        # self.return_global_pos =  self.calulate_global_pos()
+        self.return_global_pos_rot = self.calculate_global_pos_rot()
 
     def tf(self, index):
         """
@@ -45,6 +46,19 @@ class FK_SYM:
         # self.global_pos = self.global_pos[0:3]    
         return_global_pos = lambdify([self.qs, ['x', 'y', 'z']], self.global_pos, "numpy")
         return return_global_pos
+    
+    def calculate_global_pos_rot(self):
+        last_global_tf = self.global_tf_list[-1]
+        for i in range(1, self.num_joints):
+            self.global_tf_list.append(last_global_tf * self.tf(i))
+            last_global_tf = self.global_tf_list[-1]
+        self.global_pos_rot = self.global_tf_list[-1] * Matrix([[1, 0, 0, symbols('x')],
+         [0, 1, 0, symbols('y')],
+         [0, 0, 1, symbols('z')],
+         [0, 0, 0, 1.]])
+        # self.global_pos = self.global_pos[0:3]    
+        return_global_pos_rot = lambdify([self.qs, ['x', 'y', 'z']], self.global_pos_rot, "numpy")
+        return return_global_pos_rot
     
     # the followings are utility functions
     def get_extrinsic_tf(self, rpy, xyz):
@@ -87,6 +101,11 @@ if __name__ == "__main__":
 
     qs = [0.] * fk.num_joints
     local_pos = []
-    global_pos = fk.return_global_pos(qs, local_pos)
-    print("global_pos=", global_pos)
+    # global_pos = fk.return_global_pos(qs, local_pos)
+    # print("global_pos=", global_pos)
+
+    # global pos and rot
+    global_pos_rot = fk.return_global_pos_rot(qs, local_pos)
+    print("global_pos=", global_pos_rot[:3, -1])
+    print("global_rot=", global_pos_rot[:3, :3])
     
