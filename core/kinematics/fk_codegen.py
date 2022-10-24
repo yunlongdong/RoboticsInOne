@@ -25,8 +25,10 @@ class fk_CODEGEN:
         MDHs_string = "MDHs = {0}".format(np.array2string(self.robot.MDH_params, separator=",").replace("\n", "\n\t\t\t"))
         content = content.replace("MDHs = [[]]", MDHs_string, 1)
         # local_pos默认替换为最后一个link的质心
-        CoM_string = "local_pos = {0}".format(np.array2string(leave_link.com_MDH, separator=","))
-        content = content.replace("local_pos = []", CoM_string, 1)
+        CoM_pos_string = "local_pos = {0}".format(np.array2string(leave_link.com_MDH, separator=", "))
+        CoM_rpy_string = "local_rpy = {0}".format(np.array2string(leave_link.rpy_MDH, separator=", "))
+        content = content.replace("local_pos = []", CoM_pos_string, 1)
+        content = content.replace("local_rpy = []", CoM_rpy_string, 1)
         return content
     
     def jacobian_python_codegen(self, write=False):

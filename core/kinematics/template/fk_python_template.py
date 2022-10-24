@@ -37,6 +37,7 @@ class FK_SYM:
         T[2, 3] = d*cos(alpha)
         return T
     
+    # no longer used
     def calulate_global_pos(self):
         last_global_tf = self.global_tf_list[-1]
         for i in range(1, self.num_joints):
@@ -52,12 +53,11 @@ class FK_SYM:
         for i in range(1, self.num_joints):
             self.global_tf_list.append(last_global_tf * self.tf(i))
             last_global_tf = self.global_tf_list[-1]
-        self.global_pos_rot = self.global_tf_list[-1] * Matrix([[1, 0, 0, symbols('x')],
-         [0, 1, 0, symbols('y')],
-         [0, 0, 1, symbols('z')],
-         [0, 0, 0, 1.]])
-        # self.global_pos = self.global_pos[0:3]    
-        return_global_pos_rot = lambdify([self.qs, ['x', 'y', 'z']], self.global_pos_rot, "numpy")
+        final_tf = eye(4)
+        final_tf[:3, -1] = [symbols('x'), symbols('y'), symbols('z')]
+        final_tf[:3, :3] = self.get_extrinsic_rot([symbols('angle_z'), symbols('angle_y'), symbols('angle_x')])
+        self.global_pos_rot = self.global_tf_list[-1] * final_tf
+        return_global_pos_rot = lambdify([self.qs, ['x', 'y', 'z'], ['angle_z', 'angle_y', 'angle_x']], self.global_pos_rot, "numpy")
         return return_global_pos_rot
     
     # the followings are utility functions
@@ -70,6 +70,12 @@ class FK_SYM:
         tf[:3, 3] = xyz
         return tf
     
+    def get_extrinsic_rot(self, rpy):
+        x_rot = self.create_from_x_rotation(rpy[0])
+        y_rot = self.create_from_y_rotation(rpy[1])
+        z_rot = self.create_from_z_rotation(rpy[2])
+        return z_rot * y_rot * x_rot
+
     def create_from_x_rotation(self, theta):
         return Matrix(
             [[1.0, 0.0, 0.0],
@@ -101,11 +107,10 @@ if __name__ == "__main__":
 
     qs = [0.] * fk.num_joints
     local_pos = []
-    # global_pos = fk.return_global_pos(qs, local_pos)
-    # print("global_pos=", global_pos)
+    local_rpy = []
 
     # global pos and rot
-    global_pos_rot = fk.return_global_pos_rot(qs, local_pos)
+    global_pos_rot = fk.return_global_pos_rot(qs, local_pos, local_rpy)
     print("global_pos=", global_pos_rot[:3, -1])
     print("global_rot=", global_pos_rot[:3, :3])
     

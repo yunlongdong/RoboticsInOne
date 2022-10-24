@@ -61,12 +61,12 @@ class FK_SYM:
         for i in range(1, self.num_joints):
             self.global_tf_list.append(last_global_tf * self.tf(i))
             last_global_tf = self.global_tf_list[-1]
-        self.global_pos_rot = self.global_tf_list[-1] * Matrix([[1, 0, 0, symbols('x')],
-         [0, 1, 0, symbols('y')],
-         [0, 0, 1, symbols('z')],
-         [0, 0, 0, 1.]])
+        final_tf = eye(4)
+        final_tf[:3, -1] = [symbols('x'), symbols('y'), symbols('z')]
+        final_tf[:3, :3] = self.get_extrinsic_rot([symbols('angle_z'), symbols('angle_y'), symbols('angle_x')])
+        self.global_pos_rot = self.global_tf_list[-1] * final_tf
         # self.global_pos = self.global_pos[0:3]    
-        return_global_pos_rot = lambdify([self.qs, ['x', 'y', 'z']], self.global_pos_rot, "numpy")
+        return_global_pos_rot = lambdify([self.qs, ['x', 'y', 'z'], ['angle_z', 'angle_y', 'angle_x']], self.global_pos_rot, "numpy")
         return return_global_pos_rot
     
     # the followings are utility functions
@@ -79,6 +79,12 @@ class FK_SYM:
         tf[:3, 3] = xyz
         return tf
     
+    def get_extrinsic_rot(self, rpy):
+        x_rot = self.create_from_x_rotation(rpy[0])
+        y_rot = self.create_from_y_rotation(rpy[1])
+        z_rot = self.create_from_z_rotation(rpy[2])
+        return z_rot * y_rot * x_rot
+
     def create_from_x_rotation(self, theta):
         return Matrix(
             [[1.0, 0.0, 0.0],
@@ -110,6 +116,7 @@ def check_fk(filename=''):
     base2world_rpy = root_joint.rpy_MDH
     base2world_xyz = root_joint.xyz_MDH
     local_pos = leave_link.com_MDH
+    local_rpy = leave_link.rpy_MDH
     print("local_pos=", local_pos)
     MDHs = robot.MDH_params
     fk = FK_SYM(base2world_rpy, base2world_xyz, MDHs)
@@ -120,7 +127,7 @@ def check_fk(filename=''):
     robot.set_joint_angle(qs)
 
     # calculated by fk
-    global_pos_rot = fk.return_global_pos_rot(qs, local_pos)
+    global_pos_rot = fk.return_global_pos_rot(qs, local_pos, local_rpy)
     global_pos, global_rot = global_pos_rot[:3, -1], global_pos_rot[:3, :3]
     print("fk global_pos=", global_pos)
     
