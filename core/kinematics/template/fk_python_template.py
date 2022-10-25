@@ -10,7 +10,7 @@ class FK_SYM:
         self.global_tf_list = []
         self.global_tf_list.append(self.get_extrinsic_tf(base2world_rpy, base2world_xyz)*self.tf(0))
         self.global_pos = None
-        self.return_global_pos =  self.calulate_global_pos()
+        # self.return_global_pos =  self.calulate_global_pos()
         self.return_global_pos_rot = self.calculate_global_pos_rot()
 
     def tf(self, index):
@@ -44,7 +44,7 @@ class FK_SYM:
             self.global_tf_list.append(last_global_tf * self.tf(i))
             last_global_tf = self.global_tf_list[-1]
         self.global_pos = self.global_tf_list[-1] * Matrix([symbols('x'), symbols('y'), symbols('z'), 1.])
-        # self.global_pos = self.global_pos[0:3]    
+        self.global_pos = self.global_pos[0:3]    
         return_global_pos = lambdify([self.qs, ['x', 'y', 'z']], self.global_pos, "numpy")
         return return_global_pos
     
