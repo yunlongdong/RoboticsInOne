@@ -64,8 +64,7 @@ class FK_SYM:
         final_tf = eye(4)
         final_tf[:3, -1] = [symbols('x'), symbols('y'), symbols('z')]
         final_tf[:3, :3] = self.get_extrinsic_rot([symbols('angle_z'), symbols('angle_y'), symbols('angle_x')])
-        self.global_pos_rot = self.global_tf_list[-1] * final_tf
-        # self.global_pos = self.global_pos[0:3]    
+        self.global_pos_rot = self.global_tf_list[-1] * final_tf   
         return_global_pos_rot = lambdify([self.qs, ['x', 'y', 'z'], ['angle_z', 'angle_y', 'angle_x']], self.global_pos_rot, "numpy")
         return return_global_pos_rot
     
@@ -108,7 +107,7 @@ class FK_SYM:
 
 def check_fk(filename=''):
     robot = Robot(fileName=filename)
-    robot.show_MDH_frame(log=True)
+    robot.show_MDH_frame(log=False)
 
     # parameters
     root_joint = robot.return_root_joint()
@@ -144,7 +143,11 @@ def check_fk(filename=''):
     link_pos, link_orientation, _, _, _, _ = p.getLinkState(p_robot, fk.num_joints-1, computeForwardKinematics=True)
     print("pybullet global_pos=", np.array(link_pos))
     print("pos error=", np.sum(np.abs(np.array(link_pos) - global_pos)))
-    print("pybullet rotation error=", np.sum(np.abs(np.array(p.getMatrixFromQuaternion(link_orientation)).reshape(3, 3)-global_rot)))
+
+    p_global_rot = np.array(p.getMatrixFromQuaternion(link_orientation)).reshape(3, 3)
+    print("pybullet global_rot=", p_global_rot)
+    print("fk global_rot = ", global_rot)
+    print("rotation error=", np.sum(np.abs(p_global_rot-global_rot)))
     p.disconnect()
 
 

@@ -124,7 +124,7 @@ class JAC_SYM:
 
 def check_jacobian(filename=''):
     robot = Robot(fileName=filename)
-    robot.show_MDH_frame(log=True)
+    robot.show_MDH_frame(log=False)
 
     # parameters
     root_joint = robot.return_root_joint()
