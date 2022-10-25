@@ -17,11 +17,18 @@ dir_abs_path = osp.dirname(osp.abspath(__file__))
 
 
 class SystemIDFrame ( wx.Frame ):
-
     def __init__( self, parent , robot):
         wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = "System Identification", pos = wx.DefaultPosition, size = wx.Size( 800,600 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
+
         self.robot = robot
+        self.my_rls = None
         self.codegen = dyn_CODEGEN(robot)
+        self.urdf_abs_path = osp.dirname(self.robot.urdf_file)
+        fp = open(osp.join(self.urdf_abs_path, 'generated_returnA.py'), 'w')
+        fp.write(self.codegen.systemID_code)
+        fp.close()
+        sys.path.append(self.urdf_abs_path)
+
         self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
         self.SetBackgroundColour( wx.Colour( 255, 255, 255 ) )
         bSizer1 = wx.BoxSizer( wx.VERTICAL )
@@ -36,6 +43,9 @@ class SystemIDFrame ( wx.Frame ):
 
         self.m_button_start = wx.Button( self, wx.ID_ANY, u"Start Identification", wx.DefaultPosition, wx.DefaultSize, 0 )
         bSizer1_1.Add( self.m_button_start, 0, wx.ALL, 5 )
+
+        self.m_button_save_params = wx.Button( self, wx.ID_ANY, u"Save Params", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_1.Add( self.m_button_save_params, 0, wx.ALL, 5 )
 
 
         bSizer1.Add( bSizer1_1, 0, wx.EXPAND, 2 )
@@ -67,6 +77,7 @@ class SystemIDFrame ( wx.Frame ):
         self.Bind(wx.EVT_BUTTON, self.OnOpen, self.m_button_open)
         self.Bind(wx.EVT_BUTTON, self.OnPlot, self.m_button_plot)
         self.Bind(wx.EVT_BUTTON, self.OnStart, self.m_button_start)
+        self.Bind(wx.EVT_BUTTON, self.OnSaveParams, self.m_button_save_params)
 
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.show_sysid)
@@ -151,15 +162,13 @@ class SystemIDFrame ( wx.Frame ):
             axes.set_title("loss v.s. time")
             self.plot_frame.Show()
 
+    def OnSaveParams(self, e):
+        if self.my_rls is not None:
+            np.savetxt(osp.join(osp.dirname(self.robot.urdf_file), 'generated_sysid_params.txt'), self.my_rls.theta,  delimiter='\n')
 
     def run(self):
         self.m_button_start.Disable()
-        urdf_abs_path = osp.dirname(self.robot.urdf_file)
-        fp = open(osp.join(urdf_abs_path, 'generated_returnA.py'), 'w')
-        fp.write(self.codegen.systemID_code)
-        fp.close()
-        
-        sys.path.append(urdf_abs_path)
+
         from generated_returnA import returnA, RLS
 
         try:
@@ -175,10 +184,10 @@ class SystemIDFrame ( wx.Frame ):
         self.m_textCtrl_results.write('Starting...\n')
         pred_tau = []
         true_tau = []
-        my_rls = RLS()
+        self.my_rls = RLS()
         for i in range(len(qdd)):
             A = returnA(q[i, :], qd[i, :], qdd[i, :])
-            my_rls.add_obs(A, tau[i, :])
+            self.my_rls.add_obs(A, tau[i, :])
             true_tau.append(tau[i, :])
 
             if i%100 == 1:
@@ -188,12 +197,12 @@ class SystemIDFrame ( wx.Frame ):
         
         for i in range(len(qdd)):
             A = returnA(q[i, :], qd[i, :], qdd[i, :])
-            pred_tau.append(np.matmul(A, my_rls.theta))
+            pred_tau.append(np.matmul(A, self.my_rls.theta))
             
         self.pred_tau = np.asarray(pred_tau)
         self.true_tau = np.asarray(true_tau)
 
-        self.J = my_rls.meanJ_list
+        self.J = self.my_rls.meanJ_list
         
         self.m_button_start.Enable()
         self.id_done = 1

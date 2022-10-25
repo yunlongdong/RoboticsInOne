@@ -4,6 +4,7 @@ import wx
 import wx.glcanvas
 from wx import html, stc
 from copy import copy
+import os, shutil
 import os.path as osp
 import sys
 sys.path.append('../../')
@@ -91,16 +92,9 @@ class Window(BaseWindow):
             menuBar.Append(menu, "Codegen")
             self.SetMenuBar(menuBar)  # Adding the MenuBar to the Frame content
 
+
             bSizer2_1.Add( text1, -1, wx.ALL, 0)
             bSizer2_1.Add( self.m_checklist_invert_j , 1,  wx.EXPAND|wx.ALL, 0)
-            # text2 = wx.StaticText( self, wx.ID_ANY, 'Utils', wx.DefaultPosition, wx.DefaultSize, 0 )
-            # bSizer2_1.Add( text2, 0, wx.ALL, 0)
-            # bSizer2_1.Add( self.m_button_save , 0,  wx.EXPAND|wx.ALL, 0)
-            # bSizer2_1.Add( self.m_button_mdh , 0,  wx.EXPAND|wx.ALL, 0)
-            # bSizer2_1.Add( self.m_button_kine , 0,  wx.EXPAND|wx.ALL, 0)
-            # bSizer2_1.Add( self.m_button_dyn , 0,  wx.EXPAND|wx.ALL, 0)
-            # bSizer2_1.Add( self.m_button_sysid , 0,  wx.EXPAND|wx.ALL, 0)
-            # bSizer2_1.Add( self.m_button_traj_gen , 0,  wx.EXPAND|wx.ALL, 0)
 
 
             
@@ -341,9 +335,21 @@ class Window(BaseWindow):
             self.view._on_paint(None)
             return
         
+        def clean(self):
+            urdf_abs_path = osp.dirname(self.robot.urdf_file)
+            for root, dirs, files in os.walk(urdf_abs_path):
+                for file in files:
+                    if file.startswith('generated'):
+                        os.remove(osp.join(root, file))
+                for dir in dirs:
+                    if dir == "__pycache__":
+                        shutil.rmtree(osp.join(root, dir))
+                
+
         def _on_close(self, event):
             # If close was called before then close
             if self._window._closing:
+                self.clean()
                 self.view._on_close(event)
                 self.Destroy()
 
