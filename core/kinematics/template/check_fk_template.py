@@ -116,12 +116,17 @@ def check_fk(filename=''):
     base2world_xyz = root_joint.xyz_MDH
     local_pos = leave_link.com_MDH
     local_rpy = leave_link.rpy_MDH
-    print("local_pos=", local_pos)
+    
     MDHs = robot.MDH_params
     fk = FK_SYM(base2world_rpy, base2world_xyz, MDHs)
+    # print("base2world_rpy=", base2world_rpy)
+    # print("base2world_xyz=", base2world_xyz)
+    # print("MDHs=", MDHs)
+    # print("local_pos=", local_pos)
+    # print("local_rpy=", local_rpy)
 
     # randomly set joint angles
-    qs = list(random(fk.num_joints))
+    qs = list(random(fk.num_joints)) # [0.] * fk.num_joints
     print("set random joint angle=", qs)
     robot.set_joint_angle(qs)
 
