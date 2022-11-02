@@ -29,7 +29,7 @@ class DynamicsFrame(wx.Frame):
 
         bSizer1_1.Add( self.m_staticText3, 0, wx.ALIGN_CENTER_VERTICAL|wx.ALL, 5 )
 
-        m_choice_dynamicsChoices = [u"Mass Matrix", u"Inverse Dynamics", u"Base Inertia Parameters"]
+        m_choice_dynamicsChoices = [u"Mass Matrix", u"Inverse Dynamics", u"Base Inertia Parameters", u"Inv Dynamics with Base Params"]
         self.m_choice_dynamics = wx.Choice( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, m_choice_dynamicsChoices, 0 )
         self.m_choice_dynamics.SetSelection( 0 )
         bSizer1_1.Add(self.m_choice_dynamics, 0, wx.ALL, 5)
@@ -37,8 +37,8 @@ class DynamicsFrame(wx.Frame):
         self.m_button_codegen = wx.Button( self, wx.ID_ANY, u"Code", wx.DefaultPosition, wx.DefaultSize, 0 )
         bSizer1_1.Add(self.m_button_codegen, 0, wx.ALL, 5)
 
-        self.m_button_kine_check = wx.Button( self, wx.ID_ANY, u"Check", wx.DefaultPosition, wx.DefaultSize, 0 )
-        bSizer1_1.Add(self.m_button_kine_check, 0, wx.ALL, 5)
+        self.m_button_check = wx.Button( self, wx.ID_ANY, u"Check", wx.DefaultPosition, wx.DefaultSize, 0 )
+        bSizer1_1.Add(self.m_button_check, 0, wx.ALL, 5)
 
         self.m_button_cpp = wx.Button( self, wx.ID_ANY, u"C++", wx.DefaultPosition, wx.DefaultSize, 0 )
         bSizer1_1.Add( self.m_button_cpp, 0, wx.ALL, 5 )
@@ -75,7 +75,7 @@ class DynamicsFrame(wx.Frame):
 
 
         self.Bind(wx.EVT_BUTTON, self.OnCode, self.m_button_codegen)
-        self.Bind(wx.EVT_BUTTON, self.OnCheck, self.m_button_kine_check)
+        self.Bind(wx.EVT_BUTTON, self.OnCheck, self.m_button_check)
         self.Bind(wx.EVT_BUTTON, self.OnCpp, self.m_button_cpp)
         self.Bind(wx.EVT_BUTTON, self.OnRun, self.m_button_run)
         self.code_type = "code"
@@ -95,6 +95,8 @@ class DynamicsFrame(wx.Frame):
         # choose systemID
         elif mode == 2:
             self.python_codepad.SetValue(self.codegen.systemID_code)
+        elif mode == 3:
+            self.python_codepad.SetValue(self.codegen.invdyn_baseparams_code)
 
     def OnCheck(self, e):
         self.code_type = "check"
@@ -108,6 +110,8 @@ class DynamicsFrame(wx.Frame):
         # choose systemID
         elif mode == 2:
             self.python_codepad.SetValue(self.codegen.check_systemID_code)
+        elif mode == 3:
+            self.python_codepad.SetValue(self.codegen.check_invdyn_baseparams_code)
 
     def OnCpp(self, e):
         self.code_type = "cpp"
@@ -153,6 +157,13 @@ class DynamicsFrame(wx.Frame):
                     exec(self.codegen.systemID_code.replace(old_str, new_str), globals())
                 elif self.code_type == "check":
                     exec(self.codegen.check_systemID_code.replace(old_str, new_str), globals())
+                elif self.code_type == "cpp":
+                    exec("print('Running cpp code is not supported now...')")
+            elif mode == 3:
+                if self.code_type == "code":
+                    exec(self.codegen.invdyn_baseparams_code.replace(old_str, new_str), globals())
+                elif self.code_type == "check":
+                    exec(self.codegen.check_invdyn_baseparams_code.replace(old_str, new_str), globals())
                 elif self.code_type == "cpp":
                     exec("print('Running cpp code is not supported now...')")
             self.result = str(sys.stdout.getvalue().strip())

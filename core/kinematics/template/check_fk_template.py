@@ -133,6 +133,7 @@ def check_fk(filename=''):
     # calculated by fk
     global_pos_rot = fk.return_global_pos_rot(qs, local_pos, local_rpy)
     global_pos, global_rot = global_pos_rot[:3, -1], global_pos_rot[:3, :3]
+    print("*"*50)
     print("fk global_pos=", global_pos)
     
     # calculated by RIO
@@ -150,6 +151,7 @@ def check_fk(filename=''):
     print("pos error=", np.sum(np.abs(np.array(link_pos) - global_pos)))
 
     p_global_rot = np.array(p.getMatrixFromQuaternion(link_orientation)).reshape(3, 3)
+    print("*"*50)
     print("pybullet global_rot=", p_global_rot)
     print("fk global_rot = ", global_rot)
     print("rotation error=", np.sum(np.abs(p_global_rot-global_rot)))
