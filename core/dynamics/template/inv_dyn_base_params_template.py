@@ -110,6 +110,4 @@ if __name__ =="__main__":
     # 计算M, C, G, fric矩阵
     M, C, G, fric = split_M_C_G_fric(theta)
     c_code, c_header = gencpp(fric)
-    print("fric code=", fric)
-    c_code, c_header = gencpp(G)
-    print("G code=", G)
+    print("fric code=", c_code)
