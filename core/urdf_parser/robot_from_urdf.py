@@ -360,7 +360,7 @@ class Robot:
     def process_link(self, link):
         robotlink = Robotlink()
         robotlink.linkname = link.get('name')
-        robotlink.mesh_fileName =  osp.join(osp.dirname(self.urdf_file), link.find("visual").find("geometry").find("mesh").get("filename"))
+        robotlink.mesh_fileName =  osp.join(osp.dirname(self.urdf_file), link.find("visual").find("geometry").find("mesh").get("filename").replace('\\', r"/"))
 
         for child in link:
             if child.tag == 'inertial':

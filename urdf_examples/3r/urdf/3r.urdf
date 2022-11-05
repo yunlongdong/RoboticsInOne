@@ -10,13 +10,13 @@
       <visual name="base-Body">
         <origin xyz="0 0 0.2" rpy="1.5708 0 1.5708"/>
         <geometry>
-          <mesh filename="..\meshes\stl\base-Body.004.stl" scale="1.0 1.0 1.0"/>
+          <mesh filename="../meshes/stl/base-Body.004.stl" scale="1.0 1.0 1.0"/>
         </geometry>
       </visual>
       <collision>
         <origin xyz="0 0 0.2" rpy="1.5708 0 1.5708"/>
         <geometry>
-          <mesh filename="..\meshes\stl\base-Body.004.stl" scale="1.0 1.0 1.0"/>
+          <mesh filename="../meshes/stl/base-Body.004.stl" scale="1.0 1.0 1.0"/>
         </geometry>
       </collision>
     </link>
@@ -30,13 +30,13 @@
       <visual name="arm-Body">
         <origin xyz="0 0 0.18187" rpy="1.5708 0 0"/>
         <geometry>
-          <mesh filename="..\meshes\stl\arm-Body.005.stl" scale="1.0 1.0 1.0"/>
+          <mesh filename="../meshes/stl/arm-Body.005.stl" scale="1.0 1.0 1.0"/>
         </geometry>
       </visual>
       <collision>
         <origin xyz="0 0 0.18187" rpy="1.5708 0 0"/>
         <geometry>
-          <mesh filename="..\meshes\stl\arm-Body.005.stl" scale="1.0 1.0 1.0"/>
+          <mesh filename="../meshes/stl/arm-Body.005.stl" scale="1.0 1.0 1.0"/>
         </geometry>
       </collision>
     </link>
@@ -50,13 +50,13 @@
       <visual name="arm2-Body">
         <origin xyz="0 0 0.22" rpy="1.5708 0 0"/>
         <geometry>
-          <mesh filename="..\meshes\stl\arm2-Body.004.stl" scale="1.0 1.0 1.0"/>
+          <mesh filename="../meshes/stl/arm2-Body.004.stl" scale="1.0 1.0 1.0"/>
         </geometry>
       </visual>
       <collision>
         <origin xyz="0 0 0.22" rpy="1.5708 0 0"/>
         <geometry>
-          <mesh filename="..\meshes\stl\arm2-Body.004.stl" scale="1.0 1.0 1.0"/>
+          <mesh filename="../meshes/stl/arm2-Body.004.stl" scale="1.0 1.0 1.0"/>
         </geometry>
       </collision>
     </link>
@@ -70,13 +70,13 @@
         <visual name="world-Body">
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-            <mesh filename="..\meshes\stl\world-Body.003.stl" scale="1.0 1.0 1.0"/>
+            <mesh filename="../meshes/stl/world-Body.003.stl" scale="1.0 1.0 1.0"/>
             </geometry>
         </visual>
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
-                <mesh filename="..\meshes\stl\world-Body.003.stl" scale="1.0 1.0 1.0"/>
+                <mesh filename="../meshes/stl/world-Body.003.stl" scale="1.0 1.0 1.0"/>
             </geometry>
       </collision>
     </link>
@@ -90,13 +90,13 @@
       <visual name="tool-Body">
         <origin xyz="0 0 0.01881" rpy="1.5708 0 0"/>
         <geometry>
-          <mesh filename="..\meshes\stl\tool-Body.stl" scale="1.0 1.0 1.0"/>
+          <mesh filename="../meshes/stl/tool-Body.stl" scale="1.0 1.0 1.0"/>
         </geometry>
       </visual>
       <collision>
         <origin xyz="0 0 0.01881" rpy="1.5708 0 0"/>
             <geometry>
-                <mesh filename="..\meshes\stl\tool-Body.stl" scale="1.0 1.0 1.0"/>
+                <mesh filename="../meshes/stl/tool-Body.stl" scale="1.0 1.0 1.0"/>
             </geometry>
       </collision>
     </link>

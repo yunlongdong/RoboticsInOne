@@ -2,11 +2,13 @@ from numpy.random import random
 import numpy as np
 from numpy import sin, cos, sign
 
-from sympy import sin, cos, sign, sqrt, simplify, nsimplify, lambdify
+import symengine
+from symengine import var, sin, cos, sign, sqrt, zeros, eye, ones, Matrix
+from sympy import simplify, nsimplify, lambdify
 import sympy as sym
-from sympy.matrices import Matrix, zeros, eye, ones
 from sympy.utilities.codegen import codegen
 from copy import deepcopy
+import time
 
 
 def return_elements(inertia_matrix):
@@ -31,46 +33,49 @@ def returnTheta():
 
 def split_M_C_G_fric(theta, tol=1e-10):
     # theta from numpy array to sympy matrix
-    theta = Matrix(theta)
+    theta = Matrix(sym.Matrix(theta))
     num_joints = $num_joints
-    qs = [sym.symbols('q{}'.format(i+1)) for i in range(num_joints)]
-    dqs = [sym.symbols('dq{}'.format(i+1)) for i in range(num_joints)]
-    ddqs = [sym.symbols('ddq{}'.format(i+1)) for i in range(num_joints)]
+    qs = [var('q{}'.format(i+1)) for i in range(num_joints)]
+    dqs = [var('dq{}'.format(i+1)) for i in range(num_joints)]
+    ddqs = [var('ddq{}'.format(i+1)) for i in range(num_joints)]
 
     X = returnA(qs, dqs, ddqs)
     fric = X[:, -2*num_joints:] * theta[-2*num_joints:, 0]
     Mdqq_C_G = X[:, :-2*num_joints] * theta[:-2*num_joints, 0]
-    Mdqq_C_G = Mdqq_C_G.expand()
 
     # M+G 矩阵
-    Mdqq_G = Mdqq_C_G.subs([(dq, 0) for dq in dqs])
+    Mdqq_G = Mdqq_C_G.subs(dqs, [0.]*num_joints)
     # G矩阵
-    G = Mdqq_G.subs([(ddq, 0) for ddq in ddqs])
+    G = Mdqq_G.subs(ddqs, [0.]*num_joints)
     # Mdqq
     Mdqq = Mdqq_G - G
     # C
-    C = Mdqq_C_G.subs([(ddq, 0) for ddq in ddqs]) - G
+    C = Mdqq_C_G.subs(ddqs, [0.]*num_joints) - G
 
     # M*ddq矩阵 -> M矩阵
     M = zeros(num_joints)
+    start_time = time.time()
     Mdqq = Mdqq.expand()
+    print("expanding time={0}...".format(time.time()-start_time))
     for i in range(Mdqq.shape[0]):
-        for j in range(Mdqq.shape[1]):
-            Mdqq_ij = Mdqq[i, j]
-            for term in Mdqq_ij.args:
-                for k in range(num_joints):
-                    if ddqs[k] in term.free_symbols:
-                        M[i, k] += term/ddqs[k]
-    
-    M = nsimplify(M, tolerance=tol)
-    C = nsimplify(C, tolerance=tol)
-    G = nsimplify(G, tolerance=tol)
-
-    
-    # M = lambdify([qs], M, "numpy")
-    # C = lambdify([qs, dqs], C, "numpy")
-    # G = lambdify([qs], G, "numpy")
-    # fric = lambdify([qs, dqs], fric, "numpy")
+        start_time = time.time()
+        Mdqq_ij = Mdqq[i, 0]
+        print("num_term of joint {0} = {1}".format(i+1, len(Mdqq_ij.args)))
+        for index, term in enumerate(Mdqq_ij.args):
+            if index % 1e4 == 0:
+                print("index={0}".format(index))
+            clean_term = 0.
+            if abs(term.args[0]) > tol:
+                clean_term = term
+            else:
+                continue
+            
+            for k in range(num_joints):
+                if ddqs[k] in clean_term.free_symbols:
+                    M[i, k] += clean_term.subs(ddqs[k], 1.)
+                    break
+        print("time for calculating M of joint {0} = {1}...".format(i+1, time.time()-start_time))
+    M = 0.5*(M + M.T)
     
     return M, C, G, fric
 
@@ -109,5 +114,5 @@ if __name__ =="__main__":
     theta = np.ones($num_theta)#returnTheta()
     # 计算M, C, G, fric矩阵
     M, C, G, fric = split_M_C_G_fric(theta)
-    c_code, c_header = gencpp(fric)
-    print("fric code=", c_code)
+    c_code, c_header = gencpp(sym.Matrix(M))
+    print("M code=", c_code)

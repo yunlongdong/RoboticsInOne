@@ -9,12 +9,15 @@ sys.path.append(r'../')
 from urdf_parser.robot_from_urdf import *
 from urdf_parser.utils import *
 
-from sympy import sin, cos, sign, sqrt, simplify, nsimplify, lambdify
+import symengine
+from symengine import var, sin, cos, sign, sqrt, zeros, eye, ones, Matrix
+from sympy import simplify, nsimplify, lambdify
 import sympy as sym
-from sympy.matrices import Matrix, zeros, eye, ones
+from sympy.utilities.codegen import codegen
 from copy import deepcopy
+import time
 
-class systemID:
+class invdyn_baseparams:
     def __init__(self, fileName):
         self.fileName = fileName
         self.robot = Robot(fileName=self.fileName)
@@ -28,46 +31,49 @@ class systemID:
 
     def split_M_C_G_fric(self, theta, tol=1e-10):
         # theta from numpy array to sympy matrix
-        theta = Matrix(theta)
-        num_joints = self.robot.num_robotjoints
-        qs = [sym.symbols('q{}'.format(i+1)) for i in range(num_joints)]
-        dqs = [sym.symbols('dq{}'.format(i+1)) for i in range(num_joints)]
-        ddqs = [sym.symbols('ddq{}'.format(i+1)) for i in range(num_joints)]
+        theta = Matrix(sym.Matrix(theta))
+        num_joints = $num_joints
+        qs = [var('q{}'.format(i+1)) for i in range(num_joints)]
+        dqs = [var('dq{}'.format(i+1)) for i in range(num_joints)]
+        ddqs = [var('ddq{}'.format(i+1)) for i in range(num_joints)]
 
         X = self.returnA(qs, dqs, ddqs)
         fric = X[:, -2*num_joints:] * theta[-2*num_joints:, 0]
         Mdqq_C_G = X[:, :-2*num_joints] * theta[:-2*num_joints, 0]
-        Mdqq_C_G = Mdqq_C_G.expand()
 
         # M+G 矩阵
-        Mdqq_G = Mdqq_C_G.subs([(dq, 0) for dq in dqs])
+        Mdqq_G = Mdqq_C_G.subs(dqs, [0.]*num_joints)
         # G矩阵
-        G = Mdqq_G.subs([(ddq, 0) for ddq in ddqs])
+        G = Mdqq_G.subs(ddqs, [0.]*num_joints)
         # Mdqq
         Mdqq = Mdqq_G - G
         # C
-        C = Mdqq_C_G.subs([(ddq, 0) for ddq in ddqs]) - G
+        C = Mdqq_C_G.subs(ddqs, [0.]*num_joints) - G
 
         # M*ddq矩阵 -> M矩阵
         M = zeros(num_joints)
+        start_time = time.time()
         Mdqq = Mdqq.expand()
+        print("expanding time={0}...".format(time.time()-start_time))
         for i in range(Mdqq.shape[0]):
-            for j in range(Mdqq.shape[1]):
-                Mdqq_ij = Mdqq[i, j]
-                for term in Mdqq_ij.args:
-                    for k in range(num_joints):
-                        if ddqs[k] in term.free_symbols:
-                            M[i, k] += term/ddqs[k]
-        
-        M = nsimplify(M, tolerance=tol)
-        C = nsimplify(C, tolerance=tol)
-        G = nsimplify(G, tolerance=tol)
+            start_time = time.time()
+            Mdqq_ij = Mdqq[i, 0]
+            print("num_term of joint {0} = {1}".format(i+1, len(Mdqq_ij.args)))
+            for index, term in enumerate(Mdqq_ij.args):
+                clean_term = 0.
+                if abs(term.args[0]) > tol:
+                    clean_term = term
+                else:
+                    continue
+                
+                for k in range(num_joints):
+                    if ddqs[k] in clean_term.free_symbols:
+                        M[i, k] += clean_term.subs(ddqs[k], 1.)
+                        break
+            print("time for calculating M of joint {0} = {1}...".format(i+1, time.time()-start_time))
+        M = 0.5*(M + M.T)
 
-        
-        self.M = lambdify([qs], M, "numpy")
-        self.C = lambdify([qs, dqs], C, "numpy")
-        self.G = lambdify([qs], G, "numpy")
-        self.fric = lambdify([qs, dqs], fric, "numpy")
+        self.M, self.C, self.G, self.fric = M, C, G, fric
         
         return self.M, self.C, self.G, self.fric
 
@@ -130,10 +136,18 @@ class systemID:
         Theta = self.returnTheta()
         M, C, G, fric = self.split_M_C_G_fric(Theta)
         
-        C = np.array(C(qs, dqs)).flatten()
-        G = np.array(G(qs)).flatten()
-        fric = np.array(fric(qs, dqs)).flatten()
-        symoro_jointtorque = np.matmul(M(np.array(qs)), np.array(ddqs)) + C + G + fric
+        qs_sym = [var('q{}'.format(i+1)) for i in range(self.robot.num_robotjoints)]
+        dqs_sym = [var('dq{}'.format(i+1)) for i in range(self.robot.num_robotjoints)]
+        ddqs_sym = [var('ddq{}'.format(i+1)) for i in range(self.robot.num_robotjoints)]
+        M_ddq = np.matmul(np.array(simplify(M.subs(qs_sym, qs))), np.array(ddqs))
+        C = np.array(simplify(C.subs(qs_sym+dqs_sym, qs+dqs))).flatten()
+        G = np.array(simplify(G.subs(qs_sym, qs))).flatten()
+        fric = np.array(simplify(fric.subs(qs_sym+dqs_sym, qs+dqs))).flatten()
+        symoro_jointtorque =  M_ddq + C + G + fric
+        print("M_ddq=", M_ddq)
+        print("C=", C)
+        print("G=", G)
+        print("fric=", fric)
         print("symoro joint torque=", symoro_jointtorque)
 
         # calculated by pybullet
@@ -147,5 +161,5 @@ class systemID:
 
 
 if __name__ =="__main__":
-    my_systemID = systemID(fileName=r'$fileName')
-    my_systemID.compareTorque()
+    my_invdyn_baseparams = invdyn_baseparams(fileName=r'$fileName')
+    my_invdyn_baseparams.compareTorque()
