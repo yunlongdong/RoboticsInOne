@@ -139,12 +139,13 @@ class invdyn_baseparams:
         qs_sym = [var('q{}'.format(i+1)) for i in range(self.robot.num_robotjoints)]
         dqs_sym = [var('dq{}'.format(i+1)) for i in range(self.robot.num_robotjoints)]
         ddqs_sym = [var('ddq{}'.format(i+1)) for i in range(self.robot.num_robotjoints)]
-        M_ddq = np.matmul(np.array(simplify(M.subs(qs_sym, qs))), np.array(ddqs))
+        M = np.array(simplify(M.subs(qs_sym, qs)))
+        M_ddq = np.matmul(M, np.array(ddqs))
         C = np.array(simplify(C.subs(qs_sym+dqs_sym, qs+dqs))).flatten()
         G = np.array(simplify(G.subs(qs_sym, qs))).flatten()
         fric = np.array(simplify(fric.subs(qs_sym+dqs_sym, qs+dqs))).flatten()
         symoro_jointtorque =  M_ddq + C + G + fric
-        print("M_ddq=", M_ddq)
+        print("M=", M)
         print("C=", C)
         print("G=", G)
         print("fric=", fric)
