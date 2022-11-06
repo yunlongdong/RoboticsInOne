@@ -4,7 +4,9 @@ Robotics In One (RIO) Studio
 [Chinese README](./README_CH.md)
 ## Introduction
 RIO is committed to providing a standard and complete tool chain and ecology with a graphical operation interface for the robot community. RIO implements 3D visualization of robot links, joints and center of mass (CoM) by specifying a URDF file, and generates kinematics/dynamics codes via URDF ->MDH ->Kinematics ->Jacobian ->Dynamics.
-![](./docs/res/RIO_instruction.gif)
+<p align="center">
+    <img src="./docs/res/RIO_instruction.gif" height="600">
+</p>
 
 ## Getting Started
 * For windows users, you can 
