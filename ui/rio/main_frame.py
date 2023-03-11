@@ -4,45 +4,70 @@ import numpy as np
 import os.path as osp
 import os
 
+
+
 from .urdf_show import urdf_show
+from .mdpad import MDFrame
 
 dir_abs_path = osp.dirname(osp.abspath(__file__))
+
+
+class BmpPanel(wx.Panel):
+    def __init__(self, parent):
+        wx.Panel.__init__(self, parent)
+        self.start_bmp_path = osp.join(dir_abs_path, '../icons/start.png')
+        bitmap =wx.Bitmap(self.start_bmp_path)
+        self.bitmap_ctrl = wx.StaticBitmap(self, bitmap=bitmap)
+        # 布局
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(self.bitmap_ctrl, 1, wx.EXPAND|wx.ALL, 0)
+        self.SetSizer(sizer)
+
+        self.Bind(wx.EVT_SIZE, self.OnSize)
+
+    def OnSize(self, event):
+        # 获取面板尺寸
+        panel_size = self.GetSize()
+
+        # 调整位图尺寸
+        image = wx.Bitmap(self.start_bmp_path).ConvertToImage()
+        image.Rescale(panel_size.width, panel_size.height, wx.IMAGE_QUALITY_HIGH)
+        self.bitmap = wx.Bitmap(image)
+        self.bitmap_ctrl.SetBitmap(self.bitmap)
 
 class MainFrame ( wx.Frame ):
     def __init__(self, parent):
         
         wx.Frame.__init__ ( self, parent, id = wx.ID_ANY, title = u"Robotics In One", pos = wx.DefaultPosition, size = wx.Size( 800,600 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL )
 
-        self.SetSizeHints( wx.DefaultSize, wx.DefaultSize )
+        self.SetSizeHints( wx.DefaultSize, wx.DefaultSize)
 
-        bSizer1 = wx.BoxSizer( wx.HORIZONTAL )
+        self.bitmap_ctrl = BmpPanel(self)
 
-        self.m_html_start_doc = html.HtmlWindow(self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.html.HW_SCROLLBAR_AUTO)
-        bSizer1.Add( self.m_html_start_doc, 2, wx.EXPAND|wx.ALL, 2 )
+        hsizer1 = wx.BoxSizer(wx.HORIZONTAL)
+        tutorial_btn = wx.Button(self, label="README")
+        open_btn = wx.Button(self, label="Open URDF")
+        contact_btn = wx.Button(self, label="Contact")
 
-        self.m_text_show = html.HtmlWindow( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.TAB_TRAVERSAL )
-        bSizer1.Add( self.m_text_show, 4, wx.EXPAND |wx.ALL, 2 )
+        self.tutorial_btn = tutorial_btn
+        self.open_btn = open_btn
+        self.contact_btn = contact_btn
 
-        # self.m_button1 = wx.Button( self, wx.ID_ANY, u"MyButton", wx.DefaultPosition, wx.DefaultSize, 0 )
-        # bSizer1.Add( self.m_button1, 0, wx.ALL, 5 )
+        hsizer1.AddStretchSpacer(1)
+        hsizer1.Add(tutorial_btn, 0, wx.ALIGN_CENTER, 2)
+        hsizer1.AddSpacer(10)
+        hsizer1.Add(open_btn, 0, wx.ALIGN_CENTER, 2)
+        hsizer1.AddSpacer(10)
+        hsizer1.Add(contact_btn, 0, wx.ALIGN_CENTER, 2)
+        hsizer1.AddStretchSpacer(1)
 
-        self.SetSizer( bSizer1 )
-        self.Layout()
-        self.MenuMain = wx.MenuBar( 0 )
-        self.MenuFile = wx.Menu()
-        self.MenuFileOpen = wx.Menu()
-        self.m_menuItem_open_urdf = wx.MenuItem( self.MenuFileOpen, wx.ID_ANY, u"URDF\tCtrl+U", wx.EmptyString, wx.ITEM_NORMAL )
-        self.MenuFileOpen.Append( self.m_menuItem_open_urdf )
-
-        # self.m_menuItem_open_MDH = wx.MenuItem( self.MenuFileOpen, wx.ID_ANY, u"Modified D-H", wx.EmptyString, wx.ITEM_NORMAL )
-        # self.MenuFileOpen.Append( self.m_menuItem_open_MDH )
-
-        self.MenuFile.AppendSubMenu( self.MenuFileOpen, u"Open" )
-
-        self.MenuMain.Append( self.MenuFile, u"File" )
+        Vsizer = wx.BoxSizer(wx.VERTICAL)
+        Vsizer.Add(self.bitmap_ctrl, 1, wx.ALL|wx.EXPAND, 2)
+        Vsizer.Add(hsizer1, 0, wx.ALL|wx.ALIGN_CENTER_HORIZONTAL, 2)
+        self.SetSizer(Vsizer)
 
 
-        self.SetMenuBar( self.MenuMain )
+        self.SetBackgroundColour( wx.Colour( 255, 255, 255 ) )
 
         self.m_statusBar = self.CreateStatusBar( 1, wx.STB_SIZEGRIP, wx.ID_ANY )
 
@@ -55,24 +80,6 @@ class MainFrame ( wx.Frame ):
         icon.CopyFromBitmap(wx.Bitmap(osp.join(dir_abs_path, "../icons/ico.bmp"), wx.BITMAP_TYPE_ANY))
         # icon.LoadFile("icons/sm.ico", wx.BITMAP_TYPE_ANY)
         self.SetIcon(icon)
-
-        # start doc
-        # self.m_html_start_doc.LoadFile(osp.join(dir_abs_path, "../../docs/test.html"))
-        # self.m_html_start_doc.SetStandardFonts(size=10)
-        # with open(osp.join(dir_abs_path, "../../docs/start.html"), encoding='utf-8') as f:
-        #     content = f.read()
-        # self.m_html_start_doc.SetPage(content)
-        # self.m_text_show.SetStandardFonts(size=20)
-        # self.m_text_show.LoadFile(osp.join(dir_abs_path, "../../docs/support_us.html"))
-        self.m_html_start_doc.SetStandardFonts(size=15)
-        self.m_html_start_doc.LoadFile(osp.join(dir_abs_path, "../../docs/support_us.html"))
-        
-        self.m_text_show.SetStandardFonts(size=12)
-        with open(osp.join(dir_abs_path, "../../docs/start.html"), encoding='utf-8') as f:
-            content = f.read()
-        self.m_text_show.SetPage(content)
-        
-
         # bind event
         self.bind_all()
 
@@ -80,7 +87,23 @@ class MainFrame ( wx.Frame ):
         pass
 
     def bind_all(self):
-        self.Bind(wx.EVT_MENU, self.OnOpenURDF, self.m_menuItem_open_urdf)
+        self.Bind(wx.EVT_BUTTON, self.OnOpenURDF, self.open_btn)
+        self.Bind(wx.EVT_BUTTON, self.OnTutorial, self.tutorial_btn)
+        self.Bind(wx.EVT_BUTTON, self.OnContact, self.contact_btn)
+    
+    def OnTutorial(self, e):   
+        path = osp.join(dir_abs_path, "../../docs/start.md")
+        with open(path, encoding='utf-8') as f:
+            cont = f.read()
+            frame = MDFrame(self, title='README', cont=cont, home=osp.dirname(osp.abspath(path)))
+            frame.Show()
+
+    def OnContact(self, e):
+        path = osp.join(dir_abs_path, "../../docs/contact_us.md")
+        with open(path, encoding='utf-8') as f:
+            cont = f.read()
+            frame = MDFrame(self, title='Contact Us', cont=cont, home=osp.dirname(osp.abspath(path)))
+            frame.Show()
 
     def OnOpenURDF(self, evt):
         print('Open URDF...')
