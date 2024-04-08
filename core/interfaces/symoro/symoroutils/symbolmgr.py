@@ -22,9 +22,9 @@ from .genfunc import gen_fheader_matlab, gen_fbody_matlab
 
 class SymbolManager(object):
     """Symbol manager, responsible for symbol replacing, file writing."""
-    def __init__(self, file_out='disp', sydi=dict()):
-        """Default values correspond to empty dictionary and screen output.
-        """
+
+    def __init__(self, file_out="disp", sydi=dict()):
+        """Default values correspond to empty dictionary and screen output."""
         self.file_out = file_out
         """Output descriptor. Can be None, 'disp', file
         defines the output destination"""
@@ -67,9 +67,7 @@ class SymbolManager(object):
                 cos_term, sin_term = tools.cos_sin_syms(name)
             else:
                 cos_term, sin_term = cos(name), sin(name)
-            sym = self.try_opt(
-                tools.ONE, None, sin_term**2, cos_term**2, sym
-            )
+            sym = self.try_opt(tools.ONE, None, sin_term**2, cos_term**2, sym)
         return sym
 
     def CS12_simp(self, sym, silent=False):
@@ -107,10 +105,10 @@ class SymbolManager(object):
             else:
                 C1, S1 = cos(n1), sin(n1)
                 C2, S2 = cos(n2), sin(n2)
-                C12, S12 = cos(n1+n2), sin(n1+n2)
-                C1m2, S1m2 = cos(n1-n2), sin(n1-n2)
-            sym2 = self.try_opt(S12, S1m2, S1*C2, C1*S2, sym2, silent)
-            sym2 = self.try_opt(C12, C1m2, C1*C2, -S1*S2, sym2, silent)
+                C12, S12 = cos(n1 + n2), sin(n1 + n2)
+                C1m2, S1m2 = cos(n1 - n2), sin(n1 - n2)
+            sym2 = self.try_opt(S12, S1m2, S1 * C2, C1 * S2, sym2, silent)
+            sym2 = self.try_opt(C12, C1m2, C1 * C2, -S1 * S2, sym2, silent)
         if sym2 != sym:
             return self.CS12_simp(sym2, silent)
         else:
@@ -126,7 +124,7 @@ class SymbolManager(object):
             Res = old_sym
             Res_tmp = Res
             for coef in Bcfs:
-                Res_tmp += A*coef - B*coef - C*coef
+                Res_tmp += A * coef - B * coef - C * coef
                 if tools.sym_less(Res_tmp, Res):
                     Res = Res_tmp
             if tools.sym_less(Res, old_sym) and Am is None:
@@ -137,7 +135,7 @@ class SymbolManager(object):
                 Res2 = old_sym
                 Res_tmp = Res2
                 for coef in Bcfs:
-                    Res_tmp += Am*coef - B*coef + C*coef
+                    Res_tmp += Am * coef - B * coef + C * coef
                     if tools.sym_less(Res_tmp, Res2):
                         Res2 = Res_tmp
                 if tools.sym_less(Res2, Res) and tools.sym_less(Res2, old_sym):
@@ -197,8 +195,8 @@ class SymbolManager(object):
                 M[i1, i2] = M[i1, i2].subs(subs_dict)
         return M
 
-    #TODO remove index
-    def replace(self, old_sym, name, index='', forced=False):
+    # TODO remove index
+    def replace(self, old_sym, name, index="", forced=False):
         """Creates a new symbol for the symbolic expression old_sym.
 
         Parameters
@@ -232,8 +230,7 @@ class SymbolManager(object):
         self.add_to_dict(new_sym, old_sym)
         return new_sym
 
-    def mat_replace(self, M, name, index='',
-                    forced=False, skip=0, symmet=False):
+    def mat_replace(self, M, name, index="", forced=False, skip=0, symmet=False):
         """Replaces each element in M by symbol
 
         Parameters
@@ -274,9 +271,9 @@ class SymbolManager(object):
                 # for the case when B+C+... is small enough
         """
         if M.shape[0] > 9:
-            form2 = '%02d%02d'
+            form2 = "%02d%02d"
         else:
-            form2 = '%d%d'
+            form2 = "%d%d"
         for i2 in range(M.shape[1]):
             for i1 in range(M.shape[0] - skip):
                 if symmet and i1 < i2:
@@ -334,9 +331,16 @@ class SymbolManager(object):
             self.write_line(tools.l2str(params))
         self.write_line()
 
-    def write_params_table(self, robo, title='', geom=True, inert=False,
-                           dynam=False, equations=True,
-                           inert_name='Dynamic inertia parameters'):
+    def write_params_table(
+        self,
+        robo,
+        title="",
+        geom=True,
+        inert=False,
+        dynam=False,
+        equations=True,
+        inert_name="Dynamic inertia parameters",
+    ):
         """Writes the geometric parameters table
 
         Parameters
@@ -350,29 +354,34 @@ class SymbolManager(object):
         =====
         The synamic model generation program can be started with this function
         """
-        if title != '':
+        if title != "":
             self.write_line(title)
             self.write_line()
         if geom:
-            self.write_param('Geometric parameters', robo.get_geom_head(),
-                             robo, range(1, robo.NF))
+            self.write_param(
+                "Geometric parameters", robo.get_geom_head(), robo, range(1, robo.NF)
+            )
         if inert:
             if robo.is_floating or robo.is_mobile:
                 start_frame = 0
             else:
                 start_frame = 1
 
-            self.write_param(inert_name, robo.get_dynam_head(),
-                             robo, range(start_frame, robo.NL))
+            self.write_param(
+                inert_name, robo.get_dynam_head(), robo, range(start_frame, robo.NL)
+            )
         if dynam:
-            self.write_param('External forces and joint parameters',
-                             robo.get_ext_dynam_head(),
-                             robo, range(1, robo.NL))
-            self.write_param('Base velocity parameters',
-                             robo.get_base_vel_head(),
-                             robo, [0, 1, 2])
+            self.write_param(
+                "External forces and joint parameters",
+                robo.get_ext_dynam_head(),
+                robo,
+                range(1, robo.NL),
+            )
+            self.write_param(
+                "Base velocity parameters", robo.get_base_vel_head(), robo, [0, 1, 2]
+            )
         if equations:
-            self.write_line('Equations:')
+            self.write_line("Equations:")
 
     def unknown_sep(self, eq, known):
         """If there is a sum inside trigonometric function and
@@ -404,9 +413,9 @@ class SymbolManager(object):
         B: expression or var
             right-hand side of the equation
         """
-        self.write_line(str(A) + ' = ' + str(B) + ';')
+        self.write_line(str(A) + " = " + str(B) + ";")
 
-    def write_line(self, line=''):
+    def write_line(self, line=""):
         """Writes string data into the output with new line symbol
 
         Parameters
@@ -414,17 +423,17 @@ class SymbolManager(object):
         line: string, optional
             Data to be written. If empty, it adds an empty line
         """
-        if self.file_out == 'disp':
+        if self.file_out == "disp":
             print(line)
         elif self.file_out is not None:
-            self.file_out.write(str(line) + '\n')
+            self.file_out.write(str(line) + "\n")
 
     def flushout(self):
         """
         Flush the buffer and make sure the data is written to the disk
         """
         self.file_out.flush()
-        if self.file_out != 'disp':
+        if self.file_out != "disp":
             os.fsync(self.file_out.fileno())
 
     def file_open(self, robo, ext):
@@ -439,7 +448,7 @@ class SymbolManager(object):
             provides the file name extention
         """
         fname = filemgr.get_file_path(robo, ext)
-        self.file_out = open(fname, 'w')
+        self.file_out = open(fname, "w")
 
     def file_close(self):
         """
@@ -453,19 +462,19 @@ class SymbolManager(object):
             provides the file name extention
         """
         if self.file_out is not None:
-            self.write_line('*=*')
+            self.write_line("*=*")
             self.file_out.close()
 
     def gen_fheader(self, name, *args):
         fun_head = []
-        fun_head.append('def %s(*args):\n' % name)
-        imp_s_1 = '    from numpy import pi, sin, cos, sign\n'
-        imp_s_2 = '    from numpy import array, arctan2 as atan2, sqrt\n'
+        fun_head.append("def %s(*args):\n" % name)
+        imp_s_1 = "    from numpy import pi, sin, cos, sign\n"
+        imp_s_2 = "    from numpy import array, arctan2 as atan2, sqrt\n"
         fun_head.append(imp_s_1)
         fun_head.append(imp_s_2)
         for i, var_list in enumerate(args):
             v_str_list = self.convert_syms(args[i], True)
-            fun_head.append('    %s=args[%s]\n' % (v_str_list, i))
+            fun_head.append("    %s=args[%s]\n" % (v_str_list, i))
         return fun_head
 
     def convert_syms(self, syms, rpl_liter=False):
@@ -481,28 +490,28 @@ class SymbolManager(object):
         """
         if isinstance(syms, tuple) or isinstance(syms, list):
             syms = [self.convert_syms(item, rpl_liter) for item in syms]
-            res = '['
+            res = "["
             for i, s in enumerate(syms):
                 res += s
                 if i < len(syms) - 1:
-                    res += ','
-            res += ']'
+                    res += ","
+            res += "]"
             return res
         elif isinstance(syms, Matrix):
-            res = '['
+            res = "["
             for i in range(syms.shape[0]):
                 res += self.convert_syms(list(syms[i, :]), rpl_liter)
                 if i < syms.shape[0] - 1:
-                    res += ','
-            res += ']'
+                    res += ","
+            res += "]"
             return res
         elif rpl_liter and sympify(syms).is_number:
-            return '_'
+            return "_"
         else:
             return str(syms)
 
     def extract_syms(self, syms):
-        """ returns set of all symbols from list or matrix
+        """returns set of all symbols from list or matrix
         or tuple of them
         """
         if isinstance(syms, tuple) or isinstance(syms, list):
@@ -516,9 +525,8 @@ class SymbolManager(object):
             return set()
 
     def sift_syms(self, rq_syms, wr_syms):
-        """Returns ordered list of variables to be compute
-        """
-        order_list = []   # vars that are defined in sydi
+        """Returns ordered list of variables to be compute"""
+        order_list = []  # vars that are defined in sydi
         for s in reversed(self.order_list):
             if s in rq_syms and not s in wr_syms:
                 order_list.insert(0, s)
@@ -527,8 +535,8 @@ class SymbolManager(object):
                     atoms = s_val.atoms(Symbol)
                     rq_syms |= {s for s in atoms if not s.is_number}
         rq_vals = [s for s in rq_syms if not (s in self.sydi or s in wr_syms)]
-            # required vars that are not defined in sydi
-            # will be set to '1.'
+        # required vars that are not defined in sydi
+        # will be set to '1.'
         return rq_vals + order_list
 
     def gen_fbody(self, name, to_return, args):
@@ -545,31 +553,31 @@ class SymbolManager(object):
         # list of instructions in final function
         fun_body = []
         # will be switched to true when branching detected
-        space = '    '
-        folded = 1    # indentation = 1 + number of 'for' statements
+        space = "    "
+        folded = 1  # indentation = 1 + number of 'for' statements
         multival = False
         for s in order_list:
             if s not in self.sydi:
-                item = '%s%s=1.\n' % (space * folded, s)
+                item = "%s%s=1.\n" % (space * folded, s)
             elif isinstance(self.sydi[s], tuple):
                 multival = True
-                item = '%sfor %s in %s:\n' % (space * folded, s, self.sydi[s])
+                item = "%sfor %s in %s:\n" % (space * folded, s, self.sydi[s])
                 folded += 1
             else:
-                item = '%s%s=%s\n' % (space * folded, s, self.sydi[s])
+                item = "%s%s=%s\n" % (space * folded, s, self.sydi[s])
             fun_body.append(item)
         ret_expr = self.convert_syms(to_return)
         if multival:
-            fun_body.insert(0, '    %s_result=[]\n' % (name))
-            item = '%s%s_result.append(%s)\n' % (space*folded, name, ret_expr)
+            fun_body.insert(0, "    %s_result=[]\n" % (name))
+            item = "%s%s_result.append(%s)\n" % (space * folded, name, ret_expr)
         else:
-            item = '    %s_result=%s\n' % (name, ret_expr)
+            item = "    %s_result=%s\n" % (name, ret_expr)
         fun_body.append(item)
-        fun_body.append('    return %s_result\n' % (name))
+        fun_body.append("    return %s_result\n" % (name))
         return fun_body
 
-    def gen_func_string(self, name, to_return, args, syntax='python'):
-        #TODO self, name, toret, *args, **kwargs
+    def gen_func_string(self, name, to_return, args, syntax="python"):
+        # TODO self, name, toret, *args, **kwargs
         """Returns function string. The rest is the same as for
         gen_func
 
@@ -590,18 +598,18 @@ class SymbolManager(object):
         -This function must be called only after the model that
             computes symbols in to_return have been generated.
         """
-        #if kwargs.get
-        if syntax == 'python':
+        # if kwargs.get
+        if syntax == "python":
             fun_head = self.gen_fheader(name, args)
             fun_body = self.gen_fbody(name, to_return, args)
-        elif syntax == 'matlab':
+        elif syntax == "matlab":
             fun_head = gen_fheader_matlab(self, name, args, to_return)
             fun_body = gen_fbody_matlab(self, name, to_return, args)
         fun_string = "".join(fun_head + fun_body)
         return fun_string
 
     def gen_func(self, name, to_return, args):
-        """ Returns function that computes what is in to_return
+        """Returns function that computes what is in to_return
         using args as arguments
 
         Parameters
@@ -622,4 +630,4 @@ class SymbolManager(object):
             computes symbols in to_return have been generated.
         """
         exec(self.gen_func_string(name, to_return, args))
-        return eval('{}'.format(name))
+        return eval("{}".format(name))

@@ -14,31 +14,27 @@ from pysymoro.robotf import FloatingRobot as Robot
 
 
 def planar2r():
-    robo = Robot('planar2r', 2, 2, 3, False, tools.SIMPLE)
+    robo = Robot("planar2r", 2, 2, 3, False, tools.SIMPLE)
     # update geometric params
     params = {
-        1: {'sigma': 0, 'mu': 1, 'theta': var('th1')},
-        2: {'sigma': 0, 'mu': 1, 'alpha': 0, 'd': var('L1'), 'theta': var('th2')},
-        3: {'sigma': 2, 'd': var('L2')}
+        1: {"sigma": 0, "mu": 1, "theta": var("th1")},
+        2: {"sigma": 0, "mu": 1, "alpha": 0, "d": var("L1"), "theta": var("th2")},
+        3: {"sigma": 2, "d": var("L2")},
     }
-    robo.update_params('geos', params)
+    robo.update_params("geos", params)
     # update dynamic params
-    params = {
-        1: {'xx': 0, 'xy': 0, 'xz': 0, 'yy': 0, 'yz': 0, 'ia': 0}
-    }
-    robo.update_params('dyns', params)
+    params = {1: {"xx": 0, "xy": 0, "xz": 0, "yy": 0, "yz": 0, "ia": 0}}
+    robo.update_params("dyns", params)
     # update joint params
-    params = {
-        0: {'qdots': 0, 'qddots': 0, 'torques': 0}
-    }
-    robo.update_params('misc', params)
+    params = {0: {"qdots": 0, "qddots": 0, "torques": 0}}
+    robo.update_params("misc", params)
     # update gravity vector
     params = {
-        0: {'gravity': 0},
-        1: {'gravity': 0},
-        2: {'gravity': var('G3')},
+        0: {"gravity": 0},
+        1: {"gravity": 0},
+        2: {"gravity": var("G3")},
     }
-    robo.update_params('misc', params)
+    robo.update_params("misc", params)
     return robo
 
 
@@ -60,39 +56,39 @@ def planar2r_numerical(is_floating=False):
     IA2 = 0.0
     G3 = -9.81
     # create robot
-    robo = Robot(
-        'planar2r', 2, 2, 3, is_floating,
-        tools.SIMPLE, is_symbolic=False
-    )
+    robo = Robot("planar2r", 2, 2, 3, is_floating, tools.SIMPLE, is_symbolic=False)
     robo.set_dyns_to_zero()
     # update geometric params
     params = {
-        1: {'sigma': 0, 'mu': 1},
-        2: {'sigma': 0, 'mu': 1, 'd': L1},
-        3: {'sigma': 2, 'd': L2}
+        1: {"sigma": 0, "mu": 1},
+        2: {"sigma": 0, "mu": 1, "d": L1},
+        3: {"sigma": 2, "d": L2},
     }
-    robo.update_params('geos', params)
+    robo.update_params("geos", params)
     # update dynamic params
     params = {
-        1: {
-            'zz': ZZ1, 'frc': FC1, 'frv': FV1, 'ia': IA1, 'mass': M1
-        },
+        1: {"zz": ZZ1, "frc": FC1, "frv": FV1, "ia": IA1, "mass": M1},
         2: {
-            'zz': ZZ2, 'frc': FC2, 'frv': FV2, 'ia': IA2, 'mass': M2,
-            'msx': MX2, 'msy': MY2
-        }
+            "zz": ZZ2,
+            "frc": FC2,
+            "frv": FV2,
+            "ia": IA2,
+            "mass": M2,
+            "msx": MX2,
+            "msy": MY2,
+        },
     }
-    robo.update_params('dyns', params)
+    robo.update_params("dyns", params)
     # update joint params
-    params = {0: {'qdots': 0, 'qddots': 0, 'torques': 0}}
-    robo.update_params('misc', params)
+    params = {0: {"qdots": 0, "qddots": 0, "torques": 0}}
+    robo.update_params("misc", params)
     # update gravity vector
     params = {
-        0: {'gravity': 0},
-        1: {'gravity': 0},
-        2: {'gravity': G3},
+        0: {"gravity": 0},
+        1: {"gravity": 0},
+        2: {"gravity": G3},
     }
-    robo.update_params('misc', params)
+    robo.update_params("misc", params)
     return robo
 
 
@@ -116,14 +112,14 @@ def set_planar2r_joint_state(robo, q, qdot, qddot):
     q1ddot = qddot[0]
     q2ddot = qddot[1]
     # update joint variables
-    params = {1: {'theta': q1}, 2: {'theta': q2}}
-    robo.update_params('geos', params)
+    params = {1: {"theta": q1}, 2: {"theta": q2}}
+    robo.update_params("geos", params)
     # update joint params
     params = {
-        1: {'qdots': q1dot, 'qddots': q1ddot},
-        2: {'qdots': q2dot, 'qddots': q2ddot}
+        1: {"qdots": q1dot, "qddots": q1ddot},
+        2: {"qdots": q2dot, "qddots": q2ddot},
     }
-    robo.update_params('misc', params)
+    robo.update_params("misc", params)
     return robo
 
 
@@ -141,8 +137,8 @@ def set_planar2r_joint_torque(robo, qtorque):
     gam1 = qtorque[0]
     gam2 = qtorque[1]
     # update torque values
-    params = {1: {'torques': gam1}, 2: {'torques': gam2}}
-    robo.update_params('misc', params)
+    params = {1: {"torques": gam1}, 2: {"torques": gam2}}
+    robo.update_params("misc", params)
     return robo
 
 
@@ -152,6 +148,7 @@ class TestDynModelPlanar2rFixed(unittest.TestCase):
     computation for floating base robots algorithm. This testing is done
     numerically.
     """
+
     def setUp(self):
         pass
 
@@ -162,9 +159,7 @@ class TestDynModelPlanar2rFixed(unittest.TestCase):
         """
         robo = planar2r_numerical()
         # set joint state
-        robo = set_planar2r_joint_state(
-            robo, [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]
-        )
+        robo = set_planar2r_joint_state(robo, [0.0, 0.0], [0.0, 0.0], [0.0, 0.0])
         # compute IDyM
         robo.compute_idym()
         # set torque values for DDyM
@@ -207,7 +202,7 @@ class TestDynModelPlanar2rFixed(unittest.TestCase):
         # compute DDyM
         robo.compute_ddym()
         #
-        print('\n')
+        print("\n")
         print(q)
         print(qdot)
         print(qddot)
@@ -224,6 +219,7 @@ class TestDynModelPlanar2rFloating(unittest.TestCase):
     computation for floating base robots algorithm. This testing is done
     numerically.
     """
+
     def setUp(self):
         pass
 
@@ -234,9 +230,7 @@ class TestDynModelPlanar2rFloating(unittest.TestCase):
         """
         robo = planar2r_numerical(is_floating=True)
         # set joint state
-        robo = set_planar2r_joint_state(
-            robo, [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]
-        )
+        robo = set_planar2r_joint_state(robo, [0.0, 0.0], [0.0, 0.0], [0.0, 0.0])
         # compute IDyM
         robo.compute_idym()
         # set torque values for DDyM
@@ -279,7 +273,7 @@ class TestDynModelPlanar2rFloating(unittest.TestCase):
         # compute DDyM
         robo.compute_ddym()
         #
-        print('\n')
+        print("\n")
         print(q)
         print(qdot)
         print(qddot)
@@ -293,9 +287,7 @@ class TestDynModelPlanar2rFloating(unittest.TestCase):
 
 def run_tests():
     """Load and run the unittests"""
-    unit_suite = unittest.TestLoader().loadTestsFromTestCase(
-        TestDynModelPlanar2rFixed
-    )
+    unit_suite = unittest.TestLoader().loadTestsFromTestCase(TestDynModelPlanar2rFixed)
     unittest.TextTestRunner(verbosity=2).run(unit_suite)
 
 
@@ -304,7 +296,5 @@ def main():
     run_tests()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
-

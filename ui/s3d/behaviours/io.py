@@ -14,6 +14,7 @@ class SaveFrames(Behaviour):
               '/path/to/frame_{}.png' -> /path/to/frame_0.png .
         every_n: int, Save every n frames instead of all frames.
     """
+
     def __init__(self, path, every_n=1):
         self._path = path
         self._every_n = every_n
@@ -44,10 +45,11 @@ class SaveGif(Behaviour):
         optimize: bool, whether to attempt to optimize the color pallete
                   (default: True)
     """
+
     def __init__(self, path, every_n=1, duration=None, loop=0, optimize=True):
         self._path = path
         self._every_n = every_n
-        self._duration = duration or 16*every_n
+        self._duration = duration or 16 * every_n
         self._loop = loop
 
         self._i = 0
@@ -68,7 +70,7 @@ class SaveGif(Behaviour):
                 save_all=True,
                 append_images=self._images[1:],
                 duration=self._duration,
-                loop=self._loop
+                loop=self._loop,
             )
             self._i = 0
             self._images = []

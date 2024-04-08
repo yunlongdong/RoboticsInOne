@@ -9,8 +9,8 @@ from ..utils import read_image
 
 
 class MaterialReader(object):
-    """MaterialReader defines the common interface for reading material files.
-    """
+    """MaterialReader defines the common interface for reading material files."""
+
     def __init__(self, filename=None):
         self._materials = {}
         self._current = None
@@ -20,7 +20,6 @@ class MaterialReader(object):
 
     def read(self, filename):
         raise NotImplementedError()
-
 
     def set_material(self, name):
         self._current = name
@@ -60,18 +59,15 @@ class MaterialReader(object):
 
 class MtlMaterialReader(MaterialReader):
     """Read MTL material files."""
+
     def _read_texture(self, filename, texture_path):
         if isinstance(filename, str):
-            return read_image(os.path.join(
-                os.path.dirname(filename),
-                texture_path
-            ))
+            return read_image(os.path.join(os.path.dirname(filename), texture_path))
         else:
             if hasattr(filename, "name"):
-                return read_image(os.path.join(
-                    os.path.dirname(filename.name),
-                    texture_path
-                ))
+                return read_image(
+                    os.path.join(os.path.dirname(filename.name), texture_path)
+                )
             else:
                 return None
 
@@ -93,13 +89,13 @@ class MtlMaterialReader(MaterialReader):
                         materials[material["name"]] = material
                     material = {
                         "name": l.split()[1],
-                        "ambient": np.array([1., 1, 1]),
-                        "diffuse": np.array([1., 1, 1]),
-                        "specular": np.array([0., 0, 0]),
+                        "ambient": np.array([1.0, 1, 1]),
+                        "diffuse": np.array([1.0, 1, 1]),
+                        "specular": np.array([0.0, 0, 0]),
                         "mode": "specular",
                         "Ns": 10.0,
                         "bump": None,
-                        "texture": None
+                        "texture": None,
                     }
 
                 # Collect the material color information, namely lines starting
@@ -109,19 +105,13 @@ class MtlMaterialReader(MaterialReader):
                 # reflectivity and "Ks" followed by 3 floats indicating the
                 # r,g,b components for the specular reflectivity.
                 elif l.startswith("Ka"):
-                    material["ambient"] = np.array(
-                        list(map(float, l.split()[1:]))
-                    )
+                    material["ambient"] = np.array(list(map(float, l.split()[1:])))
 
                 elif l.startswith("Kd"):
-                    material["diffuse"] = np.array(
-                        list(map(float, l.split()[1:]))
-                    )
+                    material["diffuse"] = np.array(list(map(float, l.split()[1:])))
 
                 elif l.startswith("Ks"):
-                    material["specular"] = np.array(
-                        list(map(float, l.split()[1:]))
-                    )
+                    material["specular"] = np.array(list(map(float, l.split()[1:])))
 
                 # Collect the specular exponent, namely a line starting with
                 # "Ns" followed by a float.
@@ -130,26 +120,20 @@ class MtlMaterialReader(MaterialReader):
 
                 # Read the diffuse texture image
                 elif l.startswith("map_Kd"):
-                    material["texture"] = self._read_texture(
-                        filename,
-                        l.split()[1]
-                    )
+                    material["texture"] = self._read_texture(filename, l.split()[1])
 
                 # Read the bump map
                 elif l.startswith("bump"):
-                    material["bump"] = self._read_texture(
-                        filename,
-                        l.split()[1]
-                    )
+                    material["bump"] = self._read_texture(filename, l.split()[1])
 
                 # Collect the illumination model used for the material, namely
                 # a line starting with "illum" and followed by an integer,
                 # specifying the id of the illumination model.
                 elif l.startswith("illum"):
                     material["mode"] = {
-                        "0" : "constant",
-                        "1" : "diffuse",
-                        "2" : "specular"
+                        "0": "constant",
+                        "1": "diffuse",
+                        "2": "specular",
                     }[l.split()[1]]
 
             if material is not None:

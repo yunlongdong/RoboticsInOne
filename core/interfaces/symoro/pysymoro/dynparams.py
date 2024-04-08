@@ -27,6 +27,7 @@ class DynParams(object):
     Mass tensor refers to the MS 3x1 matrix which is the first moments
     of a link wrt its own frame of reference. MS = transpose([MX MY MZ])
     """
+
     def __init__(self, link, params=None):
         """Constructor
 
@@ -64,31 +65,22 @@ class DynParams(object):
         # lists to hold the string representation for the prefix of
         # different terms
         self._inertial_terms = {
-            'xx': 'XX',
-            'xy': 'XY',
-            'xz': 'XZ',
-            'yy': 'YY',
-            'yz': 'YZ',
-            'zz': 'ZZ'
+            "xx": "XX",
+            "xy": "XY",
+            "xz": "XZ",
+            "yy": "YY",
+            "yz": "YZ",
+            "zz": "ZZ",
         }
-        self._ms_terms = {
-            'msx': 'MX',
-            'msy': 'MY',
-            'msz': 'MZ',
-            'mass': 'M'
-        }
-        self._fr_terms = {
-            'ia': 'IA',
-            'frc': 'FS',
-            'frv': 'FV'
-        }
+        self._ms_terms = {"msx": "MX", "msy": "MY", "msz": "MZ", "mass": "M"}
+        self._fr_terms = {"ia": "IA", "frc": "FS", "frv": "FV"}
         self._ext_force_terms = {
-            'fx_ext': 'FX',
-            'fy_ext': 'FY',
-            'fz_ext': 'FZ',
-            'mx_ext': 'CX',
-            'my_ext': 'CY',
-            'mz_ext': 'CZ'
+            "fx_ext": "FX",
+            "fy_ext": "FY",
+            "fz_ext": "FZ",
+            "mx_ext": "CX",
+            "my_ext": "CY",
+            "mz_ext": "CZ",
         }
         # initialise the different parameters
         self._init_inertial_terms()
@@ -100,22 +92,37 @@ class DynParams(object):
             self.update_params(params)
 
     def __str__(self):
-        row_format = '\t' + ('{:^7}' * 20)
-        str_format = row_format.format(*(
-            str(self.link),
-            str(self.xx), str(self.xy), str(self.xz),
-            str(self.yy), str(self.yz), str(self.zz),
-            str(self.msx), str(self.msy), str(self.msz), str(self.mass),
-            str(self.ia), str(self.frc), str(self.frv),
-            str(self.fx_ext), str(self.fy_ext), str(self.fz_ext),
-            str(self.mx_ext), str(self.my_ext), str(self.mz_ext)
-        ))
+        row_format = "\t" + ("{:^7}" * 20)
+        str_format = row_format.format(
+            *(
+                str(self.link),
+                str(self.xx),
+                str(self.xy),
+                str(self.xz),
+                str(self.yy),
+                str(self.yz),
+                str(self.zz),
+                str(self.msx),
+                str(self.msy),
+                str(self.msz),
+                str(self.mass),
+                str(self.ia),
+                str(self.frc),
+                str(self.frv),
+                str(self.fx_ext),
+                str(self.fy_ext),
+                str(self.fz_ext),
+                str(self.mx_ext),
+                str(self.my_ext),
+                str(self.mz_ext),
+            )
+        )
         return str_format
 
     def __repr__(self):
         repr_format = str(self).lstrip().rstrip()
-        repr_format = re.sub(r'\s+', ', ', repr_format)
-        repr_format = '(' + repr_format + ')'
+        repr_format = re.sub(r"\s+", ", ", repr_format)
+        repr_format = "(" + repr_format + ")"
         return repr_format
 
     def update_params(self, params):
@@ -131,8 +138,7 @@ class DynParams(object):
             if hasattr(self, key):
                 setattr(self, key, value)
             else:
-                raise AttributeError(
-                    '{} is not an attribute of DynParams'.format(key))
+                raise AttributeError("{} is not an attribute of DynParams".format(key))
 
     def set_to_zero(self):
         """
@@ -140,14 +146,17 @@ class DynParams(object):
         """
         # attributes that shouldn't be set to zero
         outliers = [
-            'link', 'update_params', 'inertia', 'mass_tensor',
-            'spatial_inertia', 'wrench', 'force', 'moment'
+            "link",
+            "update_params",
+            "inertia",
+            "mass_tensor",
+            "spatial_inertia",
+            "wrench",
+            "force",
+            "moment",
         ]
         # get all the attributes of the class ignoring system attributes
-        attrs = [
-            attr for attr in dir(self) \
-            if not attr.startswith('_')
-        ]
+        attrs = [attr for attr in dir(self) if not attr.startswith("_")]
         for attr in attrs:
             # ignore attributes in outliers
             if attr in outliers:
@@ -157,11 +166,13 @@ class DynParams(object):
     @property
     def inertia(self):
         """Get inertia (3x3) matrix."""
-        return Matrix([
-            [self.xx, self.xy, self.xz],
-            [self.xy, self.yy, self.yz],
-            [self.xz, self.yz, self.zz]
-        ])
+        return Matrix(
+            [
+                [self.xx, self.xy, self.xz],
+                [self.xy, self.yy, self.yz],
+                [self.xz, self.yz, self.zz],
+            ]
+        )
 
     @property
     def mass_tensor(self):
@@ -173,17 +184,14 @@ class DynParams(object):
         """Get spatial inertia (6x6) matrix."""
         m_eye = self.mass * eye(3)
         ms_skew = tools.skew(self.mass_tensor)
-        return Screw6(
-            tl=m_eye, tr=ms_skew.transpose(),
-            bl=ms_skew, br=self.inertia
-        )
+        return Screw6(tl=m_eye, tr=ms_skew.transpose(), bl=ms_skew, br=self.inertia)
 
     @property
     def wrench(self):
         """Get external force (6x1) column vector (linear + angular)."""
         return Screw(
             lin=Matrix([self.fx_ext, self.fy_ext, self.fz_ext]),
-            ang=Matrix([self.mx_ext, self.my_ext, self.mz_ext])
+            ang=Matrix([self.mx_ext, self.my_ext, self.mz_ext]),
         )
 
     @property
@@ -231,5 +239,3 @@ class DynParams(object):
             else:
                 value = 0
             setattr(self, key, value)
-
-

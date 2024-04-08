@@ -26,43 +26,45 @@ ROOT = 1
 
 
 def _omega_ij(robo, j, jRant, w, qdj):
-    wi = jRant*w[robo.ant[j]]
+    wi = jRant * w[robo.ant[j]]
     w[j] = wi
-    if robo.sigma[j] == 0:    # revolute joint
+    if robo.sigma[j] == 0:  # revolute joint
         w[j] += qdj
     return wi, w[j]
 
 
 def _omega_dot_j(robo, j, jRant, w, wi, wdot, qdj, qddj):
-    wdot[j] = jRant*wdot[robo.ant[j]]
-    if robo.sigma[j] == 0:    # revolute joint
-        wdot[j] += (qddj + tools.skew(wi)*qdj)
+    wdot[j] = jRant * wdot[robo.ant[j]]
+    if robo.sigma[j] == 0:  # revolute joint
+        wdot[j] += qddj + tools.skew(wi) * qdj
     return wdot[j]
 
 
 def _v_j(robo, j, antPj, jRant, v, w, qdj, forced=False):
     ant = robo.ant[j]
-    v[j] = jRant*(tools.skew(w[ant])*antPj[j] + v[ant])
-    if robo.sigma[j] == 1:     # prismatic joint
+    v[j] = jRant * (tools.skew(w[ant]) * antPj[j] + v[ant])
+    if robo.sigma[j] == 1:  # prismatic joint
         v[j] += qdj
     return v[j]
 
 
-def _v_dot_j(
-    robo, symo, j, jRant, antPj, w, wi, wdot, U, vdot, qdj, qddj
-):
+def _v_dot_j(robo, symo, j, jRant, antPj, w, wi, wdot, U, vdot, qdj, qddj):
     DV = ParamsInit.product_combinations(w[j])
-    symo.mat_replace(DV, 'DV', j)
-    hatw_hatw = Matrix([[-DV[3]-DV[5], DV[1], DV[2]],
-                        [DV[1], -DV[5]-DV[0], DV[4]],
-                        [DV[2], DV[4], -DV[3]-DV[0]]])
+    symo.mat_replace(DV, "DV", j)
+    hatw_hatw = Matrix(
+        [
+            [-DV[3] - DV[5], DV[1], DV[2]],
+            [DV[1], -DV[5] - DV[0], DV[4]],
+            [DV[2], DV[4], -DV[3] - DV[0]],
+        ]
+    )
     U[j] = hatw_hatw + tools.skew(wdot[j])
-    symo.mat_replace(U[j], 'U', j)
-    vsp = vdot[robo.ant[j]] + U[robo.ant[j]]*antPj[j]
-    symo.mat_replace(vsp, 'VSP', j)
-    vdot[j] = jRant*vsp
-    if robo.sigma[j] == 1:    # prismatic joint
-        vdot[j] += qddj + 2*tools.skew(wi)*qdj
+    symo.mat_replace(U[j], "U", j)
+    vsp = vdot[robo.ant[j]] + U[robo.ant[j]] * antPj[j]
+    symo.mat_replace(vsp, "VSP", j)
+    vdot[j] = jRant * vsp
+    if robo.sigma[j] == 1:  # prismatic joint
+        vdot[j] += qddj + 2 * tools.skew(wi) * qdj
     return vdot[j]
 
 
@@ -77,8 +79,8 @@ def compute_omega(robo, symo, j, antRj, w, wi):
     jRant = antRj[j].T
     qdj = Z_AXIS * robo.qdot[j]
     wi[j], w[j] = _omega_ij(robo, j, jRant, w, qdj)
-    symo.mat_replace(wi[j], 'WI', j)
-    symo.mat_replace(w[j], 'W', j)
+    symo.mat_replace(wi[j], "WI", j)
+    symo.mat_replace(w[j], "W", j)
 
 
 def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
@@ -96,11 +98,11 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
     #     i = min(chain_ext)
     # if not j in chain_ext:
     #     j = max(chain_ext)
-    kTj_dict = dgm(robo, symo, chain[0], j, key='left', trig_subs=trig_subs)
-    kTj_tmp = dgm(robo, symo, chain[-1], j, key='left', trig_subs=trig_subs)
+    kTj_dict = dgm(robo, symo, chain[0], j, key="left", trig_subs=trig_subs)
+    kTj_tmp = dgm(robo, symo, chain[-1], j, key="left", trig_subs=trig_subs)
     kTj_dict.update(kTj_tmp)
-    iTk_dict = dgm(robo, symo, i, chain[0], key='right', trig_subs=trig_subs)
-    iTk_tmp = dgm(robo, symo, i, chain[-1], key='right', trig_subs=trig_subs)
+    iTk_dict = dgm(robo, symo, i, chain[0], key="right", trig_subs=trig_subs)
+    iTk_tmp = dgm(robo, symo, i, chain[-1], key="right", trig_subs=trig_subs)
     iTk_dict.update(iTk_tmp)
     for k in chain:
         kTj = kTj_dict[k, j]
@@ -111,7 +113,7 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
             dvdq = iak
             J_col = dvdq.col_join(Matrix([0, 0, 0]))
         elif sigm == 0:
-            dvdq = kTj[0, 3]*ink-kTj[1, 3]*isk
+            dvdq = kTj[0, 3] * ink - kTj[1, 3] * isk
             J_col = dvdq.col_join(iak)
         else:
             J_col = Matrix([0, 0, 0, 0, 0, 0])
@@ -121,19 +123,19 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
     iRj = Transform.R(iTk_dict[i, j])
     jTn = dgm(robo, symo, j, n, fast_form=False, trig_subs=trig_subs)
     jPn = Transform.P(jTn)
-    L = tools.skew(iRj*jPn) # origin of frame j relative to global frame
+    L = tools.skew(iRj * jPn)  # origin of frame j relative to global frame
     L = L.applyfunc(trigsimp)
     if forced:
-        symo.mat_replace(Jac, 'J', '', forced)
-        L = symo.mat_replace(L, 'L', '', forced)
+        symo.mat_replace(Jac, "J", "", forced)
+        L = symo.mat_replace(L, "L", "", forced)
     return Jac, L
 
 
 def _make_square(J):
     if J.shape[0] > J.shape[1]:
-        return J.T*J
+        return J.T * J
     else:
-        return J*J.T
+        return J * J.T
 
 
 def _jac_inv(robo, symo, n, i, j):
@@ -143,11 +145,11 @@ def _jac_inv(robo, symo, n, i, j):
     det = _jac_det(robo, symo, J=J)
     Jinv = J.adjugate()
     if det == tools.ZERO:
-        print('Matrix is singular!')
+        print("Matrix is singular!")
     else:
-        Jinv = Jinv/det
+        Jinv = Jinv / det
     Jinv = Jinv.applyfunc(symo.simp)
-    symo.mat_replace(Jinv, 'JI', '', False)
+    symo.mat_replace(Jinv, "JI", "", False)
     return Jinv
 
 
@@ -218,47 +220,49 @@ def compute_vel_acc(
     symo : symbolmgr.SymbolManager
         Instance of symbolic manager
     """
-    #init velocities and accelerations
+    # init velocities and accelerations
     w = ParamsInit.init_w(robo)
     wdot, vdot = ParamsInit.init_wv_dot(robo, gravity)
     # decide first link
     first_link = 1
     if floating or robo.is_floating or robo.is_mobile:
         first_link = 0
-    #init auxilary matrix
+    # init auxilary matrix
     U = ParamsInit.init_u(robo)
     for j in range(first_link, robo.NL):
         if j == 0:
-            w[j] = symo.mat_replace(w[j], 'W', j)
-            wdot[j] = symo.mat_replace(wdot[j], 'WP', j)
-            vdot[j] = symo.mat_replace(vdot[j], 'VP', j)
+            w[j] = symo.mat_replace(w[j], "W", j)
+            wdot[j] = symo.mat_replace(wdot[j], "WP", j)
+            vdot[j] = symo.mat_replace(vdot[j], "VP", j)
             dv0 = ParamsInit.product_combinations(w[j])
-            symo.mat_replace(dv0, 'DV', j)
-            hatw_hatw = Matrix([
-                [-dv0[3]-dv0[5], dv0[1], dv0[2]],
-                [dv0[1], -dv0[5]-dv0[0], dv0[4]],
-                [dv0[2], dv0[4], -dv0[3]-dv0[0]]
-            ])
+            symo.mat_replace(dv0, "DV", j)
+            hatw_hatw = Matrix(
+                [
+                    [-dv0[3] - dv0[5], dv0[1], dv0[2]],
+                    [dv0[1], -dv0[5] - dv0[0], dv0[4]],
+                    [dv0[2], dv0[4], -dv0[3] - dv0[0]],
+                ]
+            )
             U[j] = hatw_hatw + tools.skew(wdot[j])
-            symo.mat_replace(U[j], 'U', j)
+            symo.mat_replace(U[j], "U", j)
         else:
             jRant = antRj[j].T
             qdj = Z_AXIS * robo.qdot[j]
             qddj = Z_AXIS * robo.qddot[j]
             wi, w[j] = _omega_ij(robo, j, jRant, w, qdj)
-            symo.mat_replace(w[j], 'W', j)
-            symo.mat_replace(wi, 'WI', j)
+            symo.mat_replace(w[j], "W", j)
+            symo.mat_replace(wi, "WI", j)
             _omega_dot_j(robo, j, jRant, w, wi, wdot, qdj, qddj)
-            symo.mat_replace(wdot[j], 'WP', j, forced)
+            symo.mat_replace(wdot[j], "WP", j, forced)
             _v_dot_j(robo, symo, j, jRant, antPj, w, wi, wdot, U, vdot, qdj, qddj)
-            symo.mat_replace(vdot[j], 'VP', j, forced)
+            symo.mat_replace(vdot[j], "VP", j, forced)
     return w, wdot, vdot, U
 
 
 def velocities(robo):
     symo = symbolmgr.SymbolManager(None)
-    symo.file_open(robo, 'vel')
-    symo.write_params_table(robo, 'Link velocities')
+    symo.file_open(robo, "vel")
+    symo.write_params_table(robo, "Link velocities")
     antRj, antPj = compute_rot_trans(robo, symo)
     w = ParamsInit.init_w(robo)
     v = ParamsInit.init_v(robo)
@@ -266,17 +270,17 @@ def velocities(robo):
         jRant = antRj[j].T
         qdj = Z_AXIS * robo.qdot[j]
         _omega_ij(robo, j, jRant, w, qdj)
-        symo.mat_replace(w[j], 'W', j, forced=True)
+        symo.mat_replace(w[j], "W", j, forced=True)
         _v_j(robo, j, antPj, jRant, v, w, qdj)
-        symo.mat_replace(v[j], 'V', j, forced=True)
+        symo.mat_replace(v[j], "V", j, forced=True)
     symo.file_close()
     return symo
 
 
 def accelerations(robo):
     symo = symbolmgr.SymbolManager(None)
-    symo.file_open(robo, 'acc')
-    symo.write_params_table(robo, 'Link accelerations')
+    symo.file_open(robo, "acc")
+    symo.write_params_table(robo, "Link accelerations")
     antRj, antPj = compute_rot_trans(robo, symo)
     compute_vel_acc(robo, symo, antRj, antPj, forced=True, gravity=False)
     symo.file_close()
@@ -288,8 +292,8 @@ def jdot_qdot(robo):
     Similar to compute_vel_acc.
     """
     symo = symbolmgr.SymbolManager(None)
-    symo.file_open(robo, 'jpqp')
-    symo.write_params_table(robo, 'JdotQdot')
+    symo.file_open(robo, "jpqp")
+    symo.write_params_table(robo, "JdotQdot")
     antRj, antPj = compute_rot_trans(robo, symo)
     w = ParamsInit.init_w(robo)
     wdot, vdot = ParamsInit.init_wv_dot(robo, gravity=False)
@@ -299,19 +303,19 @@ def jdot_qdot(robo):
         qdj = Z_AXIS * robo.qdot[j]
         qddj = Z_AXIS * tools.ZERO
         wi, w[j] = _omega_ij(robo, j, jRant, w, qdj)
-        symo.mat_replace(w[j], 'W', j)
-        symo.mat_replace(wi, 'WI', j)
+        symo.mat_replace(w[j], "W", j)
+        symo.mat_replace(wi, "WI", j)
         _omega_dot_j(robo, j, jRant, w, wi, wdot, qdj, qddj)
-        symo.mat_replace(wdot[j], 'WPJ', j, forced=True)
+        symo.mat_replace(wdot[j], "WPJ", j, forced=True)
         _v_dot_j(robo, symo, j, jRant, antPj, w, wi, wdot, U, vdot, qdj, qddj)
-        symo.mat_replace(vdot[j], 'VPJ', j, forced=True)
+        symo.mat_replace(vdot[j], "VPJ", j, forced=True)
     symo.file_close()
     return symo
 
 
 def jacobian(robo, n, i, j):
     symo = symbolmgr.SymbolManager()
-    symo.file_open(robo, 'jac')
+    symo.file_open(robo, "jac")
     title = "Jacobian matrix for frame {}\n"
     title += "Projection frame {}, intermediate frame {}"
     symo.write_params_table(robo, title.format(n, i, j))
@@ -327,8 +331,8 @@ def jacobian_determinant(robo, n, i, j, rows, cols):
     for i, i_old in enumerate(rows):
         for j, j_old in enumerate(cols):
             J_reduced[i, j] = J[i_old, j_old]
-    symo.file_open(robo, 'det')
-    symo.write_params_table(robo, 'Jacobian determinant for frame %s' % n)
+    symo.file_open(robo, "det")
+    symo.write_params_table(robo, "Jacobian determinant for frame %s" % n)
     symo.write_line(_jac_det(robo, symo, J=J_reduced))
     symo.file_close()
     return symo
@@ -340,24 +344,23 @@ def kinematic_constraints(robo):
     if res == tools.FAIL:
         return tools.FAIL
     W_a, W_p, W_ac, W_pc, W_c = res
-    symo.file_open(robo, 'ckel')
-    symo.write_params_table(robo, 'Constraint kinematic equations of loop',
-                            equations=False)
-    symo.write_line('Active joint variables')
+    symo.file_open(robo, "ckel")
+    symo.write_params_table(
+        robo, "Constraint kinematic equations of loop", equations=False
+    )
+    symo.write_line("Active joint variables")
     symo.write_line([robo.get_q(i) for i in robo.indx_active])
     symo.write_line()
-    symo.write_line('Passive joints variables')
+    symo.write_line("Passive joints variables")
     symo.write_line([robo.get_q(i) for i in robo.indx_passive])
     symo.write_line()
-    symo.write_line('Cut joints variables')
+    symo.write_line("Cut joints variables")
     symo.write_line([robo.get_q(i) for i in robo.indx_cut])
     symo.write_line()
-    symo.mat_replace(W_a, 'WA', forced=True)
-    symo.mat_replace(W_p, 'WP', forced=True)
-    symo.mat_replace(W_ac, 'WPA', forced=True)
-    symo.mat_replace(W_pc, 'WPC', forced=True)
-    symo.mat_replace(W_c, 'WC', forced=True)
+    symo.mat_replace(W_a, "WA", forced=True)
+    symo.mat_replace(W_p, "WP", forced=True)
+    symo.mat_replace(W_ac, "WPA", forced=True)
+    symo.mat_replace(W_pc, "WPC", forced=True)
+    symo.mat_replace(W_c, "WC", forced=True)
     symo.file_close()
     return symo
-
-

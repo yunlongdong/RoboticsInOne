@@ -12,6 +12,7 @@ class MouseRotate(Behaviour):
     consider a sphere with a center in target and radius equal to the distance
     to the camera. We move on that sphere based on the movements of the mouse.
     """
+
     def __init__(self):
         self._start = None
         self._origin = None
@@ -31,17 +32,11 @@ class MouseRotate(Behaviour):
             else:
                 size = params.scene.size
                 end = params.mouse.location
-                deltaX = float(end[0] - self._start[0])/size[0]
-                deltaY = float(end[1] - self._start[1])/size[1]
+                deltaX = float(end[0] - self._start[0]) / size[0]
+                deltaY = float(end[1] - self._start[1]) / size[1]
 
-                Rx = matrix33.create_from_axis_rotation(
-                    self._up,
-                    deltaX*2*np.pi
-                )
-                Ry = matrix33.create_from_axis_rotation(
-                    self._right,
-                    deltaY*2*np.pi
-                )
+                Rx = matrix33.create_from_axis_rotation(self._up, deltaX * 2 * np.pi)
+                Ry = matrix33.create_from_axis_rotation(self._right, deltaY * 2 * np.pi)
                 R = Ry.dot(Rx)
                 newpos = self._origin + R.dot(self._camera_pos - self._origin)
                 newup = R.dot(self._up)
@@ -55,6 +50,7 @@ class MouseRotate(Behaviour):
 
 class MouseZoom(Behaviour):
     """Zoom in/out with the mouse scroll wheel."""
+
     def __init__(self, delta=0.9):
         self._delta = delta
 
@@ -65,16 +61,17 @@ class MouseZoom(Behaviour):
             cam_target = params.scene.camera_target
             ray = cam_target - cam_position
             if rotations > 0:
-                cam_position += ray * (1-self._delta)
+                cam_position += ray * (1 - self._delta)
             else:
-                cam_position -= ray * (1-self._delta)
+                cam_position -= ray * (1 - self._delta)
             params.scene.camera_position = cam_position
             params.refresh = True
 
 
 class MousePan(Behaviour):
     """Move the target by dragging the mouse with the middle button pressed."""
-    def __init__(self, delta=1.):
+
+    def __init__(self, delta=1.0):
         self._delta = delta
         self._start = None
         self._target = None
@@ -93,13 +90,13 @@ class MousePan(Behaviour):
             else:
                 size = params.scene.size
                 end = params.mouse.location
-                deltaX = float(end[0] - self._start[0])/size[0]
-                deltaY = float(end[1] - self._start[1])/size[1]
+                deltaX = float(end[0] - self._start[0]) / size[0]
+                deltaY = float(end[1] - self._start[1]) / size[1]
 
                 newtarget = (
-                    self._target +
-                    -self._delta * deltaX * self._right +
-                    self._delta * deltaY * self._up
+                    self._target
+                    + -self._delta * deltaX * self._right
+                    + self._delta * deltaY * self._up
                 )
                 params.scene.camera_target = newtarget
                 params.refresh = True

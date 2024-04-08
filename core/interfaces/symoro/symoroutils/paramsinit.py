@@ -24,6 +24,7 @@ class ParamsInit(object):
     matrices and parameters for various models. All the methods in this
     class are class-methods.
     """
+
     @classmethod
     def init_jplus(cls, robo):
         """Copies the inertia parameters.
@@ -79,7 +80,7 @@ class ParamsInit(object):
         =======
         list of Matrices Nx1
         """
-        return [zeros(num, 1) for i in range(robo.NL+ext)]
+        return [zeros(num, 1) for i in range(robo.NL + ext)]
 
     @classmethod
     def init_scalar(cls, robo):
@@ -133,9 +134,7 @@ class ParamsInit(object):
         """Generates a list of auxiliary U matrices"""
         u_aux_matrix = ParamsInit.init_mat(robo)
         # the value for the -1th base frame
-        u_aux_matrix.append(
-            tools.skew(robo.w0)**2 + tools.skew(robo.wdot0)
-        )
+        u_aux_matrix.append(tools.skew(robo.w0) ** 2 + tools.skew(robo.wdot0))
         return u_aux_matrix
 
     @classmethod
@@ -152,9 +151,13 @@ class ParamsInit(object):
         =======
         product_combinations: Matrix 6x1
         """
-        return Matrix([
-            vec[0]*vec[0], vec[0]*vec[1], vec[0]*vec[2],
-            vec[1]*vec[1], vec[1]*vec[2], vec[2]*vec[2]
-        ])
-
-
+        return Matrix(
+            [
+                vec[0] * vec[0],
+                vec[0] * vec[1],
+                vec[0] * vec[2],
+                vec[1] * vec[1],
+                vec[1] * vec[2],
+                vec[2] * vec[2],
+            ]
+        )

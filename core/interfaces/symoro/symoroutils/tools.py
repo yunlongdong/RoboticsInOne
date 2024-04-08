@@ -23,11 +23,11 @@ ZERO = Integer(0)
 ONE = Integer(1)
 FAIL = 1
 OK = 0
-CLOSED_LOOP = 'Closed loop'
-SIMPLE = 'Simple'
-TREE = 'Tree'
+CLOSED_LOOP = "Closed loop"
+SIMPLE = "Simple"
+TREE = "Tree"
 TYPES = [SIMPLE, TREE, CLOSED_LOOP]
-INT_KEYS = ['ant', 'sigma', 'mu']
+INT_KEYS = ["ant", "sigma", "mu"]
 
 
 def skew(vec):
@@ -42,11 +42,7 @@ def skew(vec):
     =======
     hat: Matrix 3x3
     """
-    return Matrix([
-        [0, -vec[2], vec[1]],
-        [vec[2], 0, -vec[0]],
-        [-vec[1], vec[0], 0]
-    ])
+    return Matrix([[0, -vec[2], vec[1]], [vec[2], 0, -vec[0]], [-vec[1], vec[0], 0]])
 
 
 def skew2vec(mat):
@@ -84,14 +80,14 @@ def l2str(list_var, spacing=8):
     =====
     l2str([1, 2, 3]) will be converted into '1      2      3      '
     """
-    ret_str = ''
+    ret_str = ""
     for i in list_var:
-        ret_str += str(i) + ' ' * max(1, (spacing - len(str(i))))
+        ret_str += str(i) + " " * max(1, (spacing - len(str(i))))
     return ret_str
 
 
-def find_trig_names(sym, pref=r'', pref_len=0, post=r'', post_len=0):
-    search_res = re.findall(pref + r'[AGm0-9]*' + post, str(sym))
+def find_trig_names(sym, pref=r"", pref_len=0, post=r"", post_len=0):
+    search_res = re.findall(pref + r"[AGm0-9]*" + post, str(sym))
     if post_len == 0:
         return set([s[pref_len:] for s in search_res])
     else:
@@ -99,8 +95,8 @@ def find_trig_names(sym, pref=r'', pref_len=0, post=r'', post_len=0):
 
 
 def get_trig_couple_names(sym):
-    names_s = find_trig_names(sym, r'S', 1)
-    names_c = find_trig_names(sym, r'C', 1)
+    names_s = find_trig_names(sym, r"S", 1)
+    names_c = find_trig_names(sym, r"C", 1)
     return names_c & names_s
 
 
@@ -120,37 +116,35 @@ def get_max_coef_list(sym, x_term):
 
 
 def get_max_coef(sym, x_term):
-    return Add.fromiter(
-        get_max_coef_mul(s, x_term) for s in Add.make_args(sym)
-    )
+    return Add.fromiter(get_max_coef_mul(s, x_term) for s in Add.make_args(sym))
 
 
 def get_pos_neg(str_term):
-    if str_term.find('m') != -1:
-        s_split = str_term.split('m')
+    if str_term.find("m") != -1:
+        s_split = str_term.split("m")
         return s_split[0], s_split[1]
     else:
-        return str_term, ''
+        return str_term, ""
 
 
 def reduce_str(str1, str2):
     while True:
         for j, char in enumerate(str1):
-            if char in 'AG':
-                i = str2.find(str1[j:j+2])
+            if char in "AG":
+                i = str2.find(str1[j : j + 2])
                 k = 2
             else:
                 i = str2.find(char)
                 k = 1
             if i != -1:
-                if i+k < len(str2):
-                    str2_tail = str2[i+k:]
+                if i + k < len(str2):
+                    str2_tail = str2[i + k :]
                 else:
-                    str2_tail = ''
-                if j+k < len(str1):
-                    str1_tail = str1[j+k:]
+                    str2_tail = ""
+                if j + k < len(str1):
+                    str1_tail = str1[j + k :]
                 else:
-                    str1_tail = ''
+                    str1_tail = ""
                 str2 = str2[:i] + str2_tail
                 str1 = str1[:j] + str1_tail
                 break
@@ -165,15 +159,15 @@ def ang_sum(np1, np2, nm1, nm2):
     if len(nm1) + len(nm2) == 0:
         return np1 + np2
     else:
-        return np1 + np2 + 'm' + nm1 + nm2
+        return np1 + np2 + "m" + nm1 + nm2
 
 
 def cos_sin_syms(name):
-    if isinstance(name, str) and name[0] == 'm':
-        cos_term, sin_term = var('C{0}, S{0}'.format(name[1:]))
+    if isinstance(name, str) and name[0] == "m":
+        cos_term, sin_term = var("C{0}, S{0}".format(name[1:]))
         return cos_term, -sin_term
     else:
-        return var('C{0}, S{0}'.format(name))
+        return var("C{0}, S{0}".format(name))
 
 
 def sym_less(val_a, val_b):
@@ -198,7 +192,7 @@ def cancel_terms(sym, x_term, coef):
             sym = cancel_terms(sym, x_term, arg_c)
     else:
         terms = Add.make_args(sym)
-        return Add.fromiter(t for t in terms if t != x_term*coef)
+        return Add.fromiter(t for t in terms if t != x_term * coef)
 
 
 def trignometric_info(sym):
@@ -209,5 +203,3 @@ def trignometric_info(sym):
         short_form = False
         names = get_angles(sym)
     return names, short_form
-
-

@@ -41,10 +41,18 @@ except ImportError:
         return np.asarray(Image.open(path))
 
 
-def render(renderables, behaviours, n_frames, size=(512, 512),
-           background=(1,)*4, camera_position=(-2, -2, -2),
-           camera_target=(0, 0, 0), up_vector=(0, 0, 1), light=None,
-           scene=None):
+def render(
+    renderables,
+    behaviours,
+    n_frames,
+    size=(512, 512),
+    background=(1,) * 4,
+    camera_position=(-2, -2, -2),
+    camera_target=(0, 0, 0),
+    up_vector=(0, 0, 1),
+    light=None,
+    scene=None,
+):
     """Render a list of primitives for a given number of frames calling the
     passed behaviours after every frame.
 
@@ -80,8 +88,11 @@ def render(renderables, behaviours, n_frames, size=(512, 512),
     if not isinstance(renderables, (list, tuple)):
         renderables = [renderables]
     if not all(isinstance(r, Renderable) for r in renderables):
-        raise ValueError(("render() expects one or more renderables as "
-                          "parameters not {}").format(renderables))
+        raise ValueError(
+            ("render() expects one or more renderables as " "parameters not {}").format(
+                renderables
+            )
+        )
     for r in renderables:
         scene.add(r)
 
@@ -95,12 +106,12 @@ def render(renderables, behaviours, n_frames, size=(512, 512),
 
         # run the behaviours
         params = Behaviour.Params(
-            None,                 # we have no window
-            scene,                # the scene
+            None,  # we have no window
+            scene,  # the scene
             lambda: scene.frame,  # return the frame if needed
-            None,                 # no mouse
-            None,                 # no keyboard
-            frame == n_frames-1   # is this the last frame?
+            None,  # no mouse
+            None,  # no keyboard
+            frame == n_frames - 1,  # is this the last frame?
         )
         remove = []
         for i, b in enumerate(behaviours):
@@ -123,8 +134,7 @@ def normalize_colors(c, N):
         c = c[np.newaxis].repeat(N, axis=0)
     elif len(c.shape) == 2:
         if len(c) != N:
-            raise ValueError(("c cannot represent the requested number "
-                              "of colors"))
+            raise ValueError(("c cannot represent the requested number " "of colors"))
         if c.shape[1] == 3:
             c = np.hstack([c, np.ones((N, 1))])
 

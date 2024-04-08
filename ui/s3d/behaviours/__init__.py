@@ -8,6 +8,7 @@ by using `simple_3dviz.window.show` or `simple_3dviz.utils.render`
 respectively.
 """
 
+
 class Behaviour(object):
     """Behaviour defines the interface that is implemented by all behaviours
     and provides simple helper classes to encapsulate the current scene
@@ -18,6 +19,7 @@ class Behaviour(object):
     of type `simple_3dviz.behaviours.Behaviour.Params`. For details see the
     corresponding comments.
     """
+
     class Mouse(object):
         """Hold information about the mouse events.
 
@@ -37,6 +39,7 @@ class Behaviour(object):
                             changes of the scroll wheel of the mouse, the sign
                             indicates the direction of rotation
         """
+
         def __init__(self, location, left_pressed, middle_pressed, wheel_rotation):
             self.location = location
             self.left_pressed = left_pressed
@@ -57,6 +60,7 @@ class Behaviour(object):
             keys_down: set[string], the keys that were pressed down
             keys_up: set[string], the keys that were released
         """
+
         def __init__(self, keys_down, keys_up):
             self.keys_down = set(keys_down)
             self.keys_up = set(keys_up)
@@ -89,6 +93,7 @@ class Behaviour(object):
             done: bool, when set remove this behaviour from the list
             refresh: bool, when set make sure to redraw the window
         """
+
         def __init__(self, window, scene, frame, mouse, keyboard, last_call):
             self.window = window
             self.scene = scene
@@ -153,6 +158,7 @@ class SceneInit(Behaviour):
         scene_init: callable, a function that takes a Scene as an argument to
                     initialize it, add objects, set the camera, etc.
     """
+
     def __init__(self, scene_init):
         self._init_func = scene_init
 

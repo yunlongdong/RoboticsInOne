@@ -19,6 +19,7 @@ class Screw(object):
         This class basically adds a lot of constraints to the Matrix
         class of sympy - atleast tries to :)
     """
+
     def __init__(self, lin=zeros(3, 1), ang=zeros(3, 1)):
         """
         Constructor period.
@@ -36,15 +37,21 @@ class Screw(object):
         self._val[3:6, 0] = ang
 
     def __str__(self):
-        row_format = '[' + ('{:} ; ' * 5) + ('{:}') + ']'
-        str_format = row_format.format(*(
-            str(self._val[0]), str(self._val[1]), str(self._val[2]),
-            str(self._val[3]), str(self._val[4]), str(self._val[5])
-        ))
+        row_format = "[" + ("{:} ; " * 5) + ("{:}") + "]"
+        str_format = row_format.format(
+            *(
+                str(self._val[0]),
+                str(self._val[1]),
+                str(self._val[2]),
+                str(self._val[3]),
+                str(self._val[4]),
+                str(self._val[5]),
+            )
+        )
         return str_format
 
     def __repr__(self):
-        repr_format = 'Screw({0})'.format(str(self))
+        repr_format = "Screw({0})".format(str(self))
         return repr_format
 
     @property
@@ -116,13 +123,9 @@ class Screw(object):
     def __eq__(self, other):
         """Check equality between two instances of Screw."""
         if type(self) != type(other):
-            raise ValueError(
-                "Unable to compare %s with Screw type." % str(type(other))
-            )
+            raise ValueError("Unable to compare %s with Screw type." % str(type(other)))
         return self.val == other.val
 
     def __ne__(self, other):
         """Check non-equality between two instances of Screw."""
         return not self == other
-
-

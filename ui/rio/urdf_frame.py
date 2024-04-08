@@ -7,7 +7,8 @@ from copy import copy
 import os, shutil
 import os.path as osp
 import sys
-sys.path.append('../../')
+
+sys.path.append("../../")
 from core.urdf_parser.utils import inv_tf
 
 from ..s3d.behaviours import Behaviour
@@ -23,18 +24,15 @@ from .custom_widget import JointController
 
 dir_abs_path = osp.dirname(osp.abspath(__file__))
 
+
 class Window(BaseWindow):
-    _FRAME_STYLE = wx.DEFAULT_FRAME_STYLE & ~(
-        wx.RESIZE_BORDER | wx.MAXIMIZE_BOX
-    )
+    _FRAME_STYLE = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX)
 
     class _Frame(wx.Frame):
         """A simple frame for our wxWidgets app."""
+
         def __init__(self, window, size, title):
-            super(Window._Frame, self).__init__(
-                None,
-                style=Window._FRAME_STYLE
-            )
+            super(Window._Frame, self).__init__(None, style=Window._FRAME_STYLE)
             self._window = window
             self.SetTitle(title)
             self.SetClientSize(size)
@@ -43,48 +41,78 @@ class Window(BaseWindow):
             self.Bind(wx.EVT_CLOSE, self._on_close)
 
             icon = wx.Icon()
-            icon.CopyFromBitmap(wx.Bitmap(osp.join(dir_abs_path, "../icons/ico.bmp"), wx.BITMAP_TYPE_ANY))
+            icon.CopyFromBitmap(
+                wx.Bitmap(
+                    osp.join(dir_abs_path, "../icons/ico.bmp"), wx.BITMAP_TYPE_ANY
+                )
+            )
             # icon.LoadFile("icons/sm.ico", wx.BITMAP_TYPE_ANY)
             self.SetIcon(icon)
-            self.SetBackgroundColour( wx.Colour( 255, 255, 255 ) )
+            self.SetBackgroundColour(wx.Colour(255, 255, 255))
 
-            bSizer1 = wx.BoxSizer( wx.VERTICAL )
-            bSizer2 = wx.BoxSizer( wx.HORIZONTAL )
-            bSizer2_1 = wx.BoxSizer( wx.VERTICAL )
-            bSizer3 = wx.BoxSizer( wx.HORIZONTAL )
+            bSizer1 = wx.BoxSizer(wx.VERTICAL)
+            bSizer2 = wx.BoxSizer(wx.HORIZONTAL)
+            bSizer2_1 = wx.BoxSizer(wx.VERTICAL)
+            bSizer3 = wx.BoxSizer(wx.HORIZONTAL)
 
             self.robot = self._window.robot or []
-            self.m_checklist_link = wx.CheckListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, list(self.robot.robotlinks.keys()), 0 )
-            text = wx.StaticText( self, wx.ID_ANY, 'Links Information', wx.DefaultPosition, wx.DefaultSize, 0 )
-            bSizer2_1.Add( text, -1, wx.ALL, 0)
-            bSizer2_1.Add( self.m_checklist_link , 1,  wx.EXPAND|wx.ALL, 0)
+            self.m_checklist_link = wx.CheckListBox(
+                self,
+                wx.ID_ANY,
+                wx.DefaultPosition,
+                wx.DefaultSize,
+                list(self.robot.robotlinks.keys()),
+                0,
+            )
+            text = wx.StaticText(
+                self,
+                wx.ID_ANY,
+                "Links Information",
+                wx.DefaultPosition,
+                wx.DefaultSize,
+                0,
+            )
+            bSizer2_1.Add(text, -1, wx.ALL, 0)
+            bSizer2_1.Add(self.m_checklist_link, 1, wx.EXPAND | wx.ALL, 0)
 
-            joint_names = [ i for i in list(self.robot.robotjoints.keys())]
+            joint_names = [i for i in list(self.robot.robotjoints.keys())]
             self.joint_names = joint_names
-            self.joint_inv_prev = {j:0 for j in self.joint_names}
-            self.m_checklist_invert_j = wx.CheckListBox( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, joint_names, 0 )
-            text1 = wx.StaticText( self, wx.ID_ANY, 'Invert Joint', wx.DefaultPosition, wx.DefaultSize, 0 )
-            self.m_button_save = wx.Button( self, wx.ID_ANY, 'Save URDF')
+            self.joint_inv_prev = {j: 0 for j in self.joint_names}
+            self.m_checklist_invert_j = wx.CheckListBox(
+                self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, joint_names, 0
+            )
+            text1 = wx.StaticText(
+                self, wx.ID_ANY, "Invert Joint", wx.DefaultPosition, wx.DefaultSize, 0
+            )
+            self.m_button_save = wx.Button(self, wx.ID_ANY, "Save URDF")
             self.m_button_mdh = wx.Button(self, wx.ID_ANY, "Save MDH")
-            self.m_button_kine = wx.Button( self, wx.ID_ANY, 'Kinematics')
-            self.m_button_dyn = wx.Button( self, wx.ID_ANY, 'Dynamics')
-            self.m_button_sysid = wx.Button( self, wx.ID_ANY, 'Identification')
-            self.m_button_traj_gen = wx.Button( self, wx.ID_ANY, 'Trajectory')
+            self.m_button_kine = wx.Button(self, wx.ID_ANY, "Kinematics")
+            self.m_button_dyn = wx.Button(self, wx.ID_ANY, "Dynamics")
+            self.m_button_sysid = wx.Button(self, wx.ID_ANY, "Identification")
+            self.m_button_traj_gen = wx.Button(self, wx.ID_ANY, "Trajectory")
             # add menu bar
             menuBar = wx.MenuBar()
 
-            menu= wx.Menu()
-            self.save_urdf_item = wx.MenuItem(menu, wx.ID_ANY, u"Save URDF", wx.EmptyString)
-            self.save_MDH_item = wx.MenuItem(menu, wx.ID_ANY, u"Save MDH", wx.EmptyString)
+            menu = wx.Menu()
+            self.save_urdf_item = wx.MenuItem(
+                menu, wx.ID_ANY, "Save URDF", wx.EmptyString
+            )
+            self.save_MDH_item = wx.MenuItem(
+                menu, wx.ID_ANY, "Save MDH", wx.EmptyString
+            )
             menu.Append(self.save_urdf_item)
             menu.Append(self.save_MDH_item)
-            menuBar.Append(menu,"Save")
+            menuBar.Append(menu, "Save")
 
-            menu= wx.Menu()
-            self.menu_kin = wx.MenuItem(menu, wx.ID_ANY, u"Kinematics", wx.EmptyString)
-            self.menu_dyn = wx.MenuItem(menu, wx.ID_ANY, u"Dynamics", wx.EmptyString)
-            self.menu_sysid = wx.MenuItem(menu, wx.ID_ANY, u"Identification", wx.EmptyString)
-            self.menu_trajgen = wx.MenuItem(menu, wx.ID_ANY, u"Trajectory", wx.EmptyString)
+            menu = wx.Menu()
+            self.menu_kin = wx.MenuItem(menu, wx.ID_ANY, "Kinematics", wx.EmptyString)
+            self.menu_dyn = wx.MenuItem(menu, wx.ID_ANY, "Dynamics", wx.EmptyString)
+            self.menu_sysid = wx.MenuItem(
+                menu, wx.ID_ANY, "Identification", wx.EmptyString
+            )
+            self.menu_trajgen = wx.MenuItem(
+                menu, wx.ID_ANY, "Trajectory", wx.EmptyString
+            )
             menu.Append(self.menu_kin)
             menu.Append(self.menu_dyn)
             menu.Append(self.menu_sysid)
@@ -92,71 +120,99 @@ class Window(BaseWindow):
             menuBar.Append(menu, "Codegen")
             self.SetMenuBar(menuBar)  # Adding the MenuBar to the Frame content
 
+            bSizer2_1.Add(text1, -1, wx.ALL, 0)
+            bSizer2_1.Add(self.m_checklist_invert_j, 1, wx.EXPAND | wx.ALL, 0)
 
-            bSizer2_1.Add( text1, -1, wx.ALL, 0)
-            bSizer2_1.Add( self.m_checklist_invert_j , 1,  wx.EXPAND|wx.ALL, 0)
-
-
-            
             self.joint_control = JointController(self, joint_names)
 
-            text = wx.StaticText( self, wx.ID_ANY, 'Joints Control', wx.DefaultPosition, wx.DefaultSize, 0 )
-            bSizer2_1.Add( text, -1, wx.ALL, 0)
-            bSizer2_1.Add (self.joint_control, 5, wx.EXPAND|wx.ALL, 0)
+            text = wx.StaticText(
+                self, wx.ID_ANY, "Joints Control", wx.DefaultPosition, wx.DefaultSize, 0
+            )
+            bSizer2_1.Add(text, -1, wx.ALL, 0)
+            bSizer2_1.Add(self.joint_control, 5, wx.EXPAND | wx.ALL, 0)
 
-            bSizer2.Add( self.view, 5, wx.EXPAND |wx.ALL, 0 )
-            bSizer2.Add( bSizer2_1, -1, wx.EXPAND|wx.ALL, 0 )
-            
+            bSizer2.Add(self.view, 5, wx.EXPAND | wx.ALL, 0)
+            bSizer2.Add(bSizer2_1, -1, wx.EXPAND | wx.ALL, 0)
 
-            self.m_staticText1 = wx.StaticText( self, wx.ID_ANY, u"Color", wx.DefaultPosition, wx.DefaultSize, 0 )
-            self.m_staticText1.Wrap( -1 )
-            bSizer3.Add( self.m_staticText1, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
-            self.m_colourPicker2 = wx.ColourPickerCtrl( self, wx.ID_ANY, '#708090', wx.DefaultPosition, wx.DefaultSize, wx.CLRP_DEFAULT_STYLE )
-            self.m_colourPicker2.SetColour('#708090')
-            bSizer3.Add( self.m_colourPicker2, 0, wx.ALL, 5 )
+            self.m_staticText1 = wx.StaticText(
+                self, wx.ID_ANY, "Color", wx.DefaultPosition, wx.DefaultSize, 0
+            )
+            self.m_staticText1.Wrap(-1)
+            bSizer3.Add(self.m_staticText1, 0, wx.ALIGN_CENTER | wx.ALL, 5)
+            self.m_colourPicker2 = wx.ColourPickerCtrl(
+                self,
+                wx.ID_ANY,
+                "#708090",
+                wx.DefaultPosition,
+                wx.DefaultSize,
+                wx.CLRP_DEFAULT_STYLE,
+            )
+            self.m_colourPicker2.SetColour("#708090")
+            bSizer3.Add(self.m_colourPicker2, 0, wx.ALL, 5)
 
-            self.m_staticText2 = wx.StaticText( self, wx.ID_ANY, u"Alpha", wx.DefaultPosition, wx.DefaultSize, 0 )
-            self.m_staticText2.Wrap( -1 )
+            self.m_staticText2 = wx.StaticText(
+                self, wx.ID_ANY, "Alpha", wx.DefaultPosition, wx.DefaultSize, 0
+            )
+            self.m_staticText2.Wrap(-1)
 
-            bSizer3.Add( self.m_staticText2, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+            bSizer3.Add(self.m_staticText2, 0, wx.ALIGN_CENTER | wx.ALL, 5)
 
-            self.m_slider2 = wx.Slider( self, wx.ID_ANY, 20, 0, 100, wx.DefaultPosition, wx.DefaultSize, wx.SL_HORIZONTAL )
-            bSizer3.Add( self.m_slider2, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+            self.m_slider2 = wx.Slider(
+                self,
+                wx.ID_ANY,
+                20,
+                0,
+                100,
+                wx.DefaultPosition,
+                wx.DefaultSize,
+                wx.SL_HORIZONTAL,
+            )
+            bSizer3.Add(self.m_slider2, 0, wx.ALIGN_CENTER | wx.ALL, 5)
 
-            self.m_checkBoxCoM = wx.CheckBox( self, wx.ID_ANY, u"CoM", wx.DefaultPosition, wx.DefaultSize, 0 )
+            self.m_checkBoxCoM = wx.CheckBox(
+                self, wx.ID_ANY, "CoM", wx.DefaultPosition, wx.DefaultSize, 0
+            )
             self.m_checkBoxCoM.SetValue(True)
-            bSizer3.Add( self.m_checkBoxCoM, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+            bSizer3.Add(self.m_checkBoxCoM, 0, wx.ALIGN_CENTER | wx.ALL, 5)
 
-            self.m_checkBoxAxis = wx.CheckBox( self, wx.ID_ANY, u"Axis", wx.DefaultPosition, wx.DefaultSize, 0 )
+            self.m_checkBoxAxis = wx.CheckBox(
+                self, wx.ID_ANY, "Axis", wx.DefaultPosition, wx.DefaultSize, 0
+            )
             self.m_checkBoxAxis.SetValue(True)
-            bSizer3.Add( self.m_checkBoxAxis, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+            bSizer3.Add(self.m_checkBoxAxis, 0, wx.ALIGN_CENTER | wx.ALL, 5)
 
-            self.m_checkBoxAxis_MDH = wx.CheckBox( self, wx.ID_ANY, u"MDH Axis", wx.DefaultPosition, wx.DefaultSize, 0 )
+            self.m_checkBoxAxis_MDH = wx.CheckBox(
+                self, wx.ID_ANY, "MDH Axis", wx.DefaultPosition, wx.DefaultSize, 0
+            )
             self.m_checkBoxAxis_MDH.SetValue(False)
-            bSizer3.Add( self.m_checkBoxAxis_MDH, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+            bSizer3.Add(self.m_checkBoxAxis_MDH, 0, wx.ALIGN_CENTER | wx.ALL, 5)
 
-            self.m_checkBoxAxis_World = wx.CheckBox( self, wx.ID_ANY, u"World", wx.DefaultPosition, wx.DefaultSize, 0 )
+            self.m_checkBoxAxis_World = wx.CheckBox(
+                self, wx.ID_ANY, "World", wx.DefaultPosition, wx.DefaultSize, 0
+            )
             self.m_checkBoxAxis_World.SetValue(True)
-            bSizer3.Add( self.m_checkBoxAxis_World, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+            bSizer3.Add(self.m_checkBoxAxis_World, 0, wx.ALIGN_CENTER | wx.ALL, 5)
 
+            bSizer1.Add(bSizer2, 6, wx.ALL | wx.EXPAND, 0)
+            bSizer1.Add(bSizer3, 0, wx.ALL | wx.EXPAND, 0)
 
-            bSizer1.Add( bSizer2, 6, wx.ALL|wx.EXPAND, 0 )
-            bSizer1.Add( bSizer3, 0, wx.ALL|wx.EXPAND, 0 )
-
-
-            self.SetSizer( bSizer1 )
+            self.SetSizer(bSizer1)
             self.Layout()
 
-            self.Centre( wx.BOTH )
+            self.Centre(wx.BOTH)
 
             self.Bind(wx.EVT_COLOURPICKER_CHANGED, self.OnColor, self.m_colourPicker2)
             self.Bind(wx.EVT_SCROLL, self.OnSlider, self.m_slider2)
             self.Bind(wx.EVT_CHECKBOX, self.OnCheckerCoM, self.m_checkBoxCoM)
             self.Bind(wx.EVT_CHECKBOX, self.OnCheckerAxis, self.m_checkBoxAxis)
             self.Bind(wx.EVT_CHECKBOX, self.OnCheckerAxis_MDH, self.m_checkBoxAxis_MDH)
-            self.Bind(wx.EVT_CHECKBOX, self.OnCheckerAxis_World, self.m_checkBoxAxis_World)
+            self.Bind(
+                wx.EVT_CHECKBOX, self.OnCheckerAxis_World, self.m_checkBoxAxis_World
+            )
             self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckerLink, self.m_checklist_link)
-            self.Bind(wx.EVT_CHECKLISTBOX, self.OnCheckerInvJ, self.m_checklist_invert_j)
+            self.Bind(
+                wx.EVT_CHECKLISTBOX, self.OnCheckerInvJ, self.m_checklist_invert_j
+            )
             # self.Bind(wx.EVT_BUTTON, self.OnButtonSave, self.m_button_save)
             # self.Bind(wx.EVT_BUTTON, self.OnButtonSaveMDH, self.m_button_mdh)
             # self.Bind(wx.EVT_BUTTON, self.OnButtonKin, self.m_button_kine)
@@ -179,16 +235,26 @@ class Window(BaseWindow):
         def show_all_link(self):
             for i in range(len(self.robot.robotlinks.keys())):
                 self.m_checklist_link.Check(i)
-        
+
         def OnButtonSave(self, e):
-            dlg = wx.MessageDialog(self, 'The generated URDF will be saved besides the original URDF file.', caption='Save URDF?', style=wx.YES_NO)
+            dlg = wx.MessageDialog(
+                self,
+                "The generated URDF will be saved besides the original URDF file.",
+                caption="Save URDF?",
+                style=wx.YES_NO,
+            )
             if dlg.ShowModal() == wx.ID_YES:
                 # do something here
                 robot = self._window.robot
                 robot.export_to_urdf()
 
         def OnButtonSaveMDH(self, e):
-            dlg = wx.MessageDialog(self, 'The generated MDH file will be saved besides the original URDF file.', caption='Save MDH?', style=wx.YES_NO)
+            dlg = wx.MessageDialog(
+                self,
+                "The generated MDH file will be saved besides the original URDF file.",
+                caption="Save MDH?",
+                style=wx.YES_NO,
+            )
             if dlg.ShowModal() == wx.ID_YES:
                 # do something here
                 robot = self._window.robot
@@ -198,16 +264,16 @@ class Window(BaseWindow):
             frame = KinematicsFrame(self, self.robot)
             frame.Show()
             return
-        
+
         def OnButtonDyn(self, e):
             frame = DynamicsFrame(self, self.robot)
             frame.Show()
-            return 
-        
+            return
+
         def OnButtonTrajGen(self, e):
             frame = TrajectoryFrame(self, self.robot)
             frame.Show()
-            return 
+            return
 
         def OnButtonSysid(self, e):
             frame = SystemIDFrame(self, self.robot)
@@ -217,31 +283,33 @@ class Window(BaseWindow):
         def OnColor(self, e):
             self.show_all_link()
             color = self.m_colourPicker2.GetColour()[:3]
-            color = [ c/255.0 for c in color]
+            color = [c / 255.0 for c in color]
             for render in self._window._scene._renderables:
                 if isinstance(render, Mesh):
-                    render.colors = color + [self.m_slider2.GetValue()/100.0]
-            
+                    render.colors = color + [self.m_slider2.GetValue() / 100.0]
+
             self.view._on_paint(None)
-            return 
+            return
 
         def OnSlider(self, e):
             self.show_all_link()
             for render in self._window._scene._renderables:
                 if isinstance(render, Mesh):
-                    colors = render.colors                 
-                    colors[:, -1] = self.m_slider2.GetValue()/100.0 
+                    colors = render.colors
+                    colors[:, -1] = self.m_slider2.GetValue() / 100.0
                     render.colors = colors
             self.view._on_paint(None)
-            return 
+            return
 
         def OnSliderControl(self, e):
-            q = [ i.GetValue()/20.0 for i in self.joint_control.joint_controller_sliders]
+            q = [
+                i.GetValue() / 20.0 for i in self.joint_control.joint_controller_sliders
+            ]
             robot = self._window.robot
             robot.set_joint_angle(q)
-            self.updateAllRenders()          
+            self.updateAllRenders()
             self.view._on_paint(None)
-            return 
+            return
 
         def OnCheckerCoM(self, e):
             if self.m_checkBoxCoM.IsChecked():
@@ -251,7 +319,7 @@ class Window(BaseWindow):
             else:
                 for render in self._window._scene._renderables:
                     if isinstance(render, Spherecloud):
-                        render.scale(0.001) 
+                        render.scale(0.001)
             self.view._on_paint(None)
             return
 
@@ -282,7 +350,7 @@ class Window(BaseWindow):
                         render.scale(0.001)
             self.view._on_paint(None)
             return
-        
+
         def OnCheckerAxis_World(self, e):
             if self.m_checkBoxAxis_World.IsChecked():
                 for render in self._window._scene._renderables:
@@ -300,12 +368,12 @@ class Window(BaseWindow):
                 if isinstance(render, Mesh):
                     name = render.name
                     if not name in self.m_checklist_link.GetCheckedStrings():
-                        colors = render.colors                   
+                        colors = render.colors
                         colors[:, -1] = 0.0
                         render.colors = colors
                     else:
-                        colors = render.colors                   
-                        colors[:, -1] = self.m_slider2.GetValue()/100.0
+                        colors = render.colors
+                        colors[:, -1] = self.m_slider2.GetValue() / 100.0
                         render.colors = colors
             self.view._on_paint(None)
             return
@@ -316,9 +384,9 @@ class Window(BaseWindow):
             robot.set_joint_angle(np.zeros(robot.num_robotjoints))
             # reset slider
             for i in self.joint_control.joint_controller_sliders:
-                i.SetValue(0) 
+                i.SetValue(0)
 
-            self.joint_inv_now = {j:0 for j in self.joint_names}
+            self.joint_inv_now = {j: 0 for j in self.joint_names}
 
             for inv_j in self.m_checklist_invert_j.GetCheckedStrings():
                 self.joint_inv_now[inv_j] = 1
@@ -331,20 +399,19 @@ class Window(BaseWindow):
 
             self.joint_inv_prev = copy(self.joint_inv_now)
 
-            self.updateAllRenders()         
+            self.updateAllRenders()
             self.view._on_paint(None)
             return
-        
+
         def clean(self):
             urdf_abs_path = osp.dirname(self.robot.urdf_file)
             for root, dirs, files in os.walk(urdf_abs_path):
                 for file in files:
-                    if file.startswith('generated'):
+                    if file.startswith("generated"):
                         os.remove(osp.join(root, file))
                 for dir in dirs:
                     if dir == "__pycache__":
                         shutil.rmtree(osp.join(root, dir))
-                
 
         def _on_close(self, event):
             # If close was called before then close
@@ -355,7 +422,7 @@ class Window(BaseWindow):
 
             # otherwise just set the window to closing
             self._window._closing = True
-        
+
         # The followings are utility funtions
         def updateAllRenders(self):
             robot = self._window.robot
@@ -368,7 +435,9 @@ class Window(BaseWindow):
                     m[:3, 3] = render.t
                     m_inv = inv_tf(m)
                     render.affine_transform_no_update(R=m_inv[:3, :3].T, t=m_inv[:3, 3])
-                    render.affine_transform(R=abs_tf_visual[:3, :3].T, t=abs_tf_visual[:3, 3])
+                    render.affine_transform(
+                        R=abs_tf_visual[:3, :3].T, t=abs_tf_visual[:3, 3]
+                    )
                 elif isinstance(render, Lines):
                     linkname = None
                     abs_tf_link = None
@@ -389,11 +458,12 @@ class Window(BaseWindow):
                     m[:3, 3] = render.t
                     m_inv = inv_tf(m)
                     render.affine_transform_no_update(R=m_inv[:3, :3].T, t=m_inv[:3, 3])
-                    render.affine_transform(R=abs_tf_link[:3, :3].T, t=abs_tf_link[:3, 3])
+                    render.affine_transform(
+                        R=abs_tf_link[:3, :3].T, t=abs_tf_link[:3, 3]
+                    )
                 elif isinstance(render, Spherecloud):
                     robotlink = robot.robotlinks[render.name]
                     render.updatePos([robotlink.abs_com])
-
 
     class _Canvas(wx.glcanvas.GLCanvas):
         def __init__(self, window, parent):
@@ -404,8 +474,8 @@ class Window(BaseWindow):
                     wx.glcanvas.WX_GL_RGBA,
                     wx.glcanvas.WX_GL_DOUBLEBUFFER,
                     wx.glcanvas.WX_GL_DEPTH_SIZE,
-                    24
-                ]
+                    24,
+                ],
             )
             self._window = window
             self._window._get_frame = self._get_frame
@@ -422,8 +492,7 @@ class Window(BaseWindow):
         def _get_frame(self):
             framebuffer = self._mgl_context.detect_framebuffer()
             return np.frombuffer(
-                framebuffer.read(components=4),
-                dtype=np.uint8
+                framebuffer.read(components=4), dtype=np.uint8
             ).reshape(*(framebuffer.size + (4,)))[::-1]
 
         def _on_close(self, event):
@@ -431,7 +500,6 @@ class Window(BaseWindow):
             self.Unbind(wx.EVT_TIMER)
 
         def _on_paint(self, event):
-            
             self.SetCurrent(self._context)
             if self._window._scene is None:
                 self._mgl_context = moderngl.create_context()
@@ -439,14 +507,15 @@ class Window(BaseWindow):
                 self._mgl_context.blend_func = (
                     # moderngl.SRC_ALPHA,
                     # moderngl.ONE_MINUS_SRC_ALPHA
-                    moderngl.SRC_ALPHA, moderngl.ONE_MINUS_SRC_ALPHA,
+                    moderngl.SRC_ALPHA,
+                    moderngl.ONE_MINUS_SRC_ALPHA,
                     # moderngl.FUNC_ADD, moderngl.FUNC_ADD
                     # moderngl.ONE, moderngl.ONE
                 )
                 self._window._scene = Scene(
                     size=(self.Size.width, self.Size.height),
-                    background=(0,)*4,
-                    ctx=self._mgl_context
+                    background=(0,) * 4,
+                    ctx=self._mgl_context,
                 )
                 self._ticker.Start(16)
 
@@ -468,7 +537,7 @@ class Window(BaseWindow):
             self._window._mouse.middle_pressed = state.MiddleIsDown()
             if abs(event.GetWheelRotation()) > 0:
                 self._window._mouse.wheel_rotation += (
-                    event.GetWheelRotation()/event.GetWheelDelta()
+                    event.GetWheelRotation() / event.GetWheelDelta()
                 )
 
         def _on_keyboard(self, event):
@@ -479,11 +548,13 @@ class Window(BaseWindow):
             cmd = event.CmdDown() == down
             meta = event.MetaDown() == down
             keys = set(
-                [key] if key != "\00" else [] +
-                (["<alt>"] if alt else []) +
-                (["<ctrl>"] if ctrl else []) +
-                (["<cmd>"] if cmd else []) +
-                (["<meta>"] if meta else [])
+                [key]
+                if key != "\00"
+                else []
+                + (["<alt>"] if alt else [])
+                + (["<ctrl>"] if ctrl else [])
+                + (["<cmd>"] if cmd else [])
+                + (["<meta>"] if meta else [])
             )
 
             if down:
@@ -511,7 +582,7 @@ class Window(BaseWindow):
             self._get_frame,
             self._mouse,
             self._keyboard,
-            self._closing
+            self._closing,
         )
 
         # Run the behaviours

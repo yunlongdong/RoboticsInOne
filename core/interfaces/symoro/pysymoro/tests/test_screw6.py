@@ -16,36 +16,23 @@ from pysymoro.screw6 import Screw6
 
 class TestScrew6(unittest.TestCase):
     """Unit test for Screw6 class."""
+
     def setUp(self):
         # setup data matrices to compare against
-        self.data = Matrix([
-            [1, 2, 3, 4, 5, 6],
-            [7, 8, 9, 10, 11, 12],
-            [13, 14, 15, 16, 17, 18],
-            [19, 20, 21, 22, 23, 24],
-            [25, 26, 27, 28, 29, 30],
-            [31, 32, 33, 34, 35, 36]
-        ])
-        self.data_tl = Matrix([
-            [1, 2, 3],
-            [7, 8, 9],
-            [13, 14, 15]
-        ])
-        self.data_tr = Matrix([
-            [4, 5, 6],
-            [10, 11, 12],
-            [16, 17, 18]
-        ])
-        self.data_bl = Matrix([
-            [19, 20, 21],
-            [25, 26, 27],
-            [31, 32, 33]
-        ])
-        self.data_br = Matrix([
-            [22, 23, 24],
-            [28, 29, 30],
-            [34, 35, 36]
-        ])
+        self.data = Matrix(
+            [
+                [1, 2, 3, 4, 5, 6],
+                [7, 8, 9, 10, 11, 12],
+                [13, 14, 15, 16, 17, 18],
+                [19, 20, 21, 22, 23, 24],
+                [25, 26, 27, 28, 29, 30],
+                [31, 32, 33, 34, 35, 36],
+            ]
+        )
+        self.data_tl = Matrix([[1, 2, 3], [7, 8, 9], [13, 14, 15]])
+        self.data_tr = Matrix([[4, 5, 6], [10, 11, 12], [16, 17, 18]])
+        self.data_bl = Matrix([[19, 20, 21], [25, 26, 27], [31, 32, 33]])
+        self.data_br = Matrix([[22, 23, 24], [28, 29, 30], [34, 35, 36]])
         # setup Screw6 instances
         self.empty = Screw6()
         self.indiv = Screw6()
@@ -59,16 +46,11 @@ class TestScrew6(unittest.TestCase):
         self.assertIsInstance(Screw6(self.data), Screw6)
         self.assertIsInstance(Screw6(value=self.data), Screw6)
         self.assertIsInstance(
-            Screw6(
-                self.data_tl, self.data_tr,
-                self.data_bl, self.data_br
-            ), Screw6
+            Screw6(self.data_tl, self.data_tr, self.data_bl, self.data_br), Screw6
         )
         self.assertIsInstance(
-            Screw6(
-                tl=self.data_tl, bl=self.data_bl,
-                tr=self.data_tr, br=self.data_br
-            ), Screw6
+            Screw6(tl=self.data_tl, bl=self.data_bl, tr=self.data_tr, br=self.data_br),
+            Screw6,
         )
         # test raise appropriate exception
         self.assertRaises(NotImplementedError, Screw6, 3, 4)
@@ -130,13 +112,12 @@ class TestScrew6(unittest.TestCase):
         self.assertEqual(self.empty, Screw6())
         self.assertNotEqual(self.indiv, Screw6())
         self.assertRaises(
-            ValueError, self.empty.__eq__,
-            Matrix([1, 2, 3, 4, 5, 6, 7, 8])
+            ValueError, self.empty.__eq__, Matrix([1, 2, 3, 4, 5, 6, 7, 8])
         )
         self.assertRaises(
-            ValueError, self.empty.__ne__,
-            Matrix([1, 2, 3, 4, 5, 6, 7, 8])
+            ValueError, self.empty.__ne__, Matrix([1, 2, 3, 4, 5, 6, 7, 8])
         )
+
 
 def run_tests():
     """Load and run the unittests"""
@@ -149,7 +130,5 @@ def main():
     run_tests()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
-

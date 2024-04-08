@@ -32,22 +32,21 @@ class TestParfile(unittest.TestCase):
         l1 = self.orig_robo.get_geom_head()
         l2 = self.orig_robo.get_dynam_head()
         l3 = self.orig_robo.get_ext_dynam_head()
-        for name in l3[1:]+l2[1:]+l1[1:]:
+        for name in l3[1:] + l2[1:] + l1[1:]:
             for i in range(1, self.orig_robo.NL):
-                self.assertEqual(self.orig_robo.get_val(i, name),
-                                 new_robo.get_val(i, name))
+                self.assertEqual(
+                    self.orig_robo.get_val(i, name), new_robo.get_val(i, name)
+                )
 
 
 def main():
     # load and run the doctests
-#    doc_suite = doctest.DocTestSuite(parfile)
-#    unittest.TextTestRunner(verbosity=2).run(doc_suite)
+    #    doc_suite = doctest.DocTestSuite(parfile)
+    #    unittest.TextTestRunner(verbosity=2).run(doc_suite)
     # load and run the unittests
     unit_suite = unittest.TestLoader().loadTestsFromTestCase(TestParfile)
     unittest.TextTestRunner(verbosity=2).run(unit_suite)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
-

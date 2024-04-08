@@ -19,60 +19,64 @@ from pysymoro.transform import TransformationMatrix
 
 class TestTransformationMatrix(unittest.TestCase):
     """Unit test for TransformationMatrix class."""
+
     def setUp(self):
         # parameter values
-        th1 = var('th1')
-        l1 = var('L1')
+        th1 = var("th1")
+        l1 = var("L1")
         self.gamma = 0
         self.b = 0
         self.alpha = 0
         self.d = l1
         self.theta = th1
         self.r = 0
-        self.t_val = Matrix([
-            [cos(th1), -sin(th1), 0, l1],
-            [sin(th1), cos(th1), 0, 0],
-            [0, 0, 1, 0],
-            [0, 0, 0, 1]
-        ])
-        self.rot_val = Matrix([
-            [cos(th1), -sin(th1), 0],
-            [sin(th1), cos(th1), 0],
-            [0, 0, 1]
-        ])
+        self.t_val = Matrix(
+            [
+                [cos(th1), -sin(th1), 0, l1],
+                [sin(th1), cos(th1), 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1],
+            ]
+        )
+        self.rot_val = Matrix(
+            [[cos(th1), -sin(th1), 0], [sin(th1), cos(th1), 0], [0, 0, 1]]
+        )
         self.trans_val = Matrix([l1, 0, 0])
-        self.t_inv = Matrix([
-            [cos(th1), sin(th1), 0, -l1*cos(th1)],
-            [-sin(th1), cos(th1), 0, l1*sin(th1)],
-            [0, 0, 1, 0],
-            [0, 0, 0, 1]
-        ])
-        self.inv_rot = Matrix([
-            [cos(th1), sin(th1), 0],
-            [-sin(th1), cos(th1), 0],
-            [0, 0, 1]
-        ])
-        self.inv_trans = Matrix([-l1*cos(th1), l1*sin(th1), 0])
+        self.t_inv = Matrix(
+            [
+                [cos(th1), sin(th1), 0, -l1 * cos(th1)],
+                [-sin(th1), cos(th1), 0, l1 * sin(th1)],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1],
+            ]
+        )
+        self.inv_rot = Matrix(
+            [[cos(th1), sin(th1), 0], [-sin(th1), cos(th1), 0], [0, 0, 1]]
+        )
+        self.inv_trans = Matrix([-l1 * cos(th1), l1 * sin(th1), 0])
         self.sji = Screw6(
-            tl=self.rot_val, tr=tools.skew(self.trans_val),
-            bl=zeros(3, 3), br=self.rot_val
+            tl=self.rot_val,
+            tr=tools.skew(self.trans_val),
+            bl=zeros(3, 3),
+            br=self.rot_val,
         ).val
         self.sij = Screw6(
             tl=self.inv_rot,
             tr=-(self.inv_rot * tools.skew(self.trans_val)),
-            bl=zeros(3, 3), br=self.inv_rot
+            bl=zeros(3, 3),
+            br=self.inv_rot,
         ).val
         # params dict
         self.params = {
-            'gamma': self.gamma,
-            'b': self.b,
-            'alpha': self.alpha,
-            'd': self.d,
-            'theta': self.theta,
-            'r': self.r
+            "gamma": self.gamma,
+            "b": self.b,
+            "alpha": self.alpha,
+            "d": self.d,
+            "theta": self.theta,
+            "r": self.r,
         }
-        self.sigmu_param = {'sigma': 2, 'mu': 0}
-        self.wrong_param = {'rand': 'some-value'}
+        self.sigmu_param = {"sigma": 2, "mu": 0}
+        self.wrong_param = {"rand": "some-value"}
         # frames
         self.frame_i = 5
         self.frame_j = 6
@@ -88,22 +92,15 @@ class TestTransformationMatrix(unittest.TestCase):
         # test raise NotImplementedError
         self.assertRaises(NotImplementedError, TransformationMatrix)
         # test raise AttributeError
-        self.assertRaises(
-            AttributeError, TransformationMatrix, params=params
-        )
+        self.assertRaises(AttributeError, TransformationMatrix, params=params)
         # test different forms of the constructor
+        self.assertIsInstance(TransformationMatrix(i=0, j=0), TransformationMatrix)
         self.assertIsInstance(
-            TransformationMatrix(i=0, j=0), TransformationMatrix
+            TransformationMatrix(i=0, j=0, params=params), TransformationMatrix
         )
-        self.assertIsInstance(
-            TransformationMatrix(i=0, j=0, params=params),
-            TransformationMatrix
-        )
-        params['frame'] = 1
-        params['ant'] = 0
-        self.assertIsInstance(
-            TransformationMatrix(params=params), TransformationMatrix
-        )
+        params["frame"] = 1
+        params["ant"] = 0
+        self.assertIsInstance(TransformationMatrix(params=params), TransformationMatrix)
 
     def test_val(self):
         """Test get of val()"""
@@ -148,9 +145,7 @@ class TestTransformationMatrix(unittest.TestCase):
     def test_update(self):
         """Test update()"""
         # test raise AttributeError
-        self.assertRaises(
-            AttributeError, self.t_empty.update, self.wrong_param
-        )
+        self.assertRaises(AttributeError, self.t_empty.update, self.wrong_param)
         # test sigma, mu
         self.t_empty.update(self.sigmu_param)
         self.assertEqual(self.t_empty.val, eye(4))
@@ -161,9 +156,7 @@ class TestTransformationMatrix(unittest.TestCase):
 
 def run_tests():
     """Load and run the unittests"""
-    unit_suite = unittest.TestLoader().loadTestsFromTestCase(
-        TestTransformationMatrix
-    )
+    unit_suite = unittest.TestLoader().loadTestsFromTestCase(TestTransformationMatrix)
     unittest.TextTestRunner(verbosity=2).run(unit_suite)
 
 
@@ -172,7 +165,5 @@ def main():
     run_tests()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
-

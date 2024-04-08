@@ -50,12 +50,9 @@ def get_transformation_matrix(gamma, b, alpha, d, theta, r):
     t33 = c_alpha
     t34 = (r * c_alpha) + b
     # t matrix
-    tmat = sympy.Matrix([
-        [t11, t12, t13, t14],
-        [t21, t22, t23, t24],
-        [t31, t32, t33, t34],
-        [0, 0, 0, 1]
-    ])
+    tmat = sympy.Matrix(
+        [[t11, t12, t13, t14], [t21, t22, t23, t24], [t31, t32, t33, t34], [0, 0, 0, 1]]
+    )
     return tmat
 
 
@@ -65,6 +62,7 @@ class TransformationMatrix(object):
         Represent the data structure to hold a transformation matrix
         between any two frames.
     """
+
     def __init__(self, **kwargs):
         """Constructor
 
@@ -89,19 +87,20 @@ class TransformationMatrix(object):
             self._compute_smat()
             self._compute_sinv()
             if len(kwargs) > 1:
-                self._frame_i = int(kwargs['i'])
-                self._frame_j = int(kwargs['j'])
-                if 'params' in kwargs:
-                    self.update(kwargs['params'])
+                self._frame_i = int(kwargs["i"])
+                self._frame_j = int(kwargs["j"])
+                if "params" in kwargs:
+                    self.update(kwargs["params"])
             else:
-                if self._has_frames(kwargs['params']):
-                    self.update(kwargs['params'])
+                if self._has_frames(kwargs["params"]):
+                    self.update(kwargs["params"])
                 else:
                     self._cleanup()
                     raise AttributeError(
                         """Cannot setup TransformationMatrix without
                         specifying the two frames - frame, ant. Input
-                        was: %s""" % str(kwargs['params'])
+                        was: %s"""
+                        % str(kwargs["params"])
                     )
         else:
             raise NotImplementedError(
@@ -117,16 +116,20 @@ class TransformationMatrix(object):
             "%s\n"
             "**********************************\n"
         ) % (
-            self._frame_j, self._frame_i,
-            str(self._gamma), str(self._b),
-            str(self._alpha), str(self._d),
-            str(self._theta), str(self._r),
-            sympy.pretty(self._tmat)
+            self._frame_j,
+            self._frame_i,
+            str(self._gamma),
+            str(self._b),
+            str(self._alpha),
+            str(self._d),
+            str(self._theta),
+            str(self._r),
+            sympy.pretty(self._tmat),
         )
         return str_format
 
     def __repr__(self):
-        return 'T of {} wrt {}'.format(self._frame_j, self._frame_i)
+        return "T of {} wrt {}".format(self._frame_j, self._frame_i)
 
     @property
     def val(self):
@@ -135,8 +138,8 @@ class TransformationMatrix(object):
         Returns:
             A 4x4 Matrix.
         """
-        if not hasattr(self, '_tmat'):
-            raise AttributeError('tmat is yet to be computed')
+        if not hasattr(self, "_tmat"):
+            raise AttributeError("tmat is yet to be computed")
         return self._tmat
 
     @property
@@ -146,8 +149,8 @@ class TransformationMatrix(object):
         Returns:
             A 3x3 Matrix.
         """
-        if not hasattr(self, '_tmat'):
-            raise AttributeError('tmat is yet to be computed')
+        if not hasattr(self, "_tmat"):
+            raise AttributeError("tmat is yet to be computed")
         return self._tmat[0:3, 0:3]
 
     @property
@@ -157,8 +160,8 @@ class TransformationMatrix(object):
         Returns:
             A 3x1 Matrix.
         """
-        if not hasattr(self, '_tmat'):
-            raise AttributeError('tmat is yet to be computed')
+        if not hasattr(self, "_tmat"):
+            raise AttributeError("tmat is yet to be computed")
         return self._tmat[0:3, 3:4]
 
     @property
@@ -168,8 +171,8 @@ class TransformationMatrix(object):
         Returns:
             A 4x4 Matrix.
         """
-        if not hasattr(self, '_tinv'):
-            raise AttributeError('tinv is yet to be computed')
+        if not hasattr(self, "_tinv"):
+            raise AttributeError("tinv is yet to be computed")
         return self._tinv
 
     @property
@@ -179,8 +182,8 @@ class TransformationMatrix(object):
         Returns:
             A 3x3 Matrix.
         """
-        if not hasattr(self, '_tinv'):
-            raise AttributeError('tinv is yet to be computed')
+        if not hasattr(self, "_tinv"):
+            raise AttributeError("tinv is yet to be computed")
         return self._tinv[0:3, 0:3]
 
     @property
@@ -190,8 +193,8 @@ class TransformationMatrix(object):
         Returns:
             A 3x1 Matrix.
         """
-        if not hasattr(self, '_tinv'):
-            raise AttributeError('tinv is yet to be computed')
+        if not hasattr(self, "_tinv"):
+            raise AttributeError("tinv is yet to be computed")
         return self._tinv[0:3, 3:4]
 
     @property
@@ -222,18 +225,17 @@ class TransformationMatrix(object):
                 to be updated.
         """
         for key, value in params.items():
-            attr = '_' + key
+            attr = "_" + key
             if hasattr(self, attr):
                 setattr(self, attr, value)
-            elif key in ['sigma', 'mu']:
+            elif key in ["sigma", "mu"]:
                 continue
-            elif key is 'frame':
+            elif key is "frame":
                 self._frame_j = int(value)
-            elif key is 'ant':
+            elif key is "ant":
                 self._frame_i = int(value)
             else:
-                raise AttributeError(
-                    '{} is not a geometric parameter'.format(key))
+                raise AttributeError("{} is not a geometric parameter".format(key))
         self._compute_tmat()
         self._compute_tinv()
         self._compute_smat()
@@ -246,15 +248,13 @@ class TransformationMatrix(object):
         transformation matrix between any two frames.
         """
         self._tmat = get_transformation_matrix(
-            self._gamma, self._b,
-            self._alpha, self._d,
-            self._theta, self._r
+            self._gamma, self._b, self._alpha, self._d, self._theta, self._r
         )
 
     def _compute_tinv(self):
         """Compute the inverse of the transformation matrix"""
-        if not hasattr(self, '_tmat'):
-            raise AttributeError('tmat is yet to be computed')
+        if not hasattr(self, "_tmat"):
+            raise AttributeError("tmat is yet to be computed")
         self._tinv = sympy.eye(4)
         rot_inv = self.rot.transpose()
         trans_inv = -rot_inv * self.trans
@@ -264,8 +264,7 @@ class TransformationMatrix(object):
     def _compute_smat(self):
         """Compute the transformation matrix in Screw (6x6) matrix form"""
         self._smat = Screw6(
-            tl=self.rot, tr=tools.skew(self.trans),
-            bl=sympy.zeros(3, 3), br=self.rot
+            tl=self.rot, tr=tools.skew(self.trans), bl=sympy.zeros(3, 3), br=self.rot
         )
 
     def _compute_sinv(self):
@@ -274,8 +273,10 @@ class TransformationMatrix(object):
         Compute the inverse transformation matrix in screw (6x6) matrix form.
         """
         self._sinv = Screw6(
-            tl=self.inv_rot, tr=-(self.inv_rot * tools.skew(self.trans)),
-            bl=sympy.zeros(3, 3), br=self.inv_rot
+            tl=self.inv_rot,
+            tr=-(self.inv_rot * tools.skew(self.trans)),
+            bl=sympy.zeros(3, 3),
+            br=self.inv_rot,
         )
 
     def _init_default(self):
@@ -297,7 +298,7 @@ class TransformationMatrix(object):
             True if `frame` and `ant` keys are present in params. False
             otherwise.
         """
-        if 'frame' in params and 'ant' in params:
+        if "frame" in params and "ant" in params:
             return True
         else:
             return False

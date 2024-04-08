@@ -1,4 +1,3 @@
-
 import numpy as np
 from pyrr import Matrix44, matrix44, euler
 
@@ -11,7 +10,8 @@ from .base import Renderable
 class MeshBase(Renderable):
     """Abstract base class that implements functions commonly used by the
     subclasses."""
-    def __init__(self, vertices, normals, offset=[0, 0, 0.]):
+
+    def __init__(self, vertices, normals, offset=[0, 0, 0.0]):
         self._vertices = np.asarray(vertices)
         self._normals = np.asarray(normals)
         self._model_matrix = np.eye(4).astype(np.float32)
@@ -47,10 +47,7 @@ class MeshBase(Renderable):
         """The axis aligned bounding box of all the vertices as two
         3-dimensional arrays containing the minimum and maximum for each
         axis."""
-        return [
-            self._vertices.min(axis=0),
-            self._vertices.max(axis=0)
-        ]
+        return [self._vertices.min(axis=0), self._vertices.max(axis=0)]
 
     @property
     def model_matrix(self):
@@ -87,8 +84,6 @@ class MeshBase(Renderable):
         matrix around the passed in axis."""
         m = matrix44.create_from_axis_rotation(axis, angle)
         self.model_matrix = m.dot(self.model_matrix)
-    
-    
 
     @property
     def offset(self):
@@ -146,7 +141,7 @@ class MeshBase(Renderable):
         """Transform the mesh such that it fits in the 0 centered unit cube."""
         bbox = self.bbox
         dims = bbox[1] - bbox[0]
-        self._vertices -= dims/2 + bbox[0]
+        self._vertices -= dims / 2 + bbox[0]
         self._vertices /= dims.max()
         self._update_vbo()
 
@@ -198,8 +193,17 @@ class Mesh(MeshBase):
               defines the rendering mode for this mesh. (default: shading)
         max_depth: The maximum depth map value when rendering depth maps
     """
-    def __init__(self, vertices, normals, colors, offset=[0, 0, 0.],
-                 mode="shading", max_depth=3.0, name=''):
+
+    def __init__(
+        self,
+        vertices,
+        normals,
+        colors,
+        offset=[0, 0, 0.0],
+        mode="shading",
+        max_depth=3.0,
+        name="",
+    ):
         super(Mesh, self).__init__(vertices, normals, offset)
         self.name = name
         self._colors = np.asarray(colors)
@@ -289,17 +293,15 @@ class Mesh(MeshBase):
                         f_color = vec4(depth, depth, depth, 1);
                     }
                 }
-            """
+            """,
         )
-        self._vbo = ctx.buffer(np.hstack([
-            self._vertices,
-            self._normals,
-            self._colors
-        ]).astype(np.float32).tobytes())
+        self._vbo = ctx.buffer(
+            np.hstack([self._vertices, self._normals, self._colors])
+            .astype(np.float32)
+            .tobytes()
+        )
         self._vao = ctx.simple_vertex_array(
-            self._prog,
-            self._vbo,
-            "in_vert", "in_norm", "in_color"
+            self._prog, self._vbo, "in_vert", "in_norm", "in_color"
         )
         self.model_matrix = self._model_matrix
         self.offset = self._offset
@@ -325,9 +327,11 @@ class Mesh(MeshBase):
         """Write in the vertex buffer object the vertices, normals and
         colors."""
         if self._vbo is not None:
-            self._vbo.write(np.hstack([
-                self._vertices, self._normals, self._colors
-            ]).astype(np.float32).tobytes())
+            self._vbo.write(
+                np.hstack([self._vertices, self._normals, self._colors])
+                .astype(np.float32)
+                .tobytes()
+            )
 
     @property
     def mode(self):
@@ -336,12 +340,7 @@ class Mesh(MeshBase):
     @mode.setter
     def mode(self, new_mode):
         self._mode = new_mode
-        modes = dict(
-            shading=0,
-            flat=1,
-            depth=2,
-            orthographic_depth=3
-        )
+        modes = dict(shading=0, flat=1, depth=2, orthographic_depth=3)
         # if self._prog:
         #     self._prog["mode"] = modes[self._mode]
 
@@ -366,9 +365,9 @@ class Mesh(MeshBase):
         colors = self._colors.reshape(-1, 12)
 
         centers = vertices.mean(-2)
-        d = ((np.asarray(point).reshape(1, 3) - centers)**2).sum(-1)
-        alpha = (colors[:, ::4].mean(-1)<1).astype(np.float32) * 1000
-        idxs = np.argsort(d+alpha)[::-1]
+        d = ((np.asarray(point).reshape(1, 3) - centers) ** 2).sum(-1)
+        alpha = (colors[:, ::4].mean(-1) < 1).astype(np.float32) * 1000
+        idxs = np.argsort(d + alpha)[::-1]
 
         self._vertices = vertices[idxs].reshape(-1, 3)
         self._normals = normals[idxs].reshape(-1, 3)
@@ -376,7 +375,7 @@ class Mesh(MeshBase):
         self._update_vbo()
 
     @classmethod
-    def from_file(cls, filepath, color=(0.3, 0.3, 0.3), ext=None, name=''):
+    def from_file(cls, filepath, color=(0.3, 0.3, 0.3), ext=None, name=""):
         """Read the mesh from a file.
 
         Arguments
@@ -410,16 +409,17 @@ class Mesh(MeshBase):
     @classmethod
     def from_xyz(cls, X, Y, Z, colormap=None):
         X, Y, Z = list(map(np.asarray, [X, Y, Z]))
+
         def gray(x):
-            return np.ones((x.shape[0], 3))*x[:, np.newaxis]
+            return np.ones((x.shape[0], 3)) * x[:, np.newaxis]
 
         def normalize(x):
             xmin = x.min()
             xmax = x.max()
-            return 2*(x-xmin)/(xmax-xmin) - 1
+            return 2 * (x - xmin) / (xmax - xmin) - 1
 
         def idx(i, j, x):
-            return i*x.shape[1] + j
+            return i * x.shape[1] + j
 
         # Normalize dimensions in [-1, 1]
         x = normalize(X)
@@ -428,34 +428,30 @@ class Mesh(MeshBase):
 
         # Create faces by triangulating each quad
         faces = []
-        for i in range(x.shape[0]-1):
-            for j in range(y.shape[1]-1):
+        for i in range(x.shape[0] - 1):
+            for j in range(y.shape[1] - 1):
                 # i, j; i, j+1; i+1; j+1
                 # i, j; i+1, j; i+1; j+1
-                faces.extend([
-                    idx(i+1, j+1, x),
-                    idx(i, j+1, x),
-                    idx(i, j, x),
-                    idx(i+1, j, x),
-                    idx(i+1, j+1, x),
-                    idx(i, j, x)
-                ])
+                faces.extend(
+                    [
+                        idx(i + 1, j + 1, x),
+                        idx(i, j + 1, x),
+                        idx(i, j, x),
+                        idx(i + 1, j, x),
+                        idx(i + 1, j + 1, x),
+                        idx(i, j, x),
+                    ]
+                )
 
         vertices = np.vstack([x.ravel(), y.ravel(), z.ravel()]).T[faces]
-        colors = (
-            colormap(Z.ravel()[faces])
-            if colormap else gray(z.ravel()[faces])
-        )
+        colors = colormap(Z.ravel()[faces]) if colormap else gray(z.ravel()[faces])
         normals = np.repeat(cls._triangle_normals(vertices), 3, axis=0)
 
         return cls(vertices, normals, colors)
 
     @classmethod
-    def from_faces(cls, vertices, faces, colors=(0.3,0.3,0.3)):
-        vertices, faces, colors = list(map(
-            np.asarray,
-            [vertices, faces, colors]
-        ))
+    def from_faces(cls, vertices, faces, colors=(0.3, 0.3, 0.3)):
+        vertices, faces, colors = list(map(np.asarray, [vertices, faces, colors]))
         colors = normalize_colors(colors, len(vertices))
         vertices = vertices[faces].reshape(-1, 3)
         normals = np.repeat(cls._triangle_normals(vertices), 3, axis=0)
@@ -464,7 +460,7 @@ class Mesh(MeshBase):
         return cls(vertices, normals, colors)
 
     @classmethod
-    def from_boxes(cls, centers, sizes, colors=(0.3,0.3,0.3)):
+    def from_boxes(cls, centers, sizes, colors=(0.3, 0.3, 0.3)):
         """Create boxes.
 
         Arguments
@@ -474,95 +470,100 @@ class Mesh(MeshBase):
                    depth, half the height
             colors: tuple for all boxes or array of colors per box
         """
-        box = np.array([[-1, -1,  1],
-                        [ 1, -1,  1],
-                        [ 1,  1,  1],
-                        [-1, -1,  1],
-                        [ 1,  1,  1],
-                        [-1,  1,  1],
-                        [-1,  1, -1],
-                        [ 1,  1,  1],
-                        [-1,  1,  1],
-                        [-1,  1, -1],
-                        [ 1,  1, -1],
-                        [ 1,  1,  1],
-                        [-1,  1, -1],
-                        [-1, -1,  1],
-                        [-1,  1,  1],
-                        [-1,  1, -1],
-                        [-1, -1,  1],
-                        [-1, -1, -1],
-                        [ 1, -1, -1],
-                        [ 1, -1,  1],
-                        [ 1,  1,  1],
-                        [ 1, -1, -1],
-                        [ 1,  1, -1],
-                        [ 1,  1,  1],
-                        [ 1, -1, -1],
-                        [-1, -1,  1],
-                        [ 1, -1,  1],
-                        [ 1, -1, -1],
-                        [-1, -1,  1],
-                        [-1, -1, -1],
-                        [ 1, -1, -1],
-                        [-1,  1, -1],
-                        [ 1,  1, -1],
-                        [ 1, -1, -1],
-                        [-1,  1, -1],
-                        [-1, -1, -1]]).astype(np.float32)
+        box = np.array(
+            [
+                [-1, -1, 1],
+                [1, -1, 1],
+                [1, 1, 1],
+                [-1, -1, 1],
+                [1, 1, 1],
+                [-1, 1, 1],
+                [-1, 1, -1],
+                [1, 1, 1],
+                [-1, 1, 1],
+                [-1, 1, -1],
+                [1, 1, -1],
+                [1, 1, 1],
+                [-1, 1, -1],
+                [-1, -1, 1],
+                [-1, 1, 1],
+                [-1, 1, -1],
+                [-1, -1, 1],
+                [-1, -1, -1],
+                [1, -1, -1],
+                [1, -1, 1],
+                [1, 1, 1],
+                [1, -1, -1],
+                [1, 1, -1],
+                [1, 1, 1],
+                [1, -1, -1],
+                [-1, -1, 1],
+                [1, -1, 1],
+                [1, -1, -1],
+                [-1, -1, 1],
+                [-1, -1, -1],
+                [1, -1, -1],
+                [-1, 1, -1],
+                [1, 1, -1],
+                [1, -1, -1],
+                [-1, 1, -1],
+                [-1, -1, -1],
+            ]
+        ).astype(np.float32)
 
-        normals = np.array([[ 0,  0,  1],
-                            [ 0,  0,  1],
-                            [ 0,  0,  1],
-                            [ 0,  0,  1],
-                            [ 0,  0,  1],
-                            [ 0,  0,  1],
-                            [ 0,  1,  0],
-                            [ 0,  1,  0],
-                            [ 0,  1,  0],
-                            [ 0,  1,  0],
-                            [ 0,  1,  0],
-                            [ 0,  1,  0],
-                            [-1,  0,  0],
-                            [-1,  0,  0],
-                            [-1,  0,  0],
-                            [-1,  0,  0],
-                            [-1,  0,  0],
-                            [-1,  0,  0],
-                            [ 1,  0,  0],
-                            [ 1,  0,  0],
-                            [ 1,  0,  0],
-                            [ 1,  0,  0],
-                            [ 1,  0,  0],
-                            [ 1,  0,  0],
-                            [ 0, -1,  0],
-                            [ 0, -1,  0],
-                            [ 0, -1,  0],
-                            [ 0, -1,  0],
-                            [ 0, -1,  0],
-                            [ 0, -1,  0],
-                            [ 0,  0, -1],
-                            [ 0,  0, -1],
-                            [ 0,  0, -1],
-                            [ 0,  0, -1],
-                            [ 0,  0, -1],
-                            [ 0,  0, -1]]).astype(np.float32)
+        normals = np.array(
+            [
+                [0, 0, 1],
+                [0, 0, 1],
+                [0, 0, 1],
+                [0, 0, 1],
+                [0, 0, 1],
+                [0, 0, 1],
+                [0, 1, 0],
+                [0, 1, 0],
+                [0, 1, 0],
+                [0, 1, 0],
+                [0, 1, 0],
+                [0, 1, 0],
+                [-1, 0, 0],
+                [-1, 0, 0],
+                [-1, 0, 0],
+                [-1, 0, 0],
+                [-1, 0, 0],
+                [-1, 0, 0],
+                [1, 0, 0],
+                [1, 0, 0],
+                [1, 0, 0],
+                [1, 0, 0],
+                [1, 0, 0],
+                [1, 0, 0],
+                [0, -1, 0],
+                [0, -1, 0],
+                [0, -1, 0],
+                [0, -1, 0],
+                [0, -1, 0],
+                [0, -1, 0],
+                [0, 0, -1],
+                [0, 0, -1],
+                [0, 0, -1],
+                [0, 0, -1],
+                [0, 0, -1],
+                [0, 0, -1],
+            ]
+        ).astype(np.float32)
 
-        centers, sizes, colors = list(map(
-            np.asarray,
-            [centers, sizes, colors]
-        ))
+        centers, sizes, colors = list(map(np.asarray, [centers, sizes, colors]))
 
         assert len(centers.shape) == 2 and centers.shape[1] == 3
         if len(sizes.shape) == 1:
             sizes = sizes[np.newaxis].repeat(len(centers), axis=0)
-        vertices = centers[:, np.newaxis]+sizes[:, np.newaxis]*box[np.newaxis]
+        vertices = centers[:, np.newaxis] + sizes[:, np.newaxis] * box[np.newaxis]
         vertices = vertices.reshape(-1, 3)
-        normals = np.vstack([normals]*len(centers))
+        normals = np.vstack([normals] * len(centers))
 
         if len(colors.shape) == 1:
             if colors.size < 4:
-                colors = np.array(colors.tolist() + [1.]*(4-colors.size))
+                colors = np.array(colors.tolist() + [1.0] * (4 - colors.size))
             colors = colors[np.newaxis].repeat(len(vertices), axis=0)
         if len(colors) != len(vertices) and len(colors) == len(centers):
             colors = np.repeat(colors, len(box), axis=0)
@@ -570,9 +571,14 @@ class Mesh(MeshBase):
         return cls(vertices, normals, colors)
 
     @classmethod
-    def from_voxel_grid(cls, voxels, sizes=None, colors=(0.3, 0.3, 0.3),
-                        bbox=[[-0.5, -0.5, -0.5], [0.5, 0.5, 0.5]]):
-        """ Create a voxel grid
+    def from_voxel_grid(
+        cls,
+        voxels,
+        sizes=None,
+        colors=(0.3, 0.3, 0.3),
+        bbox=[[-0.5, -0.5, -0.5], [0.5, 0.5, 0.5]],
+    ):
+        """Create a voxel grid
 
         Arguments
         ---------
@@ -591,7 +597,7 @@ class Mesh(MeshBase):
 
         # Clean and standardize the sizes
         if sizes is None:
-            sizes = (bbox[1]-bbox[0]) * 0.48 / [M, N, K]
+            sizes = (bbox[1] - bbox[0]) * 0.48 / [M, N, K]
         else:
             sizes = np.asarray(sizes)
 
@@ -621,7 +627,7 @@ class Mesh(MeshBase):
         """Create a voxel grid from a binvox file.
 
         For the format see https://patrickmin.com/binvox/binvox.html .
-        
+
         Arguments
         ---------
             binvoxfile: str or file object that contains the voxelgrid data in
@@ -629,13 +635,21 @@ class Mesh(MeshBase):
             colors: The colors of the voxels to pass to from_voxel_grid().
         """
         voxelgrid, translation, scale = read_binvox(binvoxfile)
-        bbox = np.array([[0., 0, 0], [1, 1, 1]]) * scale + translation
+        bbox = np.array([[0.0, 0, 0], [1, 1, 1]]) * scale + translation
 
         return cls.from_voxel_grid(voxelgrid, colors=colors, bbox=bbox)
 
     @classmethod
-    def from_superquadrics(cls, alpha, epsilon, translation, rotation, colors,
-                           offset=[0, 0, 0.], vertex_count=10000):
+    def from_superquadrics(
+        cls,
+        alpha,
+        epsilon,
+        translation,
+        rotation,
+        colors,
+        offset=[0, 0, 0.0],
+        vertex_count=10000,
+    ):
         """Create Superquadrics.
 
         Arguments
@@ -646,8 +660,9 @@ class Mesh(MeshBase):
             rotation: Array of size 3x3 containing the rotations
             colors: Tuple for all sqs or array of colors per sq
         """
+
         def fexp(x, p):
-            return np.sign(x)*(np.abs(x)**p)
+            return np.sign(x) * (np.abs(x) ** p)
 
         def sq_surface(a1, a2, a3, e1, e2, eta, omega):
             x = a1 * fexp(np.cos(eta), e1) * fexp(np.cos(omega), e2)
@@ -657,40 +672,43 @@ class Mesh(MeshBase):
 
         # triangulate the sphere to be used with the SQs
         n = int(np.sqrt(vertex_count))
-        eta = np.linspace(-np.pi/2, np.pi/2, n, endpoint=True)
+        eta = np.linspace(-np.pi / 2, np.pi / 2, n, endpoint=True)
         omega = np.linspace(-np.pi, np.pi, n, endpoint=True)
         triangles = []
         for o1, o2 in zip(np.roll(omega, 1), omega):
-            triangles.extend([
-                (eta[0], 0),
-                (eta[1], o2),
-                (eta[1], o1),
-            ])
-        for e in range(1, len(eta)-2):
+            triangles.extend(
+                [
+                    (eta[0], 0),
+                    (eta[1], o2),
+                    (eta[1], o1),
+                ]
+            )
+        for e in range(1, len(eta) - 2):
             for o1, o2 in zip(np.roll(omega, 1), omega):
-                triangles.extend([
-                    (eta[e], o1),
-                    (eta[e+1], o2),
-                    (eta[e+1], o1),
-                    (eta[e], o1),
-                    (eta[e], o2),
-                    (eta[e+1], o2),
-                ])
+                triangles.extend(
+                    [
+                        (eta[e], o1),
+                        (eta[e + 1], o2),
+                        (eta[e + 1], o1),
+                        (eta[e], o1),
+                        (eta[e], o2),
+                        (eta[e + 1], o2),
+                    ]
+                )
         for o1, o2 in zip(np.roll(omega, 1), omega):
-            triangles.extend([
-                (eta[-1], 0),
-                (eta[-2], o1),
-                (eta[-2], o2),
-            ])
+            triangles.extend(
+                [
+                    (eta[-1], 0),
+                    (eta[-2], o1),
+                    (eta[-2], o2),
+                ]
+            )
         triangles = np.array(triangles)
         eta, omega = triangles[:, 0], triangles[:, 1]
 
         # collect the pretriangulated vertices of each SQ
         vertices = []
-        a, e, t, R = list(map(
-            np.asarray,
-            [alpha, epsilon, translation, rotation]
-        ))
+        a, e, t, R = list(map(np.asarray, [alpha, epsilon, translation, rotation]))
         M, _ = a.shape  # number of superquadrics
         assert R.shape == (M, 3, 3)
         assert t.shape == (M, 3)
@@ -710,7 +728,7 @@ class Mesh(MeshBase):
 
         if len(colors.shape) == 1:
             if colors.size < 4:
-                colors = np.array(colors.tolist() + [1.]*(4-colors.size))
+                colors = np.array(colors.tolist() + [1.0] * (4 - colors.size))
             colors = colors[np.newaxis].repeat(len(vertices), axis=0)
         assert len(colors) == len(vertices) or len(colors) == M
         if len(colors) == M:

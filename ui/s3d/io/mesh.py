@@ -10,6 +10,7 @@ from ._utils import get_file, close_file
 class MeshReader(object):
     """MeshReader defines the common interface for reading all supported mesh
     files."""
+
     def __init__(self, filename=None):
         self._vertices = None
         self._normals = None
@@ -56,13 +57,11 @@ class MeshReader(object):
 
 class PlyMeshReader(MeshReader):
     """Read binary or ascii PLY files."""
-    def __init__(self, filename=None, vertex="vertex", face="face",
-                 vertex_indices=None):
-        self._names = {
-            "vertex": vertex,
-            "face": face,
-            "vertex_indices": vertex_indices
-        }
+
+    def __init__(
+        self, filename=None, vertex="vertex", face="face", vertex_indices=None
+    ):
+        self._names = {"vertex": vertex, "face": face, "vertex_indices": vertex_indices}
         super(PlyMeshReader, self).__init__(filename)
 
     def _get_colors(self, p):
@@ -89,11 +88,7 @@ class PlyMeshReader(MeshReader):
 
         # Get the vertices
         if V in data:
-            self._vertices = np.vstack([
-                data[V]["x"],
-                data[V]["y"],
-                data[V]["z"]
-            ]).T
+            self._vertices = np.vstack([data[V]["x"], data[V]["y"], data[V]["z"]]).T
 
             # If we have per vertex colors get them as well
             per_vertex_colors = None
@@ -104,15 +99,13 @@ class PlyMeshReader(MeshReader):
         if F in data:
             if VI is None:
                 VI = data[F].properties[0].name
-            triangles = sum(
-                len(indices)-2
-                for indices in data[F][VI]
-            )
+            triangles = sum(len(indices) - 2 for indices in data[F][VI])
             if triangles == len(data[F][VI]):
                 faces = np.vstack(data[F][VI])
             else:
-                raise NotImplementedError(("Dealing with non-triangulated "
-                                           "faces is not supported"))
+                raise NotImplementedError(
+                    ("Dealing with non-triangulated " "faces is not supported")
+                )
             self._vertices = self._vertices[faces].reshape(-1, 3)
             if per_vertex_colors is not None:
                 self._colors = per_vertex_colors[faces].reshape(-1, 4)
@@ -126,6 +119,7 @@ class PlyMeshReader(MeshReader):
 
 class ObjMeshReader(MeshReader):
     """Read OBJ mesh files."""
+
     def _triangulate_faces(self, faces):
         triangles = []
         for f in faces:
@@ -133,19 +127,19 @@ class ObjMeshReader(MeshReader):
                 triangles.append(f)
             else:
                 for i in range(2, len(f)):
-                    triangles.append([f[0], f[i-1], f[i]])
+                    triangles.append([f[0], f[i - 1], f[i]])
         return triangles
 
     def read(self, filename):
         def extract_vertex(face):
-            return int(face.split("/")[0])-1
+            return int(face.split("/")[0]) - 1
 
         def extract_normal(face):
-            return int(face.split("/")[2])-1
+            return int(face.split("/")[2]) - 1
 
         def extract_uv(face):
             # print(face)
-            return int(face.split("//")[1])-1
+            return int(face.split("//")[1]) - 1
 
         try:
             f = get_file(filename)
@@ -154,41 +148,66 @@ class ObjMeshReader(MeshReader):
 
             # Collect all the vertices, namely lines starting with 'v' followed
             # by 3 floats and arrange them according to faces
-            vertices = np.array([
-                list(map(float, l.strip().split()[1:4]))
-                for l in lines if l.startswith("v ")
-            ], dtype=np.float32)
-            faces = np.array(self._triangulate_faces([
-                list(map(extract_vertex, l.strip().split()[1:]))
-                for l in lines if l.startswith("f ")
-            ]))
+            vertices = np.array(
+                [
+                    list(map(float, l.strip().split()[1:4]))
+                    for l in lines
+                    if l.startswith("v ")
+                ],
+                dtype=np.float32,
+            )
+            faces = np.array(
+                self._triangulate_faces(
+                    [
+                        list(map(extract_vertex, l.strip().split()[1:]))
+                        for l in lines
+                        if l.startswith("f ")
+                    ]
+                )
+            )
             self._vertices = vertices[faces].reshape(-1, 3)
 
             # Collect all the vertex normals, namely lines starting with 'vn'
             # followed by 3 floats and arrange the according to faces
             try:
-                normals = np.array([
-                    list(map(float, l.strip().split()[1:]))
-                    for l in lines if l.startswith("vn ")
-                ])
-                faces = np.array(self._triangulate_faces([
-                    list(map(extract_normal, l.strip().split()[1:]))
-                    for l in lines if l.startswith("f ")
-                ]))
+                normals = np.array(
+                    [
+                        list(map(float, l.strip().split()[1:]))
+                        for l in lines
+                        if l.startswith("vn ")
+                    ]
+                )
+                faces = np.array(
+                    self._triangulate_faces(
+                        [
+                            list(map(extract_normal, l.strip().split()[1:]))
+                            for l in lines
+                            if l.startswith("f ")
+                        ]
+                    )
+                )
                 self._normals = normals[faces].reshape(-1, 3)
             except IndexError:
                 pass
 
             # Collect all the texture coordinates, namely u, v [,w] coordinates
             try:
-                uv = np.array([
-                    list(map(float, l.strip().split()[1:]))
-                    for l in lines if l.startswith("vt ")
-                ])
-                faces = np.array(self._triangulate_faces([
-                    list(map(extract_uv, l.strip().split()[1:]))
-                    for l in lines if l.startswith("f ")
-                ]))
+                uv = np.array(
+                    [
+                        list(map(float, l.strip().split()[1:]))
+                        for l in lines
+                        if l.startswith("vt ")
+                    ]
+                )
+                faces = np.array(
+                    self._triangulate_faces(
+                        [
+                            list(map(extract_uv, l.strip().split()[1:]))
+                            for l in lines
+                            if l.startswith("f ")
+                        ]
+                    )
+                )
                 self._uv = uv[faces].reshape(-1, uv.shape[1])[:, :2]
             except IndexError:
                 pass
@@ -196,20 +215,17 @@ class ObjMeshReader(MeshReader):
             # Collect a material file
             try:
                 material_file = [
-                    l.strip().split()[1:][0]
-                    for l in lines if l.startswith("mtllib")
+                    l.strip().split()[1:][0] for l in lines if l.startswith("mtllib")
                 ][0]
 
                 if isinstance(filename, str):
                     self._material_file = os.path.join(
-                        os.path.dirname(filename),
-                        material_file
+                        os.path.dirname(filename), material_file
                     )
                 else:
                     if hasattr(filename, "name"):
                         self._material_file = os.path.join(
-                            os.path.dirname(filename.name),
-                            material_file
+                            os.path.dirname(filename.name), material_file
                         )
                     else:
                         pass
@@ -221,13 +237,14 @@ class ObjMeshReader(MeshReader):
 
 class OffMeshReader(MeshReader):
     """Read OFF mesh files."""
+
     def read(self, filename):
         try:
             f = get_file(filename)
 
             # Read lines and clean them from comments and empty lines
             lines = f.readlines()
-            lines = [l.strip() for l in lines if l[0]!="#" and l.strip() != ""]
+            lines = [l.strip() for l in lines if l[0] != "#" and l.strip() != ""]
 
             # Ensure it is an OFF file
             if not lines[0].startswith("OFF"):
@@ -235,31 +252,29 @@ class OffMeshReader(MeshReader):
 
             # Extract the number of vertices, faces and edges
             if len(lines[0].split()) > 1:
-                n_vertices, n_faces, n_edges = [
-                    int(x)
-                    for x in lines[0].split()[1:]
-                ]
+                n_vertices, n_faces, n_edges = [int(x) for x in lines[0].split()[1:]]
                 lines = lines[1:]
             else:
-                n_vertices, n_faces, n_edges = [
-                    int(x)
-                    for x in lines[1].split()
-                ]
+                n_vertices, n_faces, n_edges = [int(x) for x in lines[1].split()]
                 lines = lines[2:]
 
             # Collect the vertices and faces
-            vertices = np.array([
-                [float(x) for x in l.split()]
-                for l in lines[:n_vertices]
-            ], dtype=np.float32)
-            faces = np.array([
-                [float(x) for x in l.split()]
-                for l in lines[n_vertices:n_vertices+n_faces]
-            ], dtype=np.float32)
+            vertices = np.array(
+                [[float(x) for x in l.split()] for l in lines[:n_vertices]],
+                dtype=np.float32,
+            )
+            faces = np.array(
+                [
+                    [float(x) for x in l.split()]
+                    for l in lines[n_vertices : n_vertices + n_faces]
+                ],
+                dtype=np.float32,
+            )
 
             if not np.all(faces[:, 0] == 3):
-                raise NotImplementedError(("Dealing with non-triangulated "
-                                           "faces is not supported"))
+                raise NotImplementedError(
+                    ("Dealing with non-triangulated " "faces is not supported")
+                )
 
             # Set the triangles
             vertex_indices = faces[:, 1:4].astype(int).ravel()
@@ -276,6 +291,7 @@ class OffMeshReader(MeshReader):
 
 class StlMeshReader(MeshReader):
     """Read STL mesh files."""
+
     def read(self, filename):
         # Decide if it is an ASCII STL or not
         ascii_stl = True
@@ -334,11 +350,13 @@ class StlMeshReader(MeshReader):
                 header = f.read(80)
                 assert len(header) == 80
                 triangles = np.frombuffer(f.read(4), "<i4", 1)[0]
-                dtype = np.dtype([
-                    ("normal", "<f4", (3,)),
-                    ("vertices", "<f4", (3, 3)),
-                    ("attr", "<u2")
-                ])
+                dtype = np.dtype(
+                    [
+                        ("normal", "<f4", (3,)),
+                        ("vertices", "<f4", (3, 3)),
+                        ("attr", "<u2"),
+                    ]
+                )
                 mesh = np.frombuffer(f.read(), dtype, triangles)
                 self._vertices = mesh["vertices"].reshape(-1, 3)
                 self._normals = np.repeat(mesh["normal"], 3, 0).reshape(-1, 3)

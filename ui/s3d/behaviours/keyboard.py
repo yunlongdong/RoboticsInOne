@@ -1,10 +1,10 @@
-
 from ..utils import save_frame
 from . import Behaviour
 
 
 class OnKeys(Behaviour):
     """Abstract class that performs an action when a set of keys is pressed."""
+
     def __init__(self, keys):
         self._keys = keys
         self._act = False
@@ -22,7 +22,7 @@ class OnKeys(Behaviour):
 
 class SnapshotOnKey(OnKeys):
     """Save a snapshot when a key is pressed.
-    
+
     Arguments
     ---------
         path: The path to save the images with the optional index for the
@@ -30,6 +30,7 @@ class SnapshotOnKey(OnKeys):
         keys: A set of keys that must all be pressed to save the frame.
               Available special keys are <ctrl>, <cmd>, <alt>, etc.
     """
+
     def __init__(self, path="snapshot_{:03d}.png", keys={"S"}):
         super(SnapshotOnKey, self).__init__(keys)
         self._path = path
@@ -49,17 +50,21 @@ class CameraReport(OnKeys):
     ---------
         keys: A set of keys that must all be pressed to activate the action.
     """
+
     def __init__(self, keys={"R"}):
         super(CameraReport, self).__init__(keys)
 
     def action(self, params):
         def csv(x):
             return ",".join(list(map(str, x)))
-        print("--camera_target='{}' --camera_position='{}' --up='{}'".format(
-            csv(params.scene.camera_target),
-            csv(params.scene.camera_position),
-            csv(params.scene.up_vector)
-        ))
+
+        print(
+            "--camera_target='{}' --camera_position='{}' --up='{}'".format(
+                csv(params.scene.camera_target),
+                csv(params.scene.camera_position),
+                csv(params.scene.up_vector),
+            )
+        )
 
 
 class SortTriangles(OnKeys):
@@ -69,6 +74,7 @@ class SortTriangles(OnKeys):
     ---------
         keys: A set of keys that must all be pressed to activate the action
     """
+
     def __init__(self, keys={"T"}):
         super(SortTriangles, self).__init__(keys)
 

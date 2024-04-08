@@ -17,13 +17,9 @@ def main():
     file_search_path = os.path.dirname(
         os.path.abspath(inspect.getfile(inspect.currentframe()))
     )
-    all_tests = unittest.TestLoader().discover(
-        file_search_path, pattern='test_*.py'
-    )
+    all_tests = unittest.TestLoader().discover(file_search_path, pattern="test_*.py")
     unittest.TextTestRunner(verbosity=2).run(all_tests)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
-

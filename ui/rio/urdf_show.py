@@ -1,9 +1,7 @@
-
 from functools import reduce
 
 import numpy as np
 import os.path as osp
-
 
 
 from ..s3d import Mesh, Lines, Spherecloud
@@ -14,13 +12,12 @@ from ..s3d.behaviours.mouse import MouseRotate, MouseZoom, MousePan
 from ..s3d.behaviours.keyboard import CameraReport, SortTriangles
 
 import sys
-sys.path.append('../')
+
+sys.path.append("../")
 from core.urdf_parser.robot_from_urdf import Robot
 
 
-
 from .urdf_frame import Window
-
 
 
 def simple_window(init, info, robot, size=(512, 512)):
@@ -36,14 +33,33 @@ def simple_window(init, info, robot, size=(512, 512)):
         Window instance
     """
     w = Window(info, robot, size)
-    w.add_behaviours([SceneInit(init), MouseRotate(), MouseZoom(),
-                      MousePan(), CameraReport(), SortTriangles()])
+    w.add_behaviours(
+        [
+            SceneInit(init),
+            MouseRotate(),
+            MouseZoom(),
+            MousePan(),
+            CameraReport(),
+            SortTriangles(),
+        ]
+    )
     return w
 
 
-def show(meshes, axes, info, robot, size=(512, 580), background=(0., 0., 0., 1), title="Scene",
-         camera_position=(-2, -2, -2), camera_target=(0, 0, 0),
-         up_vector=(0, 0, 1), light=None, behaviours=[], ):
+def show(
+    meshes,
+    axes,
+    info,
+    robot,
+    size=(512, 580),
+    background=(0.0, 0.0, 0.0, 1),
+    title="Scene",
+    camera_position=(-2, -2, -2),
+    camera_target=(0, 0, 0),
+    up_vector=(0, 0, 1),
+    light=None,
+    behaviours=[],
+):
     """Creates a simple window that displays the renderables.
 
     Arguments
@@ -58,12 +74,11 @@ def show(meshes, axes, info, robot, size=(512, 580), background=(0., 0., 0., 1),
         up_vector: (x, y, z) defines the floor and sky
         light: (x, y, z) defines the position of the light source
     """
-    
 
     def init(scene):
         # scene.add(Lines.axes(size=0.06, width=0.006, origin=[0, 0, 0.245]))
         # scene.add(Lines.axes(size=0.06, width=0.006, origin=[0, 0, 0.245+0.195]))
-        for r in axes+meshes:
+        for r in axes + meshes:
             scene.add(r)
         scene.background = background
         scene.camera_position = camera_position
@@ -76,12 +91,15 @@ def show(meshes, axes, info, robot, size=(512, 580), background=(0., 0., 0., 1),
     w.add_behaviours(behaviours)
     w.show(title)
 
+
 def scene_init(camera_position, camera_target):
     def inner(scene):
         scene.camera_position = camera_position
         scene.camera_target = camera_target
         scene.light = scene.camera_position
+
     return inner
+
 
 def get_all_from_robot(robot):
     meshes = []
@@ -91,7 +109,11 @@ def get_all_from_robot(robot):
     for robotlink in robot.robotlinks.values():
         mesh_filename = robotlink.mesh_fileName
 
-        mesh = Mesh.from_file(mesh_filename, color=(0.89804, 0.91765, 0.92941, 0.2), name=robotlink.linkname)
+        mesh = Mesh.from_file(
+            mesh_filename,
+            color=(0.89804, 0.91765, 0.92941, 0.2),
+            name=robotlink.linkname,
+        )
         mesh_names.append(robotlink.linkname)
 
         m = np.eye(4)
@@ -102,18 +124,41 @@ def get_all_from_robot(robot):
         meshes.append(mesh)
         # axis
         if robotlink.linkname == robot.root_link_node.id:
-            axis = Lines.axes(size=0.06, width=0.006, origin=robotlink.abs_tf_link, name="World_"+robotlink.linkname)    # world axis
+            axis = Lines.axes(
+                size=0.06,
+                width=0.006,
+                origin=robotlink.abs_tf_link,
+                name="World_" + robotlink.linkname,
+            )  # world axis
             axes.append(axis)
         else:
-            axis = Lines.axes(size=0.06, width=0.006, origin=robotlink.abs_tf_link, name=robotlink.linkname)
+            axis = Lines.axes(
+                size=0.06,
+                width=0.006,
+                origin=robotlink.abs_tf_link,
+                name=robotlink.linkname,
+            )
             axes.append(axis)
-            axis = Lines.axes(size=0.06, width=0.006, origin=robotlink.abs_tf_link_MDH, name="MDH_"+robotlink.linkname)
-            axis.scale(0.001)   # 初始不显示
+            axis = Lines.axes(
+                size=0.06,
+                width=0.006,
+                origin=robotlink.abs_tf_link_MDH,
+                name="MDH_" + robotlink.linkname,
+            )
+            axis.scale(0.001)  # 初始不显示
             axes.append(axis)
         # CoM to the last
-        axes.append(Spherecloud(name=robotlink.linkname, centers=[robotlink.abs_com], colors=[0.8, 0, 0, 0.8], sizes=[0.01]))
+        axes.append(
+            Spherecloud(
+                name=robotlink.linkname,
+                centers=[robotlink.abs_com],
+                colors=[0.8, 0, 0, 0.8],
+                sizes=[0.01],
+            )
+        )
 
     return meshes, axes, mesh_names
+
 
 def urdf_show(path):
     file_name = osp.basename(path)
@@ -122,31 +167,34 @@ def urdf_show(path):
     meshes, axes, mesh_names = get_all_from_robot(robot)
 
     # auto adjust camera
-    bbox_min = reduce(
-        np.minimum,
-        (m.bbox[0] for m in meshes),
-        meshes[0].bbox[0]
-    )
-    bbox_max = reduce(
-        np.maximum,
-        (m.bbox[1] for m in meshes),
-        meshes[0].bbox[1]
-    )
+    bbox_min = reduce(np.minimum, (m.bbox[0] for m in meshes), meshes[0].bbox[0])
+    bbox_max = reduce(np.maximum, (m.bbox[1] for m in meshes), meshes[0].bbox[1])
     bbox = [bbox_min, bbox_max]
-    center = (bbox[1]-bbox[0])/2 + bbox[0]
+    center = (bbox[1] - bbox[0]) / 2 + bbox[0]
     camera_target = center
-    camera_position = center + (bbox[1]-center)*2
+    camera_position = center + (bbox[1] - center) * 2
     # In case the camera is too far, then scale the objects so that the
     # camera distance is not very large.
     # NOTE: This probably only works with a single model
-    D = np.sqrt(np.sum((camera_position - camera_target)**2))
+    D = np.sqrt(np.sum((camera_position - camera_target) ** 2))
     if D > 100:
-        s = 100. / D
+        s = 100.0 / D
         camera_target *= s
         camera_position *= s
         for m in meshes:
             m.scale(s)
 
-    show(meshes, axes, mesh_names, robot, size=(800, 770), title=file_name, camera_position=camera_position, camera_target=camera_target, 
-            behaviours=[SceneInit(scene_init(camera_position, camera_target)), LightToCamera()],
-            )
+    show(
+        meshes,
+        axes,
+        mesh_names,
+        robot,
+        size=(800, 770),
+        title=file_name,
+        camera_position=camera_position,
+        camera_target=camera_target,
+        behaviours=[
+            SceneInit(scene_init(camera_position, camera_target)),
+            LightToCamera(),
+        ],
+    )

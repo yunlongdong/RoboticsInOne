@@ -18,6 +18,7 @@ class GeoParams(object):
     Data structure:
         Represent the data structure to hold the geometric parameters.
     """
+
     def __init__(self, frame, params=None):
         """Constructor
 
@@ -40,29 +41,34 @@ class GeoParams(object):
         self.d = 0
         self.theta = 0
         self.r = 0
-        self.tmat = transform.TransformationMatrix(
-            i=self.ant, j=self.frame
-        )
+        self.tmat = transform.TransformationMatrix(i=self.ant, j=self.frame)
         # initialise with values if available
         if params is not None:
             self.update_params(params)
 
     def __str__(self):
-        row_format = '\t' + ('{:^8}' * 11)
-        str_format = row_format.format(*(
-            str(self.frame), str(self.ant),
-            str(self.sigma), str(self.mu),
-            str(self.gamma), str(self.b),
-            str(self.alpha), str(self.d),
-            str(self.theta), str(self.r),
-            str(self.q)
-        ))
+        row_format = "\t" + ("{:^8}" * 11)
+        str_format = row_format.format(
+            *(
+                str(self.frame),
+                str(self.ant),
+                str(self.sigma),
+                str(self.mu),
+                str(self.gamma),
+                str(self.b),
+                str(self.alpha),
+                str(self.d),
+                str(self.theta),
+                str(self.r),
+                str(self.q),
+            )
+        )
         return str_format
 
     def __repr__(self):
         repr_format = str(self).lstrip().rstrip()
-        repr_format = re.sub(r'\s+', ', ', repr_format)
-        repr_format = '(' + repr_format + ')'
+        repr_format = re.sub(r"\s+", ", ", repr_format)
+        repr_format = "(" + repr_format + ")"
         return repr_format
 
     def update_params(self, params):
@@ -78,8 +84,7 @@ class GeoParams(object):
             if hasattr(self, key):
                 setattr(self, key, value)
             else:
-                raise AttributeError(
-                    '{} is not an attribute of GeoParams'.format(key))
+                raise AttributeError("{} is not an attribute of GeoParams".format(key))
         self.tmat.update(params)
 
     @property
@@ -118,5 +123,3 @@ class GeoParams(object):
         if self.sigma == 2:
             return 0
         return ((1 - self.sigma) * self.theta) + (self.sigma * self.r)
-
-

@@ -25,7 +25,7 @@ def get_base_path(base_folder=SYMORO_ROBOTS_FOLDER):
     return os.path.join(home_folder, base_folder)
 
 
-def get_clean_name(name, char='-'):
+def get_clean_name(name, char="-"):
     """
     Return a string that is lowercase and all whitespaces are replaced
     by a specified character.
@@ -44,7 +44,7 @@ def get_clean_name(name, char='-'):
     >>> get_clean_name('Random teXt', '#')
     'random#text'
     """
-    return name.lower().replace(' ', char)
+    return name.lower().replace(" ", char)
 
 
 def make_folders(folder_path):
@@ -90,11 +90,9 @@ def get_file_path(robo, ext=None):
         The file path (string) created.
     """
     if ext is None:
-        fname = '{0}.par'.format(get_clean_name(robo.name))
+        fname = "{0}.par".format(get_clean_name(robo.name))
     else:
-        fname = '{0}_{1}.txt'.format(get_clean_name(robo.name), ext)
+        fname = "{0}_{1}.txt".format(get_clean_name(robo.name), ext)
     file_path = os.path.join(robo.directory, fname)
     make_folders(robo.directory)
     return file_path
-
-

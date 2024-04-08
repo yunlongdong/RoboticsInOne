@@ -24,10 +24,17 @@ class FloatingRobot(object):
     Represent the FloatingRobot data structure and provide methods that
     act as the gateway for robot modelling.
     """
+
     def __init__(
-        self, name, links=0, joints=0, frames=0,
-        is_floating=True, structure=tools.TREE, is_mobile=False,
-        is_symbolic=True
+        self,
+        name,
+        links=0,
+        joints=0,
+        frames=0,
+        is_floating=True,
+        structure=tools.TREE,
+        is_mobile=False,
+        is_symbolic=True,
     ):
         """
         Constructor period.
@@ -70,11 +77,11 @@ class FloatingRobot(object):
         """Joint stiffness usually indicated by k."""
         self.stiffness = [0 for j in self.joint_nums]
         """Joint velocities."""
-        self.qdots = [var('QP{0}'.format(j)) for j in self.joint_nums]
+        self.qdots = [var("QP{0}".format(j)) for j in self.joint_nums]
         """Joint accelerations."""
-        self.qddots = [var('QDP{0}'.format(j)) for j in self.joint_nums]
+        self.qddots = [var("QDP{0}".format(j)) for j in self.joint_nums]
         """Joint torques."""
-        self.torques = [var('GAM{0}'.format(j)) for j in self.joint_nums]
+        self.torques = [var("GAM{0}".format(j)) for j in self.joint_nums]
         # properties dependent on number of frames
         """
         List to hold the geometric parameters. NOTE: This might be moved
@@ -86,7 +93,7 @@ class FloatingRobot(object):
         self.geos = [GeoParams(j) for j in self.frame_nums]
         # properties independent of number of links, joints and frames
         """Gravity vector a 3x1 Matrix."""
-        self.gravity = Matrix([0, 0, var('G3')])
+        self.gravity = Matrix([0, 0, var("G3")])
         # the values of properties below would be modified during
         # the computation of dynamic models.
         """Base velocity 6x1 column vector - a Screw."""
@@ -110,51 +117,91 @@ class FloatingRobot(object):
         str_format = str_format + ("\tFloating: %s\n" % str(self.is_floating))
         str_format = str_format + ("\tMobile: %s\n" % str(self.is_mobile))
         str_format = str_format + ("\tStructure: %s\n" % str(self.structure))
-        str_format = str_format + '\n'
+        str_format = str_format + "\n"
         # add geometric params
         str_format = str_format + "Geometric Parameters:\n"
         str_format = str_format + "---------------------\n"
-        str_format = str_format + ('\t' + ('{:^8}' * 11) + '\n').format(*(
-            'frame', 'ant', 'sigma', 'mu', 'gamma', 'b',
-            'alpha', 'd', 'theta', 'r', 'q'
-        ))
+        str_format = str_format + ("\t" + ("{:^8}" * 11) + "\n").format(
+            *(
+                "frame",
+                "ant",
+                "sigma",
+                "mu",
+                "gamma",
+                "b",
+                "alpha",
+                "d",
+                "theta",
+                "r",
+                "q",
+            )
+        )
         for geo in self.geos:
-            str_format = str_format + str(geo) + '\n'
-        str_format = str_format + '\n'
+            str_format = str_format + str(geo) + "\n"
+        str_format = str_format + "\n"
         # add dynamic params
         str_format = str_format + "Dynamic Parameters:\n"
         str_format = str_format + "-------------------\n"
-        str_format = str_format + ('\t' + ('{:^7}' * 20) + '\n').format(*(
-            'link', 'XX', 'XY', 'XZ', 'YY', 'YZ', 'ZZ', 'MX', 'MY', 'MZ',
-            'M', 'IA', 'Fc', 'Fv', 'FX', 'FY', 'FZ', 'CX', 'CY', 'CZ'
-        ))
+        str_format = str_format + ("\t" + ("{:^7}" * 20) + "\n").format(
+            *(
+                "link",
+                "XX",
+                "XY",
+                "XZ",
+                "YY",
+                "YZ",
+                "ZZ",
+                "MX",
+                "MY",
+                "MZ",
+                "M",
+                "IA",
+                "Fc",
+                "Fv",
+                "FX",
+                "FY",
+                "FZ",
+                "CX",
+                "CY",
+                "CZ",
+            )
+        )
         for dyn in self.dyns:
-            str_format = str_format + str(dyn) + '\n'
-        str_format = str_format + '\n'
+            str_format = str_format + str(dyn) + "\n"
+        str_format = str_format + "\n"
         # add joint params
         str_format = str_format + "Joint Parameters:\n"
         str_format = str_format + "-----------------\n"
-        str_format = str_format + ('\t' + ('{:^9}' * 6) + '\n').format(*(
-            'joint', 'eta', 'stiffness', 'qdot', 'qddot', 'torque'
-        ))
+        str_format = str_format + ("\t" + ("{:^9}" * 6) + "\n").format(
+            *("joint", "eta", "stiffness", "qdot", "qddot", "torque")
+        )
         for jnt in self.joint_nums:
-            jnt_str = ('\t' + ('{:^9}' * 6) + '\n').format(*(
-                str(jnt), str(self.etas[jnt]), str(self.stiffness[jnt]),
-                str(self.qdots[jnt]), str(self.qddots[jnt]),
-                str(self.torques[jnt])
-            ))
+            jnt_str = ("\t" + ("{:^9}" * 6) + "\n").format(
+                *(
+                    str(jnt),
+                    str(self.etas[jnt]),
+                    str(self.stiffness[jnt]),
+                    str(self.qdots[jnt]),
+                    str(self.qddots[jnt]),
+                    str(self.torques[jnt]),
+                )
+            )
             str_format = str_format + jnt_str
-        str_format = str_format + '\n'
+        str_format = str_format + "\n"
         # end
-        str_format = str_format + ('=*' * 60) + '='
+        str_format = str_format + ("=*" * 60) + "="
         return str_format
 
     def __repr__(self):
         repr_format = (
             "(name=%s, links=%d, joints=%d, frames=%d, floating=%s, type=%s)"
         ) % (
-            str(self.name), self.num_links, self.num_joints,
-            self.num_frames, str(self.is_floating), str(self.structure)
+            str(self.name),
+            self.num_links,
+            self.num_joints,
+            self.num_frames,
+            str(self.is_floating),
+            str(self.structure),
         )
         return repr_format
 
@@ -170,14 +217,14 @@ class FloatingRobot(object):
         Returns:
             The value corresponding to the name and index.
         """
-        if name is 'Z':
+        if name is "Z":
             return 0
         elif name in self._dyn_params_map:
-            attr = getattr(self, 'dyns')
+            attr = getattr(self, "dyns")
             value = getattr(attr[idx], self._dyn_params_map[name])
             return value
         elif name in self._geo_params_map:
-            attr = getattr(self, 'geos')
+            attr = getattr(self, "geos")
             value = getattr(attr[idx], self._geo_params_map[name])
             return value
         elif name in self._misc_params_map:
@@ -201,22 +248,22 @@ class FloatingRobot(object):
         Returns:
             A `OK` if successful and `FAIL` otherwise.
         """
-        if name is 'Z':
+        if name is "Z":
             return tools.OK
         elif name in self._dyn_params_map:
             param = {int(idx): {self._dyn_params_map[name]: value}}
-            return self.update_params('dyns', param)
+            return self.update_params("dyns", param)
         elif name in self._geo_params_map:
-            if name in ['frame', 'ant', 'sigma', 'mu']:
+            if name in ["frame", "ant", "sigma", "mu"]:
                 value = int(value)
             param = {int(idx): {self._geo_params_map[name]: value}}
-            return self.update_params('geos', param)
+            return self.update_params("geos", param)
         elif name in self._misc_params_map:
             key = self._misc_params_map[name]
             param = {int(idx): {key: value}}
-            return self.update_params('misc', param)
+            return self.update_params("misc", param)
         elif name in self._base_params_map:
-            return self.update_params('base', param)
+            return self.update_params("base", param)
         return tools.FAIL
 
     def update_params(self, kind, params):
@@ -258,14 +305,12 @@ class FloatingRobot(object):
                 2: {'gravity': 'GZ'}
             }
         """
-        if kind in ['dyns', 'geos']:
+        if kind in ["dyns", "geos"]:
             self._update_dyns_geos(kind, params)
-        elif kind is 'misc':
+        elif kind is "misc":
             self._update_misc(params)
-        elif kind is 'base':
-            raise NotImplementedError(
-                "Yet to be supported."
-            )
+        elif kind is "base":
+            raise NotImplementedError("Yet to be supported.")
         else:
             errmsg = "`kind` can be ['dyns', 'geos', 'misc', 'base']. "
             errmsg = errmsg + ("Current input: {0}").format(kind)
@@ -373,7 +418,8 @@ class FloatingRobot(object):
         """
         q = list()
         for j in self.joint_nums:
-            if j == 0: continue
+            if j == 0:
+                continue
             if self.geos[j].mu == 0 and self.geos[j].sigma != 2:
                 q.append(self.geos[j].q)
         return q
@@ -388,7 +434,8 @@ class FloatingRobot(object):
         """
         q = list()
         for j in self.joint_nums:
-            if j == 0: continue
+            if j == 0:
+                continue
             if self.geos[j].mu == 1 and self.geos[j].sigma != 2:
                 q.append(self.geos[j].q)
         return q
@@ -404,7 +451,8 @@ class FloatingRobot(object):
         """
         joints = list()
         for j in self.joint_nums:
-            if j == 0: continue
+            if j == 0:
+                continue
             if self.geos[j].mu == 0 and self.geos[j].sigma != 2:
                 joints.append(j)
         return joints
@@ -420,7 +468,8 @@ class FloatingRobot(object):
         """
         joints = list()
         for j in self.joint_nums:
-            if j == 0: continue
+            if j == 0:
+                continue
             if self.geos[j].mu == 1 and self.geos[j].sigma != 2:
                 joints.append(j)
         return joints
@@ -440,17 +489,19 @@ class FloatingRobot(object):
             curr_params = params[key]
             for attr in curr_params:
                 if not hasattr(self, attr):
-                    raise AttributeError((
-                        "{0} is not an attribute of Robot."
-                    ).format(str(attr)))
+                    raise AttributeError(
+                        ("{0} is not an attribute of Robot.").format(str(attr))
+                    )
                 else:
                     try:
                         param = getattr(self, attr)
                         param[idx] = curr_params[attr]
                     except IndexError:
-                        raise IndexError((
-                            "`{0}` doesnt have {1} index value."
-                        ).format(attr, str(idx)))
+                        raise IndexError(
+                            ("`{0}` doesnt have {1} index value.").format(
+                                attr, str(idx)
+                            )
+                        )
 
     def _update_dyns_geos(self, attr, params):
         """
@@ -462,9 +513,9 @@ class FloatingRobot(object):
             try:
                 param[idx].update_params(params[key])
             except IndexError:
-                raise IndexError((
-                    "`{0}` doesnt have {1} index value."
-                ).format(attr, str(idx)))
+                raise IndexError(
+                    ("`{0}` doesnt have {1} index value.").format(attr, str(idx))
+                )
 
     def _init_maps(self):
         """
@@ -472,29 +523,61 @@ class FloatingRobot(object):
         different parameter values of the robot. The main purpose of
         these maps is to talk easily with the user interface.
         """
-        self._dyn_params_map = dict([
-            ('XX', 'xx'), ('XY', 'xy'), ('XZ', 'xz'),
-            ('YY', 'yy'), ('YZ', 'yz'), ('ZZ', 'zz'),
-            ('MX', 'msx'), ('MY', 'msy'), ('MZ', 'msz'), ('M', 'mass'),
-            ('IA', 'ia'), ('FS', 'frc'), ('FV', 'frv'),
-            ('FX', 'fx_ext'), ('FY', 'fy_ext'), ('FZ', 'fz_ext'),
-            ('CX', 'mx_ext'), ('CY', 'my_ext'), ('CZ', 'mz_ext')
-        ])
-        self._geo_params_map = dict([
-            ('j', 'frame'), ('ant', 'ant'), ('sigma', 'sigma'),
-            ('mu', 'mu'), ('gamma', 'gamma'), ('b', 'b'),
-            ('alpha', 'alpha'), ('d', 'd'), ('theta', 'theta'), ('r', 'r')
-        ])
-        self._base_params_map = dict([
-            ('V0', 'base_vel'), ('VP0', 'base_accel'),
-            ('W0', 'base_vel'), ('WP0', 'base_accel')
-        ])
-        self._misc_params_map = dict([
-            ('QP', 'qdots'), ('QDP', 'qddots'), ('GAM', 'torques'),
-            ('eta', 'etas'), ('k', 'stiffness'), ('G', 'gravity'),
-        ])
+        self._dyn_params_map = dict(
+            [
+                ("XX", "xx"),
+                ("XY", "xy"),
+                ("XZ", "xz"),
+                ("YY", "yy"),
+                ("YZ", "yz"),
+                ("ZZ", "zz"),
+                ("MX", "msx"),
+                ("MY", "msy"),
+                ("MZ", "msz"),
+                ("M", "mass"),
+                ("IA", "ia"),
+                ("FS", "frc"),
+                ("FV", "frv"),
+                ("FX", "fx_ext"),
+                ("FY", "fy_ext"),
+                ("FZ", "fz_ext"),
+                ("CX", "mx_ext"),
+                ("CY", "my_ext"),
+                ("CZ", "mz_ext"),
+            ]
+        )
+        self._geo_params_map = dict(
+            [
+                ("j", "frame"),
+                ("ant", "ant"),
+                ("sigma", "sigma"),
+                ("mu", "mu"),
+                ("gamma", "gamma"),
+                ("b", "b"),
+                ("alpha", "alpha"),
+                ("d", "d"),
+                ("theta", "theta"),
+                ("r", "r"),
+            ]
+        )
+        self._base_params_map = dict(
+            [
+                ("V0", "base_vel"),
+                ("VP0", "base_accel"),
+                ("W0", "base_vel"),
+                ("WP0", "base_accel"),
+            ]
+        )
+        self._misc_params_map = dict(
+            [
+                ("QP", "qdots"),
+                ("QDP", "qddots"),
+                ("GAM", "torques"),
+                ("eta", "etas"),
+                ("k", "stiffness"),
+                ("G", "gravity"),
+            ]
+        )
 
     # methods for backward-compatability with the old Robot (for fixed
     # base) class.
-
-

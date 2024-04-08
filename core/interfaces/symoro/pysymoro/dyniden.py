@@ -21,14 +21,14 @@ from ..symoroutils.paramsinit import ParamsInit
 from ..symoroutils import tools
 
 
-def get_symbol(symbol, name, index, element=''):
+def get_symbol(symbol, name, index, element=""):
     return symbol + name.format(index=index, element=element)
 
 
 def vec_replace_wrapper(symo, vec, symbol, name, index, forced=False):
     new_vec = sympy.zeros(vec.rows, 1)
     for idx in range(vec.rows):
-        sym = get_symbol(symbol, name, index, idx+1)
+        sym = get_symbol(symbol, name, index, idx + 1)
         new_vec[idx] = symo.replace(vec[idx], sym, forced=forced)
     return new_vec
 
@@ -41,11 +41,11 @@ def _compute_dynamic_wrench(robo, symo, name, j, w, wdot, U, vdot, F, N):
         F, N are the output parameters
     """
     F[j] = (robo.M[j] * vdot[j]) + (U[j] * robo.MS[j])
-    F[j] = vec_replace_wrapper(symo, F[j], 'F', name, j)
+    F[j] = vec_replace_wrapper(symo, F[j], "F", name, j)
     Psi = robo.J[j] * w[j]
-    Psi = vec_replace_wrapper(symo, Psi, 'PSI', name, j)
+    Psi = vec_replace_wrapper(symo, Psi, "PSI", name, j)
     N[j] = (robo.J[j] * wdot[j]) + (tools.skew(w[j]) * Psi)
-    N[j] = vec_replace_wrapper(symo, N[j], 'No', name, j)
+    N[j] = vec_replace_wrapper(symo, N[j], "No", name, j)
 
 
 def _compute_reaction_wrench(
@@ -60,15 +60,14 @@ def _compute_reaction_wrench(
     """
     i = robo.ant[j]
     Fjnt[j] = F[j] + Fex[j]
-    Fjnt[j] = vec_replace_wrapper(symo, Fjnt[j], 'E', name, j)
+    Fjnt[j] = vec_replace_wrapper(symo, Fjnt[j], "E", name, j)
     Njnt[j] = N[j] + Nex[j] + (tools.skew(robo.MS[j]) * vdot[j])
-    Njnt[j] = vec_replace_wrapper(symo, Njnt[j], 'N', name, j)
+    Njnt[j] = vec_replace_wrapper(symo, Njnt[j], "N", name, j)
     f_ant = antRj[j] * Fjnt[j]
-    f_ant = vec_replace_wrapper(symo, f_ant, 'FDI', name, j)
+    f_ant = vec_replace_wrapper(symo, f_ant, "FDI", name, j)
     if i != -1:
         Fex[i] = Fex[i] + f_ant
-        Nex[i] = Nex[i] + \
-            (antRj[j] * Njnt[j]) + (tools.skew(antPj[j]) * f_ant)
+        Nex[i] = Nex[i] + (antRj[j] * Njnt[j]) + (tools.skew(antPj[j]) * f_ant)
 
 
 def _compute_base_reaction_wrench(
@@ -83,13 +82,9 @@ def _compute_base_reaction_wrench(
     """
     j = 0
     Fjnt[j] = F[j] + Fex[j]
-    Fjnt[j] = vec_replace_wrapper(
-        symo, Fjnt[j], 'DE', name, j, forced=True
-    )
+    Fjnt[j] = vec_replace_wrapper(symo, Fjnt[j], "DE", name, j, forced=True)
     Njnt[j] = N[j] + Nex[j] + (tools.skew(robo.MS[j]) * vdot[j])
-    Njnt[j] = vec_replace_wrapper(
-        symo, Njnt[j], 'DN', name, j, forced=True
-    )
+    Njnt[j] = vec_replace_wrapper(symo, Njnt[j], "DN", name, j, forced=True)
 
 
 def _compute_joint_torque(robo, symo, name, j, Fjnt, Njnt):
@@ -103,7 +98,7 @@ def _compute_joint_torque(robo, symo, name, j, Fjnt, Njnt):
         tau = (robo.sigma[j] * Fjnt[j]) + ((1 - robo.sigma[j]) * Njnt[j])
         fric_rotor = robo.fric_s(j) + robo.fric_v(j) + robo.tau_ia(j)
         tau_total = tau[2] + fric_rotor
-    symo.replace(tau_total, get_symbol('DG', name, j), forced=True)
+    symo.replace(tau_total, get_symbol("DG", name, j), forced=True)
 
 
 def _compute_joint_torque_deriv(symo, param, arg, index):
@@ -121,7 +116,7 @@ def _compute_joint_torque_deriv(symo, param, arg, index):
     """
     if param != tools.ZERO and arg != tools.ZERO:
         index = str(index) + str(param)
-        symo.replace(arg, 'DG', index, forced=True)
+        symo.replace(arg, "DG", index, forced=True)
 
 
 def dynamic_identification_model(robo, symo):
@@ -135,9 +130,7 @@ def dynamic_identification_model(robo, symo):
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
     # init velocities and accelerations
-    w, wdot, vdot, U = compute_vel_acc(
-        robo, symo, antRj, antPj, floating=True
-    )
+    w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj, floating=True)
     # virtual robot with only one non-zero parameter at once
     robo_tmp = copy.deepcopy(robo)
     robo_tmp.IA = sympy.zeros(robo.NL, 1)
@@ -154,27 +147,35 @@ def dynamic_identification_model(robo, symo):
             if param_vec[i] == tools.ZERO:
                 continue
             # change link names according to current non-zero parameter
-            name = '{index}{element}' + str(param_vec[i])
+            name = "{index}{element}" + str(param_vec[i])
             # set the parameter to 1
             mask = sympy.zeros(10, 1)
             mask[i] = 1
             robo_tmp.put_inert_param(mask, k)
             # compute the total forcec of the link k
-            _compute_dynamic_wrench(
-                robo_tmp, symo, name, k, w, wdot, U, vdot, F, N
-            )
+            _compute_dynamic_wrench(robo_tmp, symo, name, k, w, wdot, U, vdot, F, N)
             # init external forces
             Fex = ParamsInit.init_vec(robo)
             Nex = ParamsInit.init_vec(robo)
             for j in reversed(range(1, k + 1)):
                 _compute_reaction_wrench(
-                    robo_tmp, symo, name, j, antRj, antPj,
-                    vdot, F, N, Fjnt, Njnt, Fex, Nex
+                    robo_tmp,
+                    symo,
+                    name,
+                    j,
+                    antRj,
+                    antPj,
+                    vdot,
+                    F,
+                    N,
+                    Fjnt,
+                    Njnt,
+                    Fex,
+                    Nex,
                 )
             # reaction wrench for base
             _compute_base_reaction_wrench(
-                robo_tmp, symo, name, antRj,antPj,
-                vdot, F, N, Fex, Nex, Fjnt, Njnt
+                robo_tmp, symo, name, antRj, antPj, vdot, F, N, Fex, Nex, Fjnt, Njnt
             )
             for j in range(1, k + 1):
                 _compute_joint_torque(robo_tmp, symo, name, j, Fjnt, Njnt)
@@ -182,16 +183,9 @@ def dynamic_identification_model(robo, symo):
         robo_tmp.put_inert_param(sympy.zeros(10, 1), k)
         # compute model for the joint parameters
         # avoid these parameters for link 0
-        if k == 0: continue
-        _compute_joint_torque_deriv(
-            symo, robo.IA[k], robo.qddot[k], k
-        )
-        _compute_joint_torque_deriv(
-            symo, robo.FS[k], sympy.sign(robo.qdot[k]), k
-        )
-        _compute_joint_torque_deriv(
-            symo, robo.FV[k], robo.qdot[k], k
-        )
+        if k == 0:
+            continue
+        _compute_joint_torque_deriv(symo, robo.IA[k], robo.qddot[k], k)
+        _compute_joint_torque_deriv(symo, robo.FS[k], sympy.sign(robo.qdot[k]), k)
+        _compute_joint_torque_deriv(symo, robo.FV[k], robo.qdot[k], k)
     return symo
-
-

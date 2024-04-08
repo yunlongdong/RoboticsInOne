@@ -23,7 +23,8 @@ class DynModel(object):
         Hold the various components obtained during the computation of
         dynamic models (inverse and direct).
     """
-    def __init__(self, joints, is_symbolic, model_type='inverse'):
+
+    def __init__(self, joints, is_symbolic, model_type="inverse"):
         """
         Constructor period.
 
@@ -53,14 +54,14 @@ class DynModel(object):
         self.accels = list(None for j in joints)
         # reaction wrench
         self.wrenchs = list(None for j in joints)
-        if self.model_type is 'inverse':
+        if self.model_type is "inverse":
             # composite spatial inertia matrix
             self.composite_inertias = list(None for j in joints)
             # composite wrench
             self.composite_betas = list(None for j in joints)
             # joint torque
             self.torques = list(None for j in joints)
-        elif self.model_type is 'direct':
+        elif self.model_type is "direct":
             # similar to composite spatial inertia matrix
             self.star_inertias = list(None for j in joints)
             # similar to composite wrench
@@ -81,22 +82,17 @@ class DynModel(object):
     def __str__(self):
         str_format = ""
         # add header
-        str_format = str_format + "DynModel ({0}):\n".format(
-            self.model_type
-        )
+        str_format = str_format + "DynModel ({0}):\n".format(self.model_type)
         str_format = str_format + "-------------------\n"
         # get all the attributes currently in the class
-        attrs = [
-            attr for attr in dir(self) \
-            if not attr.startswith('_')
-        ]
+        attrs = [attr for attr in dir(self) if not attr.startswith("_")]
         # add each attribute
         for attr in attrs:
             items = getattr(self, attr)
-            if hasattr(items, '__iter__'):
+            if hasattr(items, "__iter__"):
                 attr_str = self._str_items(items)
             else:
-                attr_str = '\t' + str(items) + '\n'
+                attr_str = "\t" + str(items) + "\n"
             str_format = str_format + str(attr) + ": \n"
             str_format = str_format + attr_str
         return str_format
@@ -114,12 +110,10 @@ class DynModel(object):
         Returns:
             A string representation of the attribute.
         """
-        row_format = '\t' + ('{0:^6} : {1}') + '\n'
+        row_format = "\t" + ("{0:^6} : {1}") + "\n"
         str_format = ""
         for idx, item in enumerate(items):
-            str_format = str_format + row_format.format(*(
-                str(idx), str(item)
-            ))
+            str_format = str_format + row_format.format(*(str(idx), str(item)))
         return str_format
 
 
@@ -201,7 +195,8 @@ def _compute_link_velocity(model, robo, j, i):
         An instance of DynModel that contains all the new values.
     """
     j_v_j = Screw()
-    if i == 0: model.vels[i] = robo.base_vel
+    if i == 0:
+        model.vels[i] = robo.base_vel
     # local variables
     j_s_i = robo.geos[j].tmat.s_i_wrt_j
     qdot_j = robo.qdots[j]
@@ -290,9 +285,9 @@ def _compute_relative_acceleration(model, robo, j):
     # local variables
     j_a_j = robo.geos[j].axisa
     j_gamma_j = model.gammas[j].val
-    if model.model_type is 'inverse':
+    if model.model_type is "inverse":
         qddot_j = robo.qddots[j]
-    elif model.model_type is 'direct':
+    elif model.model_type is "direct":
         qddot_j = model.qddots[j]
     # actual computation
     j_zeta_j.val = j_gamma_j + (qddot_j * j_a_j)
@@ -326,7 +321,7 @@ def _compute_beta_wrench(model, robo, j):
     # ang_term = j_omega_j x (j_inertia_j * j_omega_j)
     ang_term = skew(j_omega_j) * (j_inertia_j * j_omega_j)
     term = Screw(lin=lin_term, ang=ang_term)
-    j_beta_j.val = - j_fe_j - term.val
+    j_beta_j.val = -j_fe_j - term.val
     # store computed wrench in model
     model.betas[j] = j_beta_j
     return model
@@ -351,8 +346,7 @@ def _compute_composite_inertia(model, robo, j, i):
     i_inertia_i = model.composite_inertias[i].val
     j_inertia_j_c = model.composite_inertias[j].val
     # actual computation
-    i_inertia_i_c.val = i_inertia_i + \
-        (j_s_i.transpose() * j_inertia_j_c * j_s_i)
+    i_inertia_i_c.val = i_inertia_i + (j_s_i.transpose() * j_inertia_j_c * j_s_i)
     # store computed matrix in model
     model.composite_inertias[i] = i_inertia_i_c
     return model
@@ -379,8 +373,11 @@ def _compute_composite_beta(model, robo, j, i):
     j_inertia_j_c = model.composite_inertias[j].val
     j_zeta_j = model.zetas[j].val
     # actual computation
-    i_beta_i_c.val = i_beta_i + (j_s_i.transpose() * j_beta_j_c) - \
-        (j_s_i.transpose() * j_inertia_j_c * j_zeta_j)
+    i_beta_i_c.val = (
+        i_beta_i
+        + (j_s_i.transpose() * j_beta_j_c)
+        - (j_s_i.transpose() * j_inertia_j_c * j_zeta_j)
+    )
     # store computed beta in model
     model.composite_betas[i] = i_beta_i_c
     return model
@@ -435,8 +432,12 @@ def _compute_joint_torque(model, robo, j):
     actuator_inertia_term = Matrix([ia_j * qddot_j])
     coriolis_friction_term = Matrix([f_cj * sign(qdot_j)])
     viscous_friction_term = Matrix([f_vj * qdot_j])
-    gamma_j = wrench_term + actuator_inertia_term + \
-        viscous_friction_term + coriolis_friction_term
+    gamma_j = (
+        wrench_term
+        + actuator_inertia_term
+        + viscous_friction_term
+        + coriolis_friction_term
+    )
     # store computed torque in model
     model.torques[j] = gamma_j[0, 0]
     return model
@@ -486,8 +487,9 @@ def _compute_no_qddot_inertia(model, robo, j):
     j_inertia_j_s = model.star_inertias[j].val
     h_j = Matrix([model.joint_inertias[j]])
     # actual computation
-    j_k_j.val = j_inertia_j_s - (j_inertia_j_s * j_a_j * h_j.inv() * \
-        j_a_j.transpose() * j_inertia_j_s)
+    j_k_j.val = j_inertia_j_s - (
+        j_inertia_j_s * j_a_j * h_j.inv() * j_a_j.transpose() * j_inertia_j_s
+    )
     # store in model
     model.no_qddot_inertias[j] = j_k_j
     return model
@@ -543,9 +545,11 @@ def _compute_alpha_wrench(model, robo, j):
     h_j = Matrix([model.joint_inertias[j]])
     tau_j = Matrix([model.taus[j]])
     # actual computation
-    j_alpha_j.val = (j_k_j * j_gamma_j) + \
-        (j_inertia_j_s * j_a_j * h_j.inv() * \
-        (tau_j + j_a_j.transpose() * j_beta_j_s)) - j_beta_j_s
+    j_alpha_j.val = (
+        (j_k_j * j_gamma_j)
+        + (j_inertia_j_s * j_a_j * h_j.inv() * (tau_j + j_a_j.transpose() * j_beta_j_s))
+        - j_beta_j_s
+    )
     # store in model
     model.alphas[j] = j_alpha_j
     return model
@@ -626,9 +630,11 @@ def _compute_joint_acceleration(model, robo, j, i):
     tau_j = Matrix([model.taus[j]])
     i_vdot_i = model.accels[i].val
     # actual computation
-    qddot_j = h_j.inv() * (-j_a_j.transpose() * j_inertia_j_s * \
-        ((j_s_i * i_vdot_i) + j_gamma_j) + tau_j + \
-        (j_a_j.transpose() * j_beta_j_s))
+    qddot_j = h_j.inv() * (
+        -j_a_j.transpose() * j_inertia_j_s * ((j_s_i * i_vdot_i) + j_gamma_j)
+        + tau_j
+        + (j_a_j.transpose() * j_beta_j_s)
+    )
     # store in model
     model.qddots[j] = qddot_j[0, 0]
     return model
@@ -679,10 +685,10 @@ def _compute_base_acceleration(model, robo):
     # local variables
     gravity.lin = robo.gravity
     if robo.is_floating:
-        if model.model_type is 'inverse':
+        if model.model_type is "inverse":
             o_inertia_o_c = model.composite_inertias[0].val
             o_beta_o_c = model.composite_betas[0].val
-        elif model.model_type is 'direct':
+        elif model.model_type is "direct":
             o_inertia_o_c = model.star_inertias[0].val
             o_beta_o_c = model.star_betas[0].val
         # actual computation
@@ -709,10 +715,11 @@ def inverse_dynamic_model(robo):
         The inverse dynamic model of the robot.
     """
     # some book keeping variables
-    model = DynModel(robo.joint_nums, robo.is_symbolic, 'inverse')
+    model = DynModel(robo.joint_nums, robo.is_symbolic, "inverse")
     # first forward recursion
     for j in robo.joint_nums:
-        if j == 0: continue
+        if j == 0:
+            continue
         # antecedent index
         i = robo.geos[j].ant
         # compute j^V_j : link velocity (6x1)
@@ -749,7 +756,8 @@ def inverse_dynamic_model(robo):
         model = _compute_composite_beta(model, robo, j, i)
     # second forward recursion
     for j in robo.joint_nums:
-        if j == 0: continue
+        if j == 0:
+            continue
         # antecedent index
         i = robo.geos[j].ant
         # compute j^\dot{V}_j : link acceleration
@@ -773,10 +781,11 @@ def direct_dynamic_model(robo):
         The direct dynamic model of the robot.
     """
     # some book keeping variables
-    model = DynModel(robo.joint_nums, robo.is_symbolic, 'direct')
+    model = DynModel(robo.joint_nums, robo.is_symbolic, "direct")
     # first forward recursion
     for j in robo.joint_nums:
-        if j == 0: continue
+        if j == 0:
+            continue
         # antecedent index
         i = robo.geos[j].ant
         # compute j^V_j : link velocity (6x1)
@@ -796,7 +805,8 @@ def direct_dynamic_model(robo):
         model = _init_star_beta(model, robo, j)
     # second backward recursion - compute star terms
     for j in reversed(robo.joint_nums):
-        if j == 0: continue
+        if j == 0:
+            continue
         # antecedent index
         i = robo.geos[j].ant
         # compute H_j : joint inertia (scalar term)
@@ -830,5 +840,3 @@ def direct_dynamic_model(robo):
         # compute j^V_j : link acceleration
         model = _compute_link_acceleration(model, robo, j, i)
     return model
-
-

@@ -10,24 +10,21 @@ from pyrr import Matrix44, Vector3
 class BaseScene(object):
     """Base scene holds the opengl context and defines utilities that will be
     useful for all scenes.
-    
+
     Arguments
     ---------
         size: (width, height) of the framebuffer
         background: The color of the background frame buffer
         ctx: A moderngl context or None to create a standalone context
     """
+
     def __init__(self, size=(256, 256), background=(1, 1, 1, 1), ctx=None):
         if ctx is None:
             self._ctx = moderngl.create_standalone_context()
             self._ctx.enable(moderngl.BLEND)
-            self._ctx.blend_func = (
-                moderngl.SRC_ALPHA,
-                moderngl.ONE_MINUS_SRC_ALPHA
-            )
+            self._ctx.blend_func = (moderngl.SRC_ALPHA, moderngl.ONE_MINUS_SRC_ALPHA)
             self._framebuffer = self._ctx.framebuffer(
-                self._ctx.renderbuffer(size),
-                self._ctx.depth_renderbuffer(size)
+                self._ctx.renderbuffer(size), self._ctx.depth_renderbuffer(size)
             )
         else:
             self._ctx = ctx
@@ -96,24 +93,27 @@ class BaseScene(object):
             # NOTE: We flip the y axis in order to have (0, 0) to be the bottom
             # left corner.
             return np.frombuffer(
-                self._framebuffer.read(components=4),
-                dtype=np.uint8
+                self._framebuffer.read(components=4), dtype=np.uint8
             ).reshape(*(self._framebuffer.size + (4,)))[::-1]
         else:
-            raise RuntimeError(("This scene is rendering on a framebuffer "
-                                "managed by someone else (gui perhaphs). "
-                                "Access the frame from there."))
+            raise RuntimeError(
+                (
+                    "This scene is rendering on a framebuffer "
+                    "managed by someone else (gui perhaphs). "
+                    "Access the frame from there."
+                )
+            )
 
 
 class Scene(BaseScene):
     def __init__(self, size=(256, 256), background=(1, 1, 1, 1), ctx=None):
         super(Scene, self).__init__(size, background, ctx)
 
-        self._camera = (
-            Matrix44.perspective_projection(45., 1., 0.1, 1000.)
-        ).astype(np.float32)
-        self._camera_position = Vector3([-2., -2, -2], dtype="float32")
-        self._camera_target = Vector3([0., 0, 0], dtype="float32")
+        self._camera = (Matrix44.perspective_projection(45.0, 1.0, 0.1, 1000.0)).astype(
+            np.float32
+        )
+        self._camera_position = Vector3([-2.0, -2, -2], dtype="float32")
+        self._camera_target = Vector3([0.0, 0, 0], dtype="float32")
         self._rotation = Matrix44.identity().astype(np.float32)
         self._up_vector = Vector3([0, 0, 1], dtype="float32")
         self._light = Vector3([-0.5, -0.8, -2], dtype="float32")
@@ -126,11 +126,10 @@ class Scene(BaseScene):
             camera_target=self._camera_target,
             rotation=self._rotation,
             up_vector=self._up_vector,
-
             # derivative uniforms
             vm=self.vm,
             mv=self.mv,
-            mvp=self.mvp
+            mvp=self.mvp,
         )
 
     def _update_uniforms(self):
@@ -144,11 +143,12 @@ class Scene(BaseScene):
 
     @property
     def mv(self):
-        return (Matrix44.look_at(
-            self._camera_position,
-            self._camera_target,
-            self._up_vector
-        ) * self._rotation).astype(np.float32)
+        return (
+            Matrix44.look_at(
+                self._camera_position, self._camera_target, self._up_vector
+            )
+            * self._rotation
+        ).astype(np.float32)
 
     @property
     def mvp(self):

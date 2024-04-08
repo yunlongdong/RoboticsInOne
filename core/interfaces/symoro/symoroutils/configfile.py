@@ -17,7 +17,7 @@ except ImportError:
 import os
 
 
-CONFIG_FILE_NAME = 'settings.conf'
+CONFIG_FILE_NAME = "settings.conf"
 
 
 def get_prog_config_path():
@@ -27,11 +27,11 @@ def get_prog_config_path():
     Returns:
          A string specifying the path to store SYMORO settings.
     """
-    prog_name = 'symoro'
-    if os.name == 'nt':
-        return os.path.join(os.environ['APPDATA'], prog_name)
+    prog_name = "symoro"
+    if os.name == "nt":
+        return os.path.join(os.environ["APPDATA"], prog_name)
     else:
-        return os.path.join(os.environ['HOME'], '.config', prog_name)
+        return os.path.join(os.environ["HOME"], ".config", prog_name)
 
 
 def get_config_file_path():
@@ -63,11 +63,9 @@ def save_config(curr_config):
     """
     make_config_folder()
     if not isinstance(curr_config, ConfigParser):
-        raise TypeError(
-            "`curr_config` should be an instance of `ConfigParser`"
-        )
+        raise TypeError("`curr_config` should be an instance of `ConfigParser`")
     config_file_path = get_config_file_path()
-    with open(config_file_path, 'w') as config_file:
+    with open(config_file_path, "w") as config_file:
         curr_config.write(config_file)
 
 
@@ -95,8 +93,8 @@ def get_last_robot():
         A string specifying the path to the last used robot's PAR file.
     """
     config = get_config()
-    if config.has_option('startup', 'last-robot'):
-        return config.get('startup', 'last-robot')
+    if config.has_option("startup", "last-robot"):
+        return config.get("startup", "last-robot")
     else:
         return None
 
@@ -109,7 +107,6 @@ def set_last_robot(robo_par_file):
         robo_par_file: A string specifying the path to robot's PAR file.
     """
     config = ConfigParser()
-    config.add_section('startup')
-    config.set('startup', 'last-robot', robo_par_file)
+    config.add_section("startup")
+    config.set("startup", "last-robot", robo_par_file)
     save_config(config)
-

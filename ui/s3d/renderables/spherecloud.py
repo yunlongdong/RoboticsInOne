@@ -1,8 +1,8 @@
-
 import numpy as np
 
 from .base import Renderable
 from ..utils import normalize_colors
+
 
 class Spherecloud(Renderable):
     def __init__(self, name, centers, colors=(0.3, 0.3, 0.3), sizes=(0.02)):
@@ -20,7 +20,7 @@ class Spherecloud(Renderable):
             self._colors = np.hstack([self._colors, np.ones((N, 1))])
 
         if len(self._sizes.shape) == 0:
-            self._sizes = np.ones(N)*self._sizes
+            self._sizes = np.ones(N) * self._sizes
 
         self._prog = None
         self._vbo = None
@@ -58,22 +58,18 @@ class Spherecloud(Renderable):
         # offset and scale according to centers and sizes
         r2 = np.sqrt(2)
         r3 = np.sqrt(3)
-        pyramid = np.array([[ 0,   r3,       0],
-                            [ 1,    0,       0],
-                            [-1,    0,       0],
-                            [ 0, 1/r3, 2*r2/r3]])
+        pyramid = np.array(
+            [[0, r3, 0], [1, 0, 0], [-1, 0, 0], [0, 1 / r3, 2 * r2 / r3]]
+        )
         center = pyramid.mean(axis=0)
-        ab = pyramid[1]-pyramid[0]
-        ac = pyramid[2]-pyramid[0]
+        ab = pyramid[1] - pyramid[0]
+        ac = pyramid[2] - pyramid[0]
         normal = np.cross(ab, ac)
         normal /= np.sqrt(np.dot(normal, normal))
-        max_radius = np.abs(np.dot(normal, pyramid[0]-center))
+        max_radius = np.abs(np.dot(normal, pyramid[0] - center))
         pyramid -= center
         pyramid /= max_radius
-        pyramid_vertices = pyramid[[0, 1, 2,
-                                    0, 1, 3,
-                                    0, 2, 3,
-                                    1, 2, 3]][np.newaxis]
+        pyramid_vertices = pyramid[[0, 1, 2, 0, 1, 3, 0, 2, 3, 1, 2, 3]][np.newaxis]
 
         vertices = self._sizes[:, np.newaxis, np.newaxis] * pyramid_vertices
         vertices += self._centers[:, np.newaxis]
@@ -142,13 +138,11 @@ class Spherecloud(Renderable):
 
                     f_color = vec4(v_color.xyz * lum, v_color.w);
                 }
-            """
+            """,
         )
         self._vbo = ctx.buffer(self.packed_parameters.tobytes())
         self._vao = ctx.simple_vertex_array(
-            self._prog,
-            self._vbo,
-            "in_vertex", "in_center", "in_color", "in_radius"
+            self._prog, self._vbo, "in_vertex", "in_center", "in_color", "in_radius"
         )
 
     def sort_triangles(self, point):
@@ -157,9 +151,9 @@ class Spherecloud(Renderable):
         colors = self._colors
         sizes = self._sizes
 
-        d = ((np.asarray(point).reshape(1, 3) - centers)**2).sum(-1)
-        alpha = (colors[:, ::4].mean(-1)<1).astype(np.float32) * 1000
-        idxs = np.argsort(d+alpha)[::-1]
+        d = ((np.asarray(point).reshape(1, 3) - centers) ** 2).sum(-1)
+        alpha = (colors[:, ::4].mean(-1) < 1).astype(np.float32) * 1000
+        idxs = np.argsort(d + alpha)[::-1]
 
         self._centers = centers[idxs]
         self._colors = colors[idxs]
@@ -178,18 +172,13 @@ class Spherecloud(Renderable):
         for k, v in uniforms:
             if k in ["light", "mvp", "vm"]:
                 self._prog[k].write(v.tobytes())
-    
-
 
     @property
     def bbox(self):
         """The axis aligned bounding box of all the vertices as two
         3-dimensional arrays containing the minimum and maximum for each
         axis."""
-        return [
-            self._centers.min(axis=0),
-            self._centers.max(axis=0)
-        ]
+        return [self._centers.min(axis=0), self._centers.max(axis=0)]
 
     # def scale(self, s):
     #     """Multiply all the vertices with a number s."""
@@ -201,7 +190,7 @@ class Spherecloud(Renderable):
         """Transform the mesh such that it fits in the 0 centered unit cube."""
         bbox = self.bbox
         dims = bbox[1] - bbox[0]
-        self._centers -= dims/2 + bbox[0]
+        self._centers -= dims / 2 + bbox[0]
         self._centers /= dims.max()
         if self._vbo is not None:
             self._vbo.write(self.packed_parameters.tobytes())

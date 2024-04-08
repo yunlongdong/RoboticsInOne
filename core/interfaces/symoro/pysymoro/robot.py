@@ -35,10 +35,18 @@ class Robot(object):
     and direct geometric model generation.
     Also provides different representations of parameters.
     """
+
     def __init__(
-        self, name, NL=0, NJ=0, NF=0, is_floating=False,
-        structure=TREE, is_mobile=False, directory=None,
-        par_file_path=None
+        self,
+        name,
+        NL=0,
+        NJ=0,
+        NF=0,
+        is_floating=False,
+        structure=TREE,
+        is_mobile=False,
+        directory=None,
+        par_file_path=None,
     ):
         # Name of the robot: string.
         self.name = name
@@ -65,7 +73,7 @@ class Robot(object):
         # Actuated, if 1, then the joint is actuated.
         self.mu = [1] * (NF + 1)
         # Geometrical parameter: list of var.
-        self.theta = [0] + [var('th{}'.format(i + 1)) for i in range(NF)]
+        self.theta = [0] + [var("th{}".format(i + 1)) for i in range(NF)]
         # Geometrical parameter: list of var.
         self.r = [0] * (NF + 1)
         # Geometrical parameter: list of var.
@@ -89,32 +97,32 @@ class Robot(object):
         # Base linear acceleration: 3x1 matrix.
         self.vdot0 = zeros(3, 1)
         # Joint speed: list of var.
-        self.qdot = [var('QP{0}'.format(i)) for i in numj]
+        self.qdot = [var("QP{0}".format(i)) for i in numj]
         # Joint acceleration: list of var.
-        self.qddot = [var('QDP{0}'.format(i)) for i in numj]
+        self.qddot = [var("QDP{0}".format(i)) for i in numj]
         # External moment of link: list of 3x1 matrix.
         self.Nex = [zeros(3, 1) for i in num]
-        self.Nex[-1] = Matrix(var('CX{0}, CY{0}, CZ{0}'.format(self.NL - 1)))
+        self.Nex[-1] = Matrix(var("CX{0}, CY{0}, CZ{0}".format(self.NL - 1)))
         # External force of link: list of 3x1 matrix.
         self.Fex = [zeros(3, 1) for i in num]
-        self.Fex[-1] = Matrix(var('FX{0}, FY{0}, FZ{0}'.format(self.NL - 1)))
+        self.Fex[-1] = Matrix(var("FX{0}, FY{0}, FZ{0}".format(self.NL - 1)))
         # Dry friction coefficient: list of var.
-        self.FS = [var('FS{}'.format(i)) for i in num]
+        self.FS = [var("FS{}".format(i)) for i in num]
         # Joint actuator inertia: list of var.
-        self.IA = [var('IA{}'.format(i)) for i in num]
+        self.IA = [var("IA{}".format(i)) for i in num]
         # Viscous friction coefficient: list of var.
-        self.FV = [var('FV{}'.format(i)) for i in num]
+        self.FV = [var("FV{}".format(i)) for i in num]
         # First momentum of link: list of 3x1 matrix.
-        self.MS = [Matrix(var('MX{0}, MY{0}, MZ{0}'.format(i))) for i in num]
+        self.MS = [Matrix(var("MX{0}, MY{0}, MZ{0}".format(i))) for i in num]
         # Mass of link: list of var.
-        self.M = [var('M{}'.format(i)) for i in num]
+        self.M = [var("M{}".format(i)) for i in num]
         # Joint torques: list of var.
-        self.GAM = [var('GAM{}'.format(i)) for i in numj]
+        self.GAM = [var("GAM{}".format(i)) for i in numj]
         # Inertia tensor of link: list of 3x3 matrix.
-        J_str = 'XX{0},XY{0},XZ{0},XY{0},YY{0},YZ{0},XZ{0},YZ{0},ZZ{0}'
+        J_str = "XX{0},XY{0},XZ{0},XY{0},YY{0},YZ{0},XZ{0},YZ{0},ZZ{0}"
         self.J = [Matrix(3, 3, var(J_str.format(i))) for i in num]
         # Gravity vector: 3x1 matrix.
-        self.G = Matrix([0, 0, var('GZ')])
+        self.G = Matrix([0, 0, var("GZ")])
         # eta - rigid or flexible.
         self.eta = [0] * self.NJ
         # k - joint stiffness.
@@ -149,7 +157,7 @@ class Robot(object):
         # Geometric parameters.
         if geom:
             # do nothing
-            #self._set_geom_defaults()
+            # self._set_geom_defaults()
             pass
         # Base parameters.
         if base:
@@ -168,7 +176,7 @@ class Robot(object):
         base_vel_head = self.get_base_vel_head()
         ext_dynam_head = self.get_ext_dynam_head()
         dynam_head = self.get_dynam_head()
-        ext_head = ext_dynam_head[7:] + ['IA']
+        ext_head = ext_dynam_head[7:] + ["IA"]
         f_ex_head = ext_dynam_head[1:4]
         n_ex_head = ext_dynam_head[4:7]
         if name in ext_head + geom_head + base_vel_head:
@@ -181,13 +189,13 @@ class Robot(object):
         elif name in dynam_head:
             params = self.get_inert_param(j)
             i = dynam_head.index(name)
-            params[i-1] = val
+            params[i - 1] = val
             self.put_inert_param(params, j)
-        elif name == 'eta':
+        elif name == "eta":
             self.eta[j] = int(val)
-        elif name == 'k':
+        elif name == "k":
             self.k[j] = val
-        elif name == 'Z':
+        elif name == "Z":
             self.Z[j] = val
         return OK
 
@@ -196,7 +204,7 @@ class Robot(object):
         base_vel_head = self.get_base_vel_head()
         ext_dynam_head = self.get_ext_dynam_head()
         dynam_head = self.get_dynam_head()
-        ext_head = ext_dynam_head[7:] + ['IA']
+        ext_head = ext_dynam_head[7:] + ["IA"]
         f_ex_head = ext_dynam_head[1:4]
         n_ex_head = ext_dynam_head[4:7]
         if name in ext_head + geom_head + base_vel_head:
@@ -209,12 +217,12 @@ class Robot(object):
         elif name in self.get_dynam_head():
             params = self.get_inert_param(j)
             i = dynam_head.index(name)
-            return params[i-1]
-        elif name == 'eta':
+            return params[i - 1]
+        elif name == "eta":
             return self.eta[j]
-        elif name == 'k':
+        elif name == "k":
             return self.k[j]
-        elif name == 'Z':
+        elif name == "Z":
             return self.Z[j]
 
     def get_q_chain(self, j, k=0):
@@ -231,7 +239,7 @@ class Robot(object):
         return q
 
     def get_q(self, i):
-        """ Returns symbol of joint variable
+        """Returns symbol of joint variable
         or 0 if joint is fixed
         """
         if self.sigma[i] == 0:
@@ -248,7 +256,7 @@ class Robot(object):
         algorithm based on the robot type.
         """
         symo = symbolmgr.SymbolManager()
-        symo.file_open(self, 'idm')
+        symo.file_open(self, "idm")
         title = "Inverse Dynamic Model using Newton-Euler Algorithm\n"
         if 1 in self.eta:
             # with flexible joints
@@ -279,7 +287,7 @@ class Robot(object):
         algorithm.
         """
         symo = symbolmgr.SymbolManager()
-        symo.file_open(self, 'inm')
+        symo.file_open(self, "inm")
         title = "Inertia matrix using Composite links algorithm\n"
         if self.is_floating or self.is_mobile:
             # with floating or mobile base
@@ -300,7 +308,7 @@ class Robot(object):
         recursive Newton-Euler algorithm.
         """
         symo = symbolmgr.SymbolManager()
-        symo.file_open(self, 'ddm')
+        symo.file_open(self, "ddm")
         title = "Direct Dynamic Model using Newton-Euler Algorithm\n"
         if self.is_floating:
             # with floating base
@@ -321,7 +329,7 @@ class Robot(object):
         pseudo_robo = copy.deepcopy(self)
         pseudo_robo.qddot = zeros(pseudo_robo.NL, 1)
         symo = symbolmgr.SymbolManager()
-        symo.file_open(self, 'ccg')
+        symo.file_open(self, "ccg")
         title = "Pseudo forces using Newton-Euler Algorithm\n"
         if 1 in pseudo_robo.eta:
             # with flexible joints
@@ -352,18 +360,14 @@ class Robot(object):
         """
         base_robo = copy.deepcopy(self)
         symo = symbolmgr.SymbolManager()
-        symo.file_open(base_robo, 'regp')
+        symo.file_open(base_robo, "regp")
         title = "Base Inertial Parameters equations"
-        symo.write_params_table(
-            base_robo, title, inert=True, dynam=True
-        )
+        symo.write_params_table(base_robo, title, inert=True, dynam=True)
         # compute base inertial params
         baseparams.base_inertial_parameters(base_robo, symo)
         symo.write_line()
         title = "Grouped inertial parameters"
-        symo.write_params_table(
-            base_robo, title, inert=True, equations=False
-        )
+        symo.write_params_table(base_robo, title, inert=True, equations=False)
         symo.file_close()
         # set new name for robot with base params
         base_robo.name = base_robo.name + "_base"
@@ -376,7 +380,7 @@ class Robot(object):
         Compute the Dynamic Identification model of the robot.
         """
         symo = symbolmgr.SymbolManager()
-        symo.file_open(self, 'dim')
+        symo.file_open(self, "dim")
         title = "Dynamic Identification Model (Newton-Euler method)"
         symo.write_params_table(self, title, inert=True, dynam=True)
         dyniden.dynamic_identification_model(self, symo)
@@ -385,8 +389,7 @@ class Robot(object):
 
     @property
     def q_vec(self):
-        """Generates vector of joint variables
-        """
+        """Generates vector of joint variables"""
         qs = []
         for i in range(1, self.NJ):
             if self.sigma[i] != 2:
@@ -399,8 +402,7 @@ class Robot(object):
 
     @property
     def q_passive(self):
-        """Generates vector of passive joint variables (including cut!)
-        """
+        """Generates vector of passive joint variables (including cut!)"""
         q = list()
         for i in range(1, self.NJ):
             if self.mu[i] == 0:
@@ -409,8 +411,7 @@ class Robot(object):
 
     @property
     def q_active(self):
-        """Generates vector of active joint variables (including cut!)
-        """
+        """Generates vector of active joint variables (including cut!)"""
         q = list()
         for i in range(1, self.NJ):
             if self.mu[i] == 1:
@@ -419,20 +420,17 @@ class Robot(object):
 
     @property
     def indx_passive(self):
-        """Generates vector of passive joint indices
-        """
+        """Generates vector of passive joint indices"""
         return [i for i in range(1, self.NL) if self.mu[i] == 0]
 
     @property
     def indx_active(self):
-        """Generates vector of active joint indices
-        """
+        """Generates vector of active joint indices"""
         return [i for i in range(1, self.NL) if self.mu[i] == 1]
 
     @property
     def indx_cut(self):
-        """Generates vector of cut joint indices
-        """
+        """Generates vector of cut joint indices"""
         return list(range(self.NL, self.NJ))
 
     def fric_v(self, j):
@@ -491,20 +489,17 @@ class Robot(object):
 
     @property
     def NJ(self):
-        """ Actual number of joints counting 0
-        """
+        """Actual number of joints counting 0"""
         return self.nj + 1
 
     @property
     def NL(self):
-        """ Actual number of links counting 0
-        """
+        """Actual number of links counting 0"""
         return self.nl + 1
 
     @property
     def NF(self):
-        """ Actual number of frames counting 0
-        """
+        """Actual number of frames counting 0"""
         return self.nf + 1
 
     @property
@@ -559,9 +554,9 @@ class Robot(object):
         if type(self.theta[j]) != int and not self.theta[j].is_number:
             angs.append((self.theta[j], j))
         if type(self.alpha[j]) != int and not self.alpha[j].is_number:
-            angs.append((self.alpha[j], 'A{}'.format(j)))
+            angs.append((self.alpha[j], "A{}".format(j)))
         if type(self.gamma[j]) != int and not self.gamma[j].is_number:
-            angs.append((self.gamma[j], 'G{}'.format(j)))
+            angs.append((self.gamma[j], "G{}".format(j)))
         return angs
 
     def chain(self, j, k=0):
@@ -628,9 +623,18 @@ class Robot(object):
         =======
         get_dynam_param: Matrix 10x1
         """
-        K = [self.J[j][0], self.J[j][1], self.J[j][2], self.J[j][4],
-             self.J[j][5], self.J[j][8], self.MS[j][0], self.MS[j][1],
-             self.MS[j][2], self.M[j]]
+        K = [
+            self.J[j][0],
+            self.J[j][1],
+            self.J[j][2],
+            self.J[j][4],
+            self.J[j][5],
+            self.J[j][8],
+            self.MS[j][0],
+            self.MS[j][1],
+            self.MS[j][2],
+            self.M[j],
+        ]
         return Matrix(K)
 
     def put_inert_param(self, K, j):
@@ -643,9 +647,7 @@ class Robot(object):
         j: int
             Link index.
         """
-        self.J[j] = Matrix([[K[0], K[1], K[2]],
-                            [K[1], K[3], K[4]],
-                            [K[2], K[4], K[5]]])
+        self.J[j] = Matrix([[K[0], K[1], K[2]], [K[1], K[3], K[4]], [K[2], K[4], K[5]]])
         self.MS[j] = Matrix(3, 1, K[6:9])
         self.M[j] = K[9]
 
@@ -658,8 +660,22 @@ class Robot(object):
         =======
         get_ext_dynam_head: list of strings
         """
-        return ['j', 'FX', 'FY', 'FZ', 'CX', 'CY', 'CZ',
-                'FS', 'FV', 'QP', 'QDP', 'GAM', 'eta', 'k']
+        return [
+            "j",
+            "FX",
+            "FY",
+            "FZ",
+            "CX",
+            "CY",
+            "CZ",
+            "FS",
+            "FV",
+            "QP",
+            "QDP",
+            "GAM",
+            "eta",
+            "k",
+        ]
 
     def get_dynam_head(self):
         """Returns header for inertia parameters.
@@ -669,8 +685,7 @@ class Robot(object):
         =======
         get_dynam_head: list of strings
         """
-        return ['j', 'XX', 'XY', 'XZ', 'YY', 'YZ', 'ZZ',
-                'MX', 'MY', 'MZ', 'M', 'IA']
+        return ["j", "XX", "XY", "XZ", "YY", "YZ", "ZZ", "MX", "MY", "MZ", "M", "IA"]
 
     def get_geom_head(self):
         """Returns header for geometric parameters.
@@ -680,8 +695,7 @@ class Robot(object):
         =======
         get_geom_head: list of strings
         """
-        return ['j', 'ant', 'sigma', 'mu', 'gamma', 'b',
-                'alpha', 'd', 'theta', 'r']
+        return ["j", "ant", "sigma", "mu", "gamma", "b", "alpha", "d", "theta", "r"]
 
     def get_base_vel_head(self):
         """Returns header for base velocities and gravity vector.
@@ -691,15 +705,15 @@ class Robot(object):
         =======
         get_base_vel_head: list of strings
         """
-        return ['axis', 'W0', 'WP0', 'V0', 'VP0', 'G']
+        return ["axis", "W0", "WP0", "V0", "VP0", "G"]
 
     def get_param_vec(self, head, j):
         params = list()
-        axis_dict = {0: 'X', 1: 'Y', 2: 'Z'}
+        axis_dict = {0: "X", 1: "Y", 2: "Z"}
         for h in head:
-            if h == 'j':
+            if h == "j":
                 params.append(j)
-            elif h == 'axis':
+            elif h == "axis":
                 params.append(axis_dict[j])
             else:
                 params.append(self.get_val(j, h))
@@ -717,14 +731,14 @@ class Robot(object):
                     self.qddot[j] = 0
                     self.GAM[j] = 0
                 else:
-                    self.qdot[j] = var('QP{0}'.format(j))
-                    self.qddot[j] = var('QDP{0}'.format(j))
-                    self.GAM[j] = var('GAM{0}'.format(j))
+                    self.qdot[j] = var("QP{0}".format(j))
+                    self.qddot[j] = var("QDP{0}".format(j))
+                    self.GAM[j] = var("GAM{0}".format(j))
             except IndexError:
                 # just ignore exception
                 pass
             if self.eta[j] == 1:
-                self.k[j] = var('k{0}'.format(j))
+                self.k[j] = var("k{0}".format(j))
             else:
                 self.k[j] = 0
 
@@ -735,9 +749,9 @@ class Robot(object):
         """
         for j in range(1, self.NF):
             if self.sigma[j] == 0:
-                self.theta[j] = var('th{0}'.format(j))
+                self.theta[j] = var("th{0}".format(j))
             elif self.sigma[j] == 1:
-                self.r[j] = var('r{0}'.format(j))
+                self.r[j] = var("r{0}".format(j))
             elif self.sigma[j] == 2:
                 self.mu[j] = 0
 
@@ -747,14 +761,14 @@ class Robot(object):
         from the ones set in the ctor.
         """
         if self.is_floating or self.is_mobile:
-            self.G = Matrix([var('GX'), var('GY'), var('GZ')])
-            self.v0 = Matrix([var('VXb'), var('VYb'), var('VZb')])
-            self.w0 = Matrix([var('WXb'), var('WYb'), var('WZb')])
-            self.vdot0 = Matrix([var('VPXb'), var('VPYb'), var('VPZb')])
-            self.wdot0 = Matrix([var('WPXb'), var('WPYb'), var('WPZb')])
+            self.G = Matrix([var("GX"), var("GY"), var("GZ")])
+            self.v0 = Matrix([var("VXb"), var("VYb"), var("VZb")])
+            self.w0 = Matrix([var("WXb"), var("WYb"), var("WZb")])
+            self.vdot0 = Matrix([var("VPXb"), var("VPYb"), var("VPZb")])
+            self.wdot0 = Matrix([var("WPXb"), var("WPYb"), var("WPZb")])
             # Z matrix
             for i in range(0, 3):
                 for j in range(0, 3):
-                    self.Z[i, j] = var('Zr{0}{1}'.format(i + 1, j + 1))
+                    self.Z[i, j] = var("Zr{0}{1}".format(i + 1, j + 1))
             for j in range(0, 3):
-                self.Z[j, 3] = var('Zt{0}'.format(j + 1))
+                self.Z[j, 3] = var("Zt{0}".format(j + 1))

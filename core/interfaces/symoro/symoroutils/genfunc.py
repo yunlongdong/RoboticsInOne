@@ -6,12 +6,11 @@ This module provides MATLAB function generation
 from sympy import Matrix, Symbol
 
 
-def gen_fheader_matlab(symo, name, args,
-                       multival=False):
+def gen_fheader_matlab(symo, name, args, multival=False):
     func_head = []
-    func_head.append('function RESULT=%s (' % name)
+    func_head.append("function RESULT=%s (" % name)
     func_head.append(convert_syms_matlab(args))
-    func_head.append(')\n')
+    func_head.append(")\n")
     return func_head
 
 
@@ -22,8 +21,8 @@ def convert_mat_matlab(to_return):
     for i in range(to_return.shape[0]):
         for j in range(to_return.shape[1]):
             res.append(str(sym_iter.next()))
-            res.append(',')
-        res[-1] = ';'
+            res.append(",")
+        res[-1] = ";"
     res.pop()
     return "".join(res)
 
@@ -43,7 +42,7 @@ def convert_syms_matlab(syms):
     res = []
     for item in iter(sym_list):
         res.append(str(item))
-        res.append(',')
+        res.append(",")
     res.pop()
     return "".join(res)
 
@@ -63,15 +62,15 @@ def convert_to_list(syms, keep_const=True):
         return []
 
 
-def gen_fbody_matlab(symo, name, to_return, args, ret_name=''):
+def gen_fbody_matlab(symo, name, to_return, args, ret_name=""):
     """Generates list of string statements of the function that
     computes symbolf from to_return.  arg_syms are considered to
     be known
     """
-     # set of defined symbols
+    # set of defined symbols
     arg_syms = symo.extract_syms(args)
     # final symbols to be compute
-    multiline_res = False   # may be useful for C/C++ code
+    multiline_res = False  # may be useful for C/C++ code
     if len(to_return) > 16 and isinstance(to_return, Matrix):
         multiline_res = True
         to_return_list = [symo.sydi[s] for s in to_return if s in symo.sydi]
@@ -87,56 +86,56 @@ def gen_fbody_matlab(symo, name, to_return, args, ret_name=''):
     # list of instructions in final function
     func_body = []
     # will be switched to true when branching detected
-    space = '    '
-    folded = 1    # indentation = 1 + number of 'for' statements
+    space = "    "
+    folded = 1  # indentation = 1 + number of 'for' statements
     multival = False
     glob = 0
-    glob_item = ''
+    glob_item = ""
     for s in order_list:
         if s not in symo.sydi:
             if glob == 0:
                 glob += 1
-                glob_item += '%sglobal %s' % (space * folded, s)
+                glob_item += "%sglobal %s" % (space * folded, s)
             elif glob < 12:
-                glob_item += ' %s' % s
+                glob_item += " %s" % s
                 glob += 1
             else:
                 glob = 0
-                glob_item += ' %s\n' % s
+                glob_item += " %s\n" % s
         else:
             if isinstance(symo.sydi[s], tuple):
                 multival = True
-                items = ['%sfor %s=' % (space * folded, s)]
+                items = ["%sfor %s=" % (space * folded, s)]
                 for x in symo.sydi[s]:
-                    items.append('%s' % x)
-                    items.append(',')
-                items.append('\n')
+                    items.append("%s" % x)
+                    items.append(",")
+                items.append("\n")
                 item = "".join(items)
                 folded += 1
             else:
-                item = '%s%s=%s;\n' % (space * folded, s, symo.sydi[s])
-            item = item.replace('**', '^')
+                item = "%s%s=%s;\n" % (space * folded, s, symo.sydi[s])
+            item = item.replace("**", "^")
             func_body.append(item)
     if multiline_res:
         rows, cols = to_return.shape
-        func_body.insert(0, '%sRESULT=zeros(%s,%s);\n' % (space, rows, cols))
-        form_str = space + 'RESULT(%s,%s)=%s;\n'
+        func_body.insert(0, "%sRESULT=zeros(%s,%s);\n" % (space, rows, cols))
+        form_str = space + "RESULT(%s,%s)=%s;\n"
         for i in range(rows):
             for j in range(cols):
                 s = to_return[i, j]
                 if s in symo.sydi:
                     item = form_str % (i + 1, j + 1, symo.sydi[s])
-                    item = item.replace('**', '^')
+                    item = item.replace("**", "^")
                     func_body.append(item)
     elif multival:
-        func_body.insert(0, '%sRESULT=[];\n' % (space))
-        item = '%sRESULT=[RESULT;%s];\n' % (space * folded, to_ret_str)
+        func_body.insert(0, "%sRESULT=[];\n" % (space))
+        item = "%sRESULT=[RESULT;%s];\n" % (space * folded, to_ret_str)
         func_body.append(item)
     else:
-        item = '%sRESULT=[%s];\n' % (space * folded, to_ret_str)
+        item = "%sRESULT=[%s];\n" % (space * folded, to_ret_str)
         func_body.append(item)
-    for f in range(folded-1, 0, -1):
-        func_body.append('%send\n' % (space * f))
-    func_body.append('end\n')
-    func_body.insert(0, glob_item + '\n')
+    for f in range(folded - 1, 0, -1):
+        func_body.append("%send\n" % (space * f))
+    func_body.append("end\n")
+    func_body.insert(0, glob_item + "\n")
     return func_body

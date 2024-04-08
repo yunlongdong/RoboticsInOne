@@ -1,4 +1,3 @@
-
 import moderngl
 import numpy as np
 from pyrr import Matrix33
@@ -16,7 +15,10 @@ class Lines(Renderable):
         colors: array-like, per line-segment color as (r,g,b,a)
         width: float indicating the width of the line
     """
-    def __init__(self, points, colors=(0.3, 0.3, 0.3, 1.0), width=0.4, name='', origin=np.eye(4)):
+
+    def __init__(
+        self, points, colors=(0.3, 0.3, 0.3, 1.0), width=0.4, name="", origin=np.eye(4)
+    ):
         self._points = np.asarray(points)
         self._colors = np.asarray(colors)
         self._width = width
@@ -35,7 +37,7 @@ class Lines(Renderable):
         self._prog = None
         self._vbo = None
         self._vao = None
-    
+
     @property
     def colors(self):
         """Return the color per vertex."""
@@ -56,7 +58,9 @@ class Lines(Renderable):
         """Write in the vertex buffer object the vertices, normals and
         colors."""
         if self._vbo is not None:
-            self._vbo.write(np.hstack([self._points, self._colors]).astype(np.float32).tobytes())
+            self._vbo.write(
+                np.hstack([self._points, self._colors]).astype(np.float32).tobytes()
+            )
 
     def init(self, ctx):
         self._prog = ctx.program(
@@ -120,17 +124,14 @@ class Lines(Renderable):
                 void main() {
                     f_color = t_color;
                 }
-            """
+            """,
         )
         self._vbo = ctx.buffer(
             np.hstack([self._points, self._colors]).astype(np.float32).tobytes()
         )
         self._vao = ctx.simple_vertex_array(
-            self._prog,
-            self._vbo,
-            "in_vertex", "in_color"
+            self._prog, self._vbo, "in_vertex", "in_color"
         )
-
 
     def affine_transform(self, R=np.eye(3), t=np.zeros(3)):
         """Rotate and translate the vertices and then update the gpu buffer.
@@ -184,24 +185,26 @@ class Lines(Renderable):
         """The axis aligned bounding box of all the vertices as two
         3-dimensional arrays containing the minimum and maximum for each
         axis."""
-        return [
-            self._points.min(axis=0),
-            self._points.max(axis=0)
-        ]
+        return [self._points.min(axis=0), self._points.max(axis=0)]
 
     def to_unit_cube(self):
         bbox = self.bbox
         dims = bbox[1] - bbox[0]
-        self._points -= dims/2 + bbox[0]
+        self._points -= dims / 2 + bbox[0]
         self._points /= dims.max()
         if self._vbo is not None:
-            self._vbo.write(np.hstack([
-                self._points, self._colors
-            ]).astype(np.float32).tobytes())
+            self._vbo.write(
+                np.hstack([self._points, self._colors]).astype(np.float32).tobytes()
+            )
 
     @classmethod
-    def from_voxel_grid(cls, voxels, colors=(0.1, 0.1, 0.1), width=0.001,
-                        bbox=[[-0.5, -0.5, -0.5], [0.5, 0.5, 0.5]]):
+    def from_voxel_grid(
+        cls,
+        voxels,
+        colors=(0.1, 0.1, 0.1),
+        width=0.001,
+        bbox=[[-0.5, -0.5, -0.5], [0.5, 0.5, 0.5]],
+    ):
         """Create a voxel grid wire frame.
 
         Arguments
@@ -227,25 +230,44 @@ class Lines(Renderable):
         centers = np.vstack([x[voxels], y[voxels], z[voxels]]).T
 
         # Create an array containing the cube edges
-        edges = np.array([[-1, -1, -1], [ 1, -1, -1],
-                          [ 1, -1, -1], [ 1,  1, -1],
-                          [ 1,  1, -1], [-1,  1, -1],
-                          [-1,  1, -1], [-1, -1, -1],
-                          [-1, -1,  1], [ 1, -1,  1],
-                          [ 1, -1,  1], [ 1,  1,  1],
-                          [ 1,  1,  1], [-1,  1,  1],
-                          [-1,  1,  1], [-1, -1,  1],
-                          [-1, -1, -1], [-1, -1,  1],
-                          [-1,  1, -1], [-1,  1,  1],
-                          [ 1, -1, -1], [ 1, -1,  1],
-                          [ 1,  1, -1], [ 1,  1,  1]]) * sizes
+        edges = (
+            np.array(
+                [
+                    [-1, -1, -1],
+                    [1, -1, -1],
+                    [1, -1, -1],
+                    [1, 1, -1],
+                    [1, 1, -1],
+                    [-1, 1, -1],
+                    [-1, 1, -1],
+                    [-1, -1, -1],
+                    [-1, -1, 1],
+                    [1, -1, 1],
+                    [1, -1, 1],
+                    [1, 1, 1],
+                    [1, 1, 1],
+                    [-1, 1, 1],
+                    [-1, 1, 1],
+                    [-1, -1, 1],
+                    [-1, -1, -1],
+                    [-1, -1, 1],
+                    [-1, 1, -1],
+                    [-1, 1, 1],
+                    [1, -1, -1],
+                    [1, -1, 1],
+                    [1, 1, -1],
+                    [1, 1, 1],
+                ]
+            )
+            * sizes
+        )
 
         # Finally create the edges of each cube
         points = centers[:, np.newaxis] + edges[np.newaxis]
 
         # Convert the colors to per edge color
         if len(colors.shape) == 1:
-            colors = np.array([colors]*(points.size // 3))
+            colors = np.array([colors] * (points.size // 3))
         elif len(colors.shape) == 4:
             colors = colors[voxels]
             colors = np.repeat(colors, len(edges), axis=0)
@@ -264,13 +286,12 @@ class Lines(Renderable):
             width: The width of the lines for the wireframe.
         """
         voxelgrid, translation, scale = read_binvox(binvoxfile)
-        bbox = np.array([[0., 0, 0], [1, 1, 1]]) * scale + translation
+        bbox = np.array([[0.0, 0, 0], [1, 1, 1]]) * scale + translation
 
-        return cls.from_voxel_grid(voxelgrid, colors=colors, bbox=bbox,
-                                   width=width)
+        return cls.from_voxel_grid(voxelgrid, colors=colors, bbox=bbox, width=width)
 
     @classmethod
-    def axes(cls, origin=np.eye(4), size=1.0, colors=None, width=0.01, name=''):
+    def axes(cls, origin=np.eye(4), size=1.0, colors=None, width=0.01, name=""):
         """Create the three axes to be used as a reference.
 
         Arguments
@@ -293,7 +314,7 @@ class Lines(Renderable):
         elif len(colors) != 3:
             raise ValueError("colors should contain 1 or 3 colors")
         if colors.shape[1] == 3:
-            colors = np.hstack([colors, np.ones((3, 1))*1])
+            colors = np.hstack([colors, np.ones((3, 1)) * 1])
         elif colors.shape[1] != 4:
             raise ValueError("colors should be either 3 or 4 values")
         colors = np.repeat(colors, 2, axis=0)
@@ -306,16 +327,13 @@ class Lines(Renderable):
         # Normalize the origin argument
         origin = np.asarray(origin)
 
-        
-        
-        axes = np.array([[0, 0, 0],
-                         [1, 0, 0],
-                         [0, 0, 0],
-                         [0, 1, 0],
-                         [0, 0, 0],
-                         [0, 0, 1.]]) * size
-                         
-        # axes = axes.dot(origin[:3, :3].T) + origin[:3, 3]
+        axes = (
+            np.array(
+                [[0, 0, 0], [1, 0, 0], [0, 0, 0], [0, 1, 0], [0, 0, 0], [0, 0, 1.0]]
+            )
+            * size
+        )
 
+        # axes = axes.dot(origin[:3, :3].T) + origin[:3, 3]
 
         return cls(axes, colors, width=width, origin=origin, name=name)

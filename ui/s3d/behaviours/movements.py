@@ -6,17 +6,18 @@ from . import Behaviour
 class RotateModel(Behaviour):
     """Rotate all the models around an axis with a given speed (radians per
     tick).
-    
+
     Arguments
     ---------
         axis: {'x', 'y', 'z'}
         speed: float, radians per tick
     """
-    def __init__(self, axis='z', speed=np.pi/90):
+
+    def __init__(self, axis="z", speed=np.pi / 90):
         self._function = dict(
             x=lambda s, a: s.rotate_x(a),
             y=lambda s, a: s.rotate_y(a),
-            z=lambda s, a: s.rotate_z(a)
+            z=lambda s, a: s.rotate_z(a),
         )[axis]
         self._speed = speed
 
@@ -27,13 +28,14 @@ class RotateModel(Behaviour):
 
 class LocalModelRotation(Behaviour):
     """Use a per renderable model matrix to rotate the models if available.
-    
+
     Arguments
     ---------
         axis: array-like (3,) the axis around which to rotate
         speed: float, radians per tick
     """
-    def __init__(self, axis=[0, 0, 1.], speed=np.pi/90):
+
+    def __init__(self, axis=[0, 0, 1.0], speed=np.pi / 90):
         self._axis = axis
         self._speed = speed
 
@@ -55,7 +57,8 @@ class RotateRenderables(Behaviour):
         axis: array-like (3,) the axis around which to rotate
         speed: float, radians per tick
     """
-    def __init__(self, renderables, axis=[0, 0, 1.], speed=np.pi/90):
+
+    def __init__(self, renderables, axis=[0, 0, 1.0], speed=np.pi / 90):
         self.renderables = renderables
         self._axis = axis
         self._speed = speed
@@ -75,6 +78,7 @@ class _TrajectoryMovement(Behaviour):
         trajectory: The Trajectory object that provides values
         speed: percentage of completion per tick
     """
+
     def __init__(self, trajectory, speed=0.01):
         self._trajectory = trajectory
         self._speed = speed
@@ -98,6 +102,7 @@ class RenderableOffset(_TrajectoryMovement):
         trajectory: The Trajectory object that provides values
         speed: percentage of completion per tick
     """
+
     def __init__(self, renderable, trajectory, speed=0.01):
         super().__init__(trajectory, speed)
         self.renderable = renderable
@@ -109,6 +114,7 @@ class RenderableOffset(_TrajectoryMovement):
 
 class CameraTrajectory(_TrajectoryMovement):
     """Move the camera along a trajectory."""
+
     def _adjust(self, params, v):
         params.scene.camera_position = v
         params.refresh = True
@@ -116,6 +122,7 @@ class CameraTrajectory(_TrajectoryMovement):
 
 class CameraTargetTrajectory(_TrajectoryMovement):
     """Move the camera target along a trajectory."""
+
     def _adjust(self, params, v):
         params.scene.camera_target = v
         params.refresh = True
@@ -123,6 +130,7 @@ class CameraTargetTrajectory(_TrajectoryMovement):
 
 class LightTrajectory(_TrajectoryMovement):
     """Move the light along a trajectory."""
+
     def _adjust(self, params, v):
         params.scene.light = v
         params.refresh = True

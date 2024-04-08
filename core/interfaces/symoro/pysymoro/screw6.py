@@ -16,6 +16,7 @@ class Screw6(object):
         Represent the data structure (base class) to hold a 6x6 matrix
         which in turn contains four 3x3 matrices.
     """
+
     def __init__(self, *args, **kwargs):
         """
         Constructor period.
@@ -45,23 +46,25 @@ class Screw6(object):
         elif len(args) > 0:
             raise NotImplementedError(
                 """Screw6 Constructor does not accept %s positional
-                arguments. See Usage.""" % (str(len(args)))
+                arguments. See Usage."""
+                % (str(len(args)))
             )
         if len(kwargs) == 4:
-            self.topleft = kwargs['tl']
-            self.topright = kwargs['tr']
-            self.botleft = kwargs['bl']
-            self.botright = kwargs['br']
+            self.topleft = kwargs["tl"]
+            self.topright = kwargs["tr"]
+            self.botleft = kwargs["bl"]
+            self.botright = kwargs["br"]
         elif len(kwargs) == 1:
-            self.val = kwargs['value']
+            self.val = kwargs["value"]
         elif len(kwargs) > 0:
             raise NotImplementedError(
                 """Screw6 Constructor does not accept %s keyword
-                arguments. See Usage.""" % (str(len(kwargs)))
+                arguments. See Usage."""
+                % (str(len(kwargs)))
             )
 
     def __str__(self):
-        row_format = '[' + ((('{},' * 6) + ';') * 6) + ']'
+        row_format = "[" + ((("{}," * 6) + ";") * 6) + "]"
         elements = list()
         for i in range(self._val.rows):
             for j in range(self._val.cols):
@@ -70,7 +73,7 @@ class Screw6(object):
         return str_format
 
     def __repr__(self):
-        repr_format = 'Screw6()'
+        repr_format = "Screw6()"
         return repr_format
 
     @property
@@ -194,5 +197,3 @@ class Screw6(object):
     def __ne__(self, other):
         """Check non-equality between two instances of Screw6."""
         return not self == other
-
-

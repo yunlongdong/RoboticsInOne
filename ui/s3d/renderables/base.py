@@ -1,5 +1,6 @@
 class Renderable(object):
     """Represent something that can be rendered."""
+
     def init(self, ctx):
         """Initialize the renderable with the moderngl context."""
         raise NotImplementedError()
@@ -24,4 +25,3 @@ class Renderable(object):
     def render(self):
         """Render whatever this represents."""
         raise NotImplementedError()
-

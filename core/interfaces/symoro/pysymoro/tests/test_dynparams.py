@@ -19,6 +19,7 @@ from pysymoro.dynparams import DynParams
 
 class TestDynParams(unittest.TestCase):
     """Unit test for DynParams class."""
+
     def setUp(self):
         link = 33
         # setup an instance of DynParams
@@ -26,58 +27,55 @@ class TestDynParams(unittest.TestCase):
         # setup data to compare against
         self.link = link
         # inertia matrix terms
-        self.xx = var('XX33')
-        self.xy = var('XY33')
-        self.xz = var('XZ33')
-        self.yy = var('YY33')
-        self.yz = var('YZ33')
-        self.zz = var('ZZ33')
+        self.xx = var("XX33")
+        self.xy = var("XY33")
+        self.xz = var("XZ33")
+        self.yy = var("YY33")
+        self.yz = var("YZ33")
+        self.zz = var("ZZ33")
         # mass tensor terms
-        self.msx = var('MX33')
-        self.msy = var('MY33')
-        self.msz = var('MZ33')
+        self.msx = var("MX33")
+        self.msy = var("MY33")
+        self.msz = var("MZ33")
         # link mass
-        self.mass = var('M33')
+        self.mass = var("M33")
         # rotor inertia term
-        self.ia = var('IA33')
+        self.ia = var("IA33")
         # coulomb friction parameter
-        self.frc = var('FS33')
+        self.frc = var("FS33")
         # viscous friction parameter
-        self.frv = var('FV33')
+        self.frv = var("FV33")
         # external forces and moments
-        self.fx_ext = var('FX33')
-        self.fy_ext = var('FY33')
-        self.fz_ext = var('FZ33')
-        self.mx_ext = var('CX33')
-        self.my_ext = var('CY33')
-        self.mz_ext = var('CZ33')
+        self.fx_ext = var("FX33")
+        self.fy_ext = var("FY33")
+        self.fz_ext = var("FZ33")
+        self.mx_ext = var("CX33")
+        self.my_ext = var("CY33")
+        self.mz_ext = var("CZ33")
         # setup matrix terms to compare against
-        self.inertia = Matrix([
-            [self.xx, self.xy, self.xz],
-            [self.xy, self.yy, self.yz],
-            [self.xz, self.yz, self.zz]
-        ])
+        self.inertia = Matrix(
+            [
+                [self.xx, self.xy, self.xz],
+                [self.xy, self.yy, self.yz],
+                [self.xz, self.yz, self.zz],
+            ]
+        )
         self.mass_tensor = Matrix([self.msx, self.msy, self.msz])
         m_eye = self.mass * eye(3)
         ms_skew = tools.skew(self.mass_tensor)
         self.spatial_inertia = screw6.Screw6(
-            tl=m_eye, tr=ms_skew.transpose(),
-            bl=ms_skew, br=self.inertia
+            tl=m_eye, tr=ms_skew.transpose(), bl=ms_skew, br=self.inertia
         )
         self.wrench = screw.Screw(
             lin=Matrix([self.fx_ext, self.fy_ext, self.fz_ext]),
-            ang=Matrix([self.mx_ext, self.my_ext, self.mz_ext])
+            ang=Matrix([self.mx_ext, self.my_ext, self.mz_ext]),
         )
         # setup params to compare against
-        self.param_xx = var('XX20')
-        self.param_yy = var('YY20')
-        self.param_zz = var('ZZ20')
-        self.params = {
-            'xx': self.param_xx,
-            'yy': self.param_yy,
-            'zz': self.param_zz
-        }
-        self.wrong_param = {'rand': 'some-value'}
+        self.param_xx = var("XX20")
+        self.param_yy = var("YY20")
+        self.param_zz = var("ZZ20")
+        self.params = {"xx": self.param_xx, "yy": self.param_yy, "zz": self.param_zz}
+        self.wrong_param = {"rand": "some-value"}
 
     def test_init(self):
         """Test constructor"""
@@ -117,9 +115,7 @@ class TestDynParams(unittest.TestCase):
     def test_update_params(self):
         """Test update_params()"""
         # test raise AttributeError
-        self.assertRaises(
-            AttributeError, self.data.update_params, self.wrong_param
-        )
+        self.assertRaises(AttributeError, self.data.update_params, self.wrong_param)
         # test update values
         self.data.update_params(self.params)
         self.assertEqual(self.data.xx, self.param_xx)
@@ -147,9 +143,7 @@ class TestDynParams(unittest.TestCase):
 
 def run_tests():
     """Load and run the unittests"""
-    unit_suite = unittest.TestLoader().loadTestsFromTestCase(
-        TestDynParams
-    )
+    unit_suite = unittest.TestLoader().loadTestsFromTestCase(TestDynParams)
     unittest.TextTestRunner(verbosity=2).run(unit_suite)
 
 
@@ -158,7 +152,5 @@ def main():
     run_tests()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-
-

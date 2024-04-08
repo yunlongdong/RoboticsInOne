@@ -1,4 +1,3 @@
-
 import numpy as np
 
 from . import Behaviour
@@ -7,6 +6,7 @@ from . import Behaviour
 class LightToCamera(Behaviour):
     """Move the light to the same position as the camera so that the objects
     are always lit."""
+
     def __init__(self, offset=[0, 0, 0]):
         self._offset = offset
 
@@ -27,6 +27,7 @@ class AddObjectsSequentially(Behaviour):
         objects: A list of Renderable objects
         interval: The interval between additions of objects in ticks
     """
+
     def __init__(self, objects, interval=30):
         self._objects = objects
         self._interval = interval
@@ -55,6 +56,7 @@ class CycleThroughObjects(Behaviour):
         objects: A list of lists of Renderable objects
         interval: The interval between additions and removals in ticks
     """
+
     def __init__(self, objects, interval=30):
         self._objects = objects
         self._interval = interval
@@ -76,16 +78,14 @@ class CycleThroughObjects(Behaviour):
 
 class SortTriangles(Behaviour):
     """Sort the triangles of the scene wrt the camera position."""
+
     def __init__(self):
         self._prev_camera = None
 
     def behave(self, params):
         camera = params.scene.camera_position
-        if (
-            self._prev_camera is None or
-            any([
-                abs(c1-c2)>1e-3 for c1, c2 in zip(self._prev_camera, camera)
-            ])
+        if self._prev_camera is None or any(
+            [abs(c1 - c2) > 1e-3 for c1, c2 in zip(self._prev_camera, camera)]
         ):
             self._prev_camera = camera
             for r in params.scene.renderables:
@@ -96,6 +96,7 @@ class SortTriangles(Behaviour):
 
 class StartStopBehaviour(Behaviour):
     """Start and stop the decorated behaviour for the given frame counts."""
+
     def __init__(self, behaviour, start=0, stop=100):
         self._cnt = 0
         self._behaviour = behaviour

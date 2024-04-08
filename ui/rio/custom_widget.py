@@ -5,11 +5,14 @@ from wx import stc
 import os.path as osp
 
 import matplotlib
-matplotlib.use('wxagg')
+
+matplotlib.use("wxagg")
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
-from matplotlib.backends.backend_wxagg import NavigationToolbar2WxAgg as NavigationToolbar
+from matplotlib.backends.backend_wxagg import (
+    NavigationToolbar2WxAgg as NavigationToolbar,
+)
 
 
 dir_abs_path = osp.dirname(osp.abspath(__file__))
@@ -24,18 +27,28 @@ class JointController(wx.lib.scrolledpanel.ScrolledPanel):
 
         self.joint_controller_sliders = []
         for j_n in joint_names:
-
             bSizer_joint = wx.BoxSizer(wx.HORIZONTAL)
-            text = wx.StaticText(self, wx.ID_ANY, j_n, wx.DefaultPosition, wx.DefaultSize, 0)   
-            slider = wx.Slider(self, wx.ID_ANY, 0, -100, 100, wx.DefaultPosition, wx.DefaultSize, wx.SL_HORIZONTAL) 
+            text = wx.StaticText(
+                self, wx.ID_ANY, j_n, wx.DefaultPosition, wx.DefaultSize, 0
+            )
+            slider = wx.Slider(
+                self,
+                wx.ID_ANY,
+                0,
+                -100,
+                100,
+                wx.DefaultPosition,
+                wx.DefaultSize,
+                wx.SL_HORIZONTAL,
+            )
 
             bSizer_joint.Add(text, 0, wx.ALL, 1)
             bSizer_joint.Add(slider, 1, wx.ALL, 1)
 
             self.joint_controller_sliders.append(slider)
-            bSizer.Add( bSizer_joint, 0, wx.EXPAND|wx.ALL, 2 )
+            bSizer.Add(bSizer_joint, 0, wx.EXPAND | wx.ALL, 2)
 
-        self.SetSizer( bSizer )
+        self.SetSizer(bSizer)
         self.Layout()
 
 
@@ -60,27 +73,31 @@ class MyPlotNotebook(wx.Panel):
         sizer.Add(self.nb, 1, wx.EXPAND)
         self.SetSizer(sizer)
 
-    #-----------------------------------------------------------------------
-    def Add(self, name="plot"):    
+    # -----------------------------------------------------------------------
+    def Add(self, name="plot"):
         page = MyPlot(self.nb)
         self.nb.AddPage(page, name)
         return page.figure
 
     def Clear(self):
         if self.nb.GetPageCount():
-            print('cur sel:', self.nb.GetSelection())
+            print("cur sel:", self.nb.GetSelection())
             for i in range(self.nb.GetPageCount()):
-                print('remove', i)
+                print("remove", i)
                 self.nb.RemovePage(i)
                 self.nb.DeletePage(i)
                 wx.Sleep(0.02)
 
+
 class PlotFrame(wx.Frame):
     def __init__(self, parent, size=(300, 300)):
         dw, dh = wx.DisplaySize()
-        wx.Frame.__init__(self, parent, -1, 'visualization', size=size, pos = (dw//2-150, dh//2-150))
+        wx.Frame.__init__(
+            self,
+            parent,
+            -1,
+            "visualization",
+            size=size,
+            pos=(dw // 2 - 150, dh // 2 - 150),
+        )
         self.panel = MyPlotNotebook(self)
-
-
-
-

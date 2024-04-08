@@ -3,7 +3,7 @@ import json
 import keyword
 
 style_config = json.loads(
-'''{
+    """{
     "STYLE_DEFAULT":["#000000", "#ffffff", "Courier New", 10, false, false],
     "STYLE_LINENUMBER":[null, "#C0C0C0", null, 12, null, null],
     "STYLE_CONTROLCHAR":[null, null, null, null, null, null],
@@ -23,22 +23,28 @@ style_config = json.loads(
     "P_IDENTIFIER":[null, null, null, null, null, null],
     "P_COMMENTBLOCK":["#7F7F7F", null, null, null, null, null],
     "P_STRINGEOL":["#000000", "#E0C0E0", null, null, null, null]
-}''')
+}"""
+)
 
 
 class CodePad(stc.StyledTextCtrl):
-    """EditWindow based on StyledTextCtrl."""    
+    """EditWindow based on StyledTextCtrl."""
+
     def __init__(self, parent):
         """Create EditWindow instance."""
-        stc.StyledTextCtrl.__init__(self, parent, id=-1, pos=wx.DefaultPosition,
-                 size=wx.DefaultSize, style=wx.CLIP_CHILDREN | wx.SUNKEN_BORDER)
+        stc.StyledTextCtrl.__init__(
+            self,
+            parent,
+            id=-1,
+            pos=wx.DefaultPosition,
+            size=wx.DefaultSize,
+            style=wx.CLIP_CHILDREN | wx.SUNKEN_BORDER,
+        )
         self.__config()
 
-
     def __config(self):
-        
         self.SetLexer(stc.STC_LEX_PYTHON)
-        self.SetKeyWords(0, ' '.join(keyword.kwlist))
+        self.SetKeyWords(0, " ".join(keyword.kwlist))
 
         self.setStyles()
         self.SetViewWhiteSpace(False)
@@ -54,12 +60,12 @@ class CodePad(stc.StyledTextCtrl):
         self.AutoCompSetIgnoreCase(self.autoCompleteCaseInsensitive)
         self.autoCompleteAutoHide = True
         self.AutoCompSetAutoHide(self.autoCompleteAutoHide)
-        #self.AutoCompStops(' .,;:([)]}\'"\\<>%^&+-=*/|`')
+        # self.AutoCompStops(' .,;:([)]}\'"\\<>%^&+-=*/|`')
         # Do we want to automatically pop up command argument help?
         self.autoCallTip = True
         self.callTipInsert = True
-        #self.CallTipSetBackground(FACES['calltipbg'])
-        #self.CallTipSetForeground(FACES['calltipfg'])
+        # self.CallTipSetBackground(FACES['calltipbg'])
+        # self.CallTipSetForeground(FACES['calltipfg'])
         self.SetWrapMode(False)
         try:
             self.SetEndAtLastLine(False)
@@ -67,7 +73,7 @@ class CodePad(stc.StyledTextCtrl):
             pass
         self.breakpoints = []
         self.SetupMargin()
-        
+
         self.SetBackSpaceUnIndents(True)
         self.SetWrapIndentMode(stc.STC_WRAPINDENT_FIXED)
         self.SetEndAtLastLine(True)
@@ -78,7 +84,7 @@ class CodePad(stc.StyledTextCtrl):
         # self.SetMarginType(0, stc.STC_MARGIN_NUMBER)
         # self.SetMarginMask(0, 0)
         # self.SetMarginWidth(0, 38)
-        # 
+        #
         self.SetMarginType(1, stc.STC_MARGIN_NUMBER)
         self.SetMarginWidth(1, 0)
         self.SetMarginWidth(1, 35)
@@ -91,22 +97,28 @@ class CodePad(stc.StyledTextCtrl):
 
     def setStyles(self):
         def dump(cont):
-            title = ['fore','back','face','size','bold','italic']
+            title = ["fore", "back", "face", "size", "bold", "italic"]
             idx = [i for i in range(6) if not (cont[i] is None or cont[i] is False)]
-            return ','.join(['%s:%s'%(title[i], cont[i]) for i in idx])
-        self.StyleSetSpec(stc.STC_STYLE_DEFAULT, dump(style_config['STYLE_DEFAULT']))
-        self.StyleClearAll()
-        self.SetSelForeground(True, wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT))
-        self.SetSelBackground(True, wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
-        for i in style_config: self.StyleSetSpec(eval('stc.STC_'+i), dump(style_config[i]))
-        
-   
+            return ",".join(["%s:%s" % (title[i], cont[i]) for i in idx])
 
-if __name__ == '__main__':
+        self.StyleSetSpec(stc.STC_STYLE_DEFAULT, dump(style_config["STYLE_DEFAULT"]))
+        self.StyleClearAll()
+        self.SetSelForeground(
+            True, wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHTTEXT)
+        )
+        self.SetSelBackground(
+            True, wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+        )
+        for i in style_config:
+            self.StyleSetSpec(eval("stc.STC_" + i), dump(style_config[i]))
+
+
+if __name__ == "__main__":
     app = wx.App()
     frame = wx.Frame(None)
     pad = CodePad(frame)
-    pad.SetValue("""import numpy as np
+    pad.SetValue(
+        """import numpy as np
 a = 1
 b = 3
 m = n
@@ -114,6 +126,7 @@ a
 b
 b
 b
-""")
+"""
+    )
     frame.Show()
     app.MainLoop()

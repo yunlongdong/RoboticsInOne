@@ -32,9 +32,17 @@ class Material(object):
                   height, it contains the local displacement of the normal
                   vectors for implementing bump mapping
     """
-    def __init__(self, ambient=(0.4, 0.4, 0.4), diffuse=(0.4, 0.4, 0.4),
-                 specular=(0.1, 0.1, 0.1), Ns=2., texture=None,
-                 bump_map=None, mode="specular"):
+
+    def __init__(
+        self,
+        ambient=(0.4, 0.4, 0.4),
+        diffuse=(0.4, 0.4, 0.4),
+        specular=(0.1, 0.1, 0.1),
+        Ns=2.0,
+        texture=None,
+        bump_map=None,
+        mode="specular",
+    ):
         self.ambient = np.asarray(ambient, dtype=np.float32)
         self.diffuse = np.asarray(diffuse, dtype=np.float32)
         self.specular = np.asarray(specular, dtype=np.float32)
@@ -56,16 +64,22 @@ class Material(object):
         return self.bump_map[::-1]
 
     @classmethod
-    def with_texture_image(cls, texture_path, ambient=(0.4, 0.4, 0.4),
-                           diffuse=(0.4, 0.4, 0.4), specular=(0.1, 0.1, 0.1),
-                           Ns=2., mode="specular"):
+    def with_texture_image(
+        cls,
+        texture_path,
+        ambient=(0.4, 0.4, 0.4),
+        diffuse=(0.4, 0.4, 0.4),
+        specular=(0.1, 0.1, 0.1),
+        Ns=2.0,
+        mode="specular",
+    ):
         return cls(
             ambient=ambient,
             diffuse=diffuse,
             specular=specular,
             Ns=Ns,
             texture=read_image(texture_path),
-            mode=mode
+            mode=mode,
         )
 
 
@@ -81,11 +95,12 @@ class TexturedMesh(MeshBase):
         uv: array-like, per-vertex uv coordinates inside the texture
         material: simple_3dviz.renderables.textured_mesh.Material object
     """
+
     def __init__(self, vertices, normals, uv, material):
         super(TexturedMesh, self).__init__(vertices, normals)
 
         self._uv = np.asarray(uv)
-        assert(self._uv.shape == (len(self._vertices), 2))
+        assert self._uv.shape == (len(self._vertices), 2)
         self._material = material
 
         self._texture = None
@@ -178,17 +193,15 @@ class TexturedMesh(MeshBase):
                         f_color.a = 1.0;
                     }
                 }
-            """
+            """,
         )
-        self._vbo = ctx.buffer(np.hstack([
-            self._vertices,
-            self._normals,
-            self._uv
-        ]).astype(np.float32).tobytes())
+        self._vbo = ctx.buffer(
+            np.hstack([self._vertices, self._normals, self._uv])
+            .astype(np.float32)
+            .tobytes()
+        )
         self._vao = ctx.simple_vertex_array(
-            self._prog,
-            self._vbo,
-            "in_vert", "in_norm", "in_uv"
+            self._prog, self._vbo, "in_vert", "in_norm", "in_uv"
         )
         self._prog["texture"] = 0
         self._prog["bump_map"] = 1
@@ -213,9 +226,11 @@ class TexturedMesh(MeshBase):
         """Write in the vertex buffer object the vertices, normals and
         colors."""
         if self._vbo is not None:
-            self._vbo.write(np.hstack([
-                self._vertices, self._normals, self._uv, self._material
-            ]).astype(np.float32).tobytes())
+            self._vbo.write(
+                np.hstack([self._vertices, self._normals, self._uv, self._material])
+                .astype(np.float32)
+                .tobytes()
+            )
 
     @property
     def material(self):
@@ -239,7 +254,7 @@ class TexturedMesh(MeshBase):
             self._texture = self._prog.ctx.texture(
                 self._material.texture.shape[:2][::-1],
                 self._material.texture.shape[2],
-                data=self._material.texture_flipped.tobytes()
+                data=self._material.texture_flipped.tobytes(),
             )
         else:
             self._prog["has_texture"] = False
@@ -250,7 +265,7 @@ class TexturedMesh(MeshBase):
             self._bump_map = self._prog.ctx.texture(
                 self._material.bump_map.shape[:2][::-1],
                 self._material.bump_map.shape[2],
-                data=self._material.bump_map_flipped.tobytes()
+                data=self._material.bump_map_flipped.tobytes(),
             )
         else:
             self._prog["has_bump_map"] = False
@@ -263,8 +278,14 @@ class TexturedMesh(MeshBase):
         super(TexturedMesh, self).render()
 
     @classmethod
-    def from_file(cls, filepath, material_filepath=None, ext=None,
-                  material_ext=None, color=(0.5, 0.5, 0.5)):
+    def from_file(
+        cls,
+        filepath,
+        material_filepath=None,
+        ext=None,
+        material_ext=None,
+        color=(0.5, 0.5, 0.5),
+    ):
         """Read the mesh from a file.
 
         Arguments
@@ -306,13 +327,17 @@ class TexturedMesh(MeshBase):
             elif path.exists(path.join(path.dirname(filepath), "texture.png")):
                 try:
                     material = Material.with_texture_image(
-                        path.join(path.dirname(filepath), "texture.png"),
-                        diffuse=color
+                        path.join(path.dirname(filepath), "texture.png"), diffuse=color
                     )
                 except:
                     import sys
-                    print(("Error while reading the texture image "
-                           "for {}").format(filepath), file=sys.stderr)
+
+                    print(
+                        ("Error while reading the texture image " "for {}").format(
+                            filepath
+                        ),
+                        file=sys.stderr,
+                    )
                     raise
 
         if mtl is not None:
@@ -322,7 +347,7 @@ class TexturedMesh(MeshBase):
                 specular=mtl.specular,
                 Ns=mtl.Ns,
                 texture=mtl.texture,
-                bump_map=mtl.bump_map
+                bump_map=mtl.bump_map,
             )
 
         return cls(vertices, normals, uv, material)
