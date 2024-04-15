@@ -202,6 +202,7 @@ class Robot:
                 point_list.append(link.abs_tf_link[0:3, 3])
                 zaxis_list.append(np.matmul(link.abs_tf_link[0:3, 0:3], joint.axis))
 
+            print(f"point_list={point_list}, zaxis_list={zaxis_list}")
             origin_list, xaxis_list, zaxis_list = find_common_vertical_line(
                 point_list, zaxis_list, epsilon=1e-6
             )
@@ -529,11 +530,6 @@ class Robot:
             if child.tag == "axis":
                 assert robotjoint.jointtype == "revolute"
                 robotjoint.axis = np.array(child.get("xyz").split(), dtype=float)
-                try:
-                    np.testing.assert_allclose(robotjoint.axis, np.array([0, 0, 1.0]))
-                except:
-                    print("joint axis:", robotjoint.axis)
-                    raise Exception("Error: all axes of joints should be [0, 0, 1]...")
             elif child.tag == "origin":
                 robotjoint.xyz = np.array(child.get("xyz").split(), dtype=float)
                 robotjoint.rpy = np.array(child.get("rpy").split(), dtype=float)

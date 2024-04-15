@@ -221,12 +221,18 @@ class KinematicsFrame(wx.Frame):
                 elif self.code_type == "cpp":
                     exec("print('Running cpp code is not supported now...')")
             self.result = str(sys.stdout.getvalue().strip())
-        except:
-            self.result = "error..."
-        sys.stdout = old_stdout
-
-        self.running_state = 0
-        wx.CallAfter(self.afterRun)
+        except Exception as e:  # Catch the exception
+            # Capture both stdout and the error message
+            error_message = new_stdout.getvalue().strip() + "\nError: " + str(e)
+            self.result = error_message
+        else:
+            # If no exception, just capture the stdout
+            self.result = new_stdout.getvalue().strip()
+        finally:
+            # Ensure stdout is reset whether an error occurred or not
+            sys.stdout = old_stdout
+            self.running_state = 0
+            wx.CallAfter(self.afterRun)
 
     def afterRun(self):
         self.m_textCtrl_results.SetValue(self.result)
