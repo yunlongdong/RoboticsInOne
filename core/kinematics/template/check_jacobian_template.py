@@ -1,11 +1,12 @@
 from sympy import symbols, sin, cos, lambdify, zeros
 from sympy.matrices import Matrix, eye
 import sys
+import os.path as osp
 
-sys.path.append(r"../")
+sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), "../../core/"))
 from urdf_parser.robot_from_urdf import *
 from urdf_parser.utils import *
-import os.path as osp
+
 import pybullet as p
 from numpy.random import random
 
@@ -137,7 +138,7 @@ class JAC_SYM:
 
 def check_jacobian(filename=""):
     robot = Robot(fileName=filename)
-    robot.show_MDH_frame(log=False)
+    robot.show_MDH_frame(verbose=False)
 
     # parameters
     root_joint = robot.return_root_joint()

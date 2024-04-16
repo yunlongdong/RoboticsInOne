@@ -1,4 +1,4 @@
-import xml.etree.ElementTree as ET
+from urdfpy import URDF
 from anytree import AnyNode, LevelOrderIter, RenderTree
 import numpy as np
 import os.path as osp
@@ -13,13 +13,11 @@ class Robotlink:
         self.parent_jointname = ""
         self.parent_linkname = ""
         self.mass = 0.0
-        self.com = np.zeros(3)
-        self.rpy = np.zeros(3)
+        self.origin = np.eye(4)
         self.inertia = np.zeros((3, 3))  # origin: CoM, frame: urdf link frame
-        self.xyz_visual = np.zeros(3)
-        self.rpy_visual = np.zeros(3)
-
         self.inertia_joint_frame = np.zeros((3, 3))  # origin: parent joint frame origin
+        self.visual_origin = np.eye(4)
+
         self.abs_tf_link = np.eye(
             4
         )  # absolute tranformation matrix from child link to world
@@ -30,17 +28,35 @@ class Robotlink:
         self.com_MDH = np.zeros(3)
         self.rpy_MDH = np.zeros(3)
         self.inertia_MDH = np.zeros((3, 3))  # origin: CoM, frame: MDH frame
-        self.xyz_visual_MDH = np.zeros(3)
-        self.rpy_visual_MDH = np.zeros(3)
-
         self.inertia_joint_frame_MDH = np.zeros(
             (3, 3)
         )  # origin: parent joint frame origin
+        self.xyz_visual_MDH = np.zeros(3)
+        self.rpy_visual_MDH = np.zeros(3)
+
         self.abs_tf_link_MDH = np.eye(
             4
         )  # absolute tranformation matrix from child link to world
         self.abs_com_MDH = np.zeros(3)  # absolute CoM position
         self.abs_tf_visual_MDH = np.eye(4)  # absolute mesh transform
+
+    @property
+    def com(self):
+        return self.origin[0:3, 3]
+
+    @property
+    def pure_rotation_tf(self):
+        tf = np.eye(4)
+        tf[0:3, 0:3] = self.origin[0:3, 0:3]
+        return tf
+
+    @property
+    def rotation_matrix(self):
+        return self.origin[0:3, 0:3]
+
+    @property
+    def rpy(self):
+        return get_rpy_from_rotation(self.origin)
 
     @property
     def linkRPY(self):
@@ -55,11 +71,7 @@ class Robotlink:
         return self.abs_tf[0:3, 0:3]
 
     def log_link_info(self):
-        print(
-            "link {0}: mass {1}, com {2}, rpy {3}".format(
-                self.linkname, self.mass, self.com, self.rpy
-            )
-        )
+        print(f"link {self.linkname}: mass {self.mass}, com {self.com}, rpy {self.rpy}")
 
 
 class Robotjoint:
@@ -68,8 +80,7 @@ class Robotjoint:
         self.jointtype = None
         self.angle = 0
         self.axis = np.zeros(3)
-        self.xyz = np.zeros(3)
-        self.rpy = np.zeros(3)
+        self.origin = np.eye(4)
         self.parent_link = ""  # name of parent link
         self.child_link = ""  # name of child link
 
@@ -78,23 +89,24 @@ class Robotjoint:
 
     def log_joint_info(self):
         print(
-            "joint {0}: axis {1}, xyz {2}, rpy {3}".format(
-                self.jointname, self.axis, self.xyz, self.rpy
-            )
+            f"joint {self.jointname}: axis {self.axis}, xyz {self.xyz}, rpy {self.rpy}"
         )
 
 
 class Robot:
-    def __init__(self, fileName="../../urdf_examples/estun/estun.urdf"):
+    def __init__(self, fileName="../../urdf_examples/GX11/GX11.urdf"):
         self.urdf_file = fileName
-        self.urdf_tree = None  # 解析得到的urdf
+        # number
+        self.num_robotjoints = 0
+        self.num_robotlinks = 0
+        self.robotlinks = {}
+        self.robotjoints = {}
+        # urdf tree and nodes
         self.root_link_node = None
         self.leave_link_node = []
         self.urdf_tree_nodes = []
-        self.robotlinks = {}
-        self.robotjoints = {}
-        self.num_robotjoints = 0
-        self.num_robotlinks = 0
+        self.jointname_list_subtree = None
+        # MDH
         self.MDH_params = None
         # load link and joint info from urdf file
         self.parse_urdf()
@@ -187,13 +199,13 @@ class Robot:
             )
             f.writelines(np.array2string(self.MDH_params, separator=", ") + "\n")
 
-    def show_MDH_frame(self, log=False):
+    def show_MDH_frame(self, verbose=False):
         # TODO:注意可能需要先reset joint angle，避免abs_tf_link的影响
         self.set_joint_angle(np.zeros(self.num_robotjoints))
         MDH_tf_list_total = []
         MDH_param_list_total = [np.array([0, 0, 0, 0.0])]
-        jointname_list_subtree = self.get_urdf_subtree()
-        for jointname_list in jointname_list_subtree:
+
+        for jointname_list in self.jointname_list_subtree:
             point_list = []
             zaxis_list = []
             for jointname in jointname_list:
@@ -202,7 +214,6 @@ class Robot:
                 point_list.append(link.abs_tf_link[0:3, 3])
                 zaxis_list.append(np.matmul(link.abs_tf_link[0:3, 0:3], joint.axis))
 
-            print(f"point_list={point_list}, zaxis_list={zaxis_list}")
             origin_list, xaxis_list, zaxis_list = find_common_vertical_line(
                 point_list, zaxis_list, epsilon=1e-6
             )
@@ -214,9 +225,7 @@ class Robot:
         MDH_pd_frame = DataFrame(
             MDH_param_list_total, columns=["alpha", "a", "theta", "d"]
         )
-        # print("\nModified DH Parameters: (csv)")
-        # print(pd_frame.to_csv())
-        if log:
+        if verbose:
             print("\nModified DH Parameters: (markdown)")
             print(MDH_pd_frame.to_markdown())
         self.MDH_params = MDH_pd_frame.to_numpy()
@@ -224,19 +233,18 @@ class Robot:
 
     """The followings are utility functions"""
 
+    # calculate tfs
     def calculate_tfs_in_world_frame(self):
         for node in LevelOrderIter(self.root_link_node):
             if node.type == "link" and node.parent != None:
                 # last link to world
                 parent_tf_world = self.robotlinks[node.parent.parent.id].abs_tf_link
                 parent_joint = self.robotjoints[node.parent.id]
-                xyz = parent_joint.xyz
-                rpy = parent_joint.rpy
-                # current link to last link
-                tf = get_extrinsic_tf(rpy, xyz)
                 # joint angle
                 angle = self.robotjoints[node.parent.id].angle
-                tf = np.matmul(tf, matrix44.create_from_z_rotation(angle))
+                tf = np.matmul(
+                    parent_joint.origin, matrix44.create_from_z_rotation(angle)
+                )
                 # link to world
                 current_tf_world = np.matmul(parent_tf_world, tf)
                 self.robotlinks[node.id].abs_tf_link = current_tf_world
@@ -245,57 +253,10 @@ class Robot:
                 )
 
                 # visual mesh tf
-                current_link2visual = get_extrinsic_tf(
-                    self.robotlinks[node.id].rpy_visual,
-                    self.robotlinks[node.id].xyz_visual,
-                )
-                # print("error=", current_link2visual1 - current_link2visual)
+                current_link2visual = self.robotlinks[node.id].visual_origin
                 self.robotlinks[node.id].abs_tf_visual = np.matmul(
                     current_tf_world, current_link2visual
                 )
-
-    def set_joint_rpy_xyz(self, jointname, rpy, xyz):
-        self.robotjoints[jointname].rpy = rpy
-        self.robotjoints[jointname].xyz = xyz
-        # update urdf tree
-        a = self.urdf_tree.findall("./*[@name='{0}']/origin".format(jointname))
-        assert len(a) == 1
-        a[0].set(
-            "rpy",
-            str(self.robotjoints[jointname].rpy).replace("[", "").replace("]", ""),
-        )
-        a[0].set(
-            "xyz",
-            str(self.robotjoints[jointname].xyz).replace("[", "").replace("]", ""),
-        )
-
-    def set_link_rpy_com(self, linkname, rpy, com):
-        self.robotlinks[linkname].rpy = rpy
-        self.robotlinks[linkname].com = com
-        # update urdf tree
-        a = self.urdf_tree.findall("./*[@name='{0}']/inertial/origin".format(linkname))
-        assert len(a) == 1
-        a[0].set(
-            "rpy", str(self.robotlinks[linkname].rpy).replace("[", "").replace("]", "")
-        )
-        a[0].set(
-            "xyz", str(self.robotlinks[linkname].com).replace("[", "").replace("]", "")
-        )
-
-    def set_link_rpy_xyz_visual(self, linkname, rpy_visual, xyz_visual):
-        self.robotlinks[linkname].rpy_visual = rpy_visual
-        self.robotlinks[linkname].xyz_visual = xyz_visual
-        # update urdf tree
-        a = self.urdf_tree.findall("./*[@name='{0}']/visual/origin".format(linkname))
-        assert len(a) == 1
-        a[0].set(
-            "rpy",
-            str(self.robotlinks[linkname].rpy_visual).replace("[", "").replace("]", ""),
-        )
-        a[0].set(
-            "xyz",
-            str(self.robotlinks[linkname].xyz_visual).replace("[", "").replace("]", ""),
-        )
 
     def calculate_MDH_tfs_in_world_frame(self):
         for node in LevelOrderIter(self.root_link_node):
@@ -352,7 +313,7 @@ class Robot:
             old2MDH = np.matmul(inv_tf(current2world_MDH), current2world)
             rpy_MDH_matrix = np.matmul(
                 np.matmul(inv_tf(current2world_MDH), current2world),
-                get_extrinsic_rotation(robotlink.rpy),
+                robotlink.pure_rotation_tf,
             )
             self.robotlinks[linkname].rpy_MDH = get_rpy_from_rotation(rpy_MDH_matrix)
             # current2world * com = current2world_MDH * com_MDH
@@ -379,10 +340,7 @@ class Robot:
             )
 
             # update visual property
-            current_link2visual = get_extrinsic_tf(
-                self.robotlinks[linkname].rpy_visual,
-                self.robotlinks[linkname].xyz_visual,
-            )
+            current_link2visual = self.robotlinks[linkname].visual_origin
             current_link2visual_MDH = np.matmul(
                 np.matmul(
                     inv_tf(current2world_MDH), self.robotlinks[linkname].abs_tf_link
@@ -395,19 +353,59 @@ class Robot:
             )
         self.calculate_MDH_tfs_in_world_frame()
 
-    def load_from_MDH(self):
-        pass
+    # export URDF
+    def set_joint_rpy_xyz(self, jointname, rpy, xyz):
+        self.robotjoints[jointname].rpy = rpy
+        self.robotjoints[jointname].xyz = xyz
+        # update urdf tree
+        a = self.urdf_tree.findall("./*[@name='{0}']/origin".format(jointname))
+        assert len(a) == 1
+        a[0].set(
+            "rpy",
+            str(self.robotjoints[jointname].rpy).replace("[", "").replace("]", ""),
+        )
+        a[0].set(
+            "xyz",
+            str(self.robotjoints[jointname].xyz).replace("[", "").replace("]", ""),
+        )
 
+    def set_link_rpy_com(self, linkname, rpy, com):
+        self.robotlinks[linkname].rpy = rpy
+        self.robotlinks[linkname].com = com
+        # update urdf tree
+        a = self.urdf_tree.findall("./*[@name='{0}']/inertial/origin".format(linkname))
+        assert len(a) == 1
+        a[0].set(
+            "rpy", str(self.robotlinks[linkname].rpy).replace("[", "").replace("]", "")
+        )
+        a[0].set(
+            "xyz", str(self.robotlinks[linkname].com).replace("[", "").replace("]", "")
+        )
+
+    def set_link_rpy_xyz_visual(self, linkname, rpy_visual, xyz_visual):
+        self.robotlinks[linkname].rpy_visual = rpy_visual
+        self.robotlinks[linkname].xyz_visual = xyz_visual
+        # update urdf tree
+        a = self.urdf_tree.findall("./*[@name='{0}']/visual/origin".format(linkname))
+        assert len(a) == 1
+        a[0].set(
+            "rpy",
+            str(self.robotlinks[linkname].rpy_visual).replace("[", "").replace("]", ""),
+        )
+        a[0].set(
+            "xyz",
+            str(self.robotlinks[linkname].xyz_visual).replace("[", "").replace("]", ""),
+        )
+
+    # parse URDF
     def parse_urdf(self):
-        urdf_root = self.get_urdf_root()
+        self.urdf_robot = URDF.load(self.urdf_file)
         # deal with link node
-        for child in urdf_root:
-            if child.tag == "link":
-                self.process_link(child)
+        for link in self.urdf_robot.links:
+            self.process_link(link)
         # deal with joint node
-        for child in urdf_root:
-            if child.tag == "joint":
-                self.process_joint(child)
+        for joint in self.urdf_robot.joints:
+            self.process_joint(joint)
 
         # find root link
         self.leave_link_node = list(self.robotlinks.keys())
@@ -423,28 +421,11 @@ class Robot:
                 and self.robotlinks[node.id].parent_linkname in self.leave_link_node
             ):
                 self.leave_link_node.remove(self.robotlinks[node.id].parent_linkname)
-        if num_nodes_no_parent != 1:
-            print("Error: Should only be one root link!!!")
-
-        if len(self.leave_link_node) != 1:
-            print(
-                "The urdf file contains more than one leave link!!! Errors might happen..."
-            )
-
-        # num of joints and links
         self.num_robotjoints = len(self.robotjoints)
         self.num_robotlinks = len(self.robotlinks)
+        self.jointname_list_subtree = self.get_urdf_subtree(verbose=True)
 
-    def get_urdf_root(self):
-        try:
-            tree = ET.parse(self.urdf_file)
-            self.urdf_tree = tree
-        except ET.ParseError:
-            print("ERROR: Could not parse urdf file.")
-
-        return tree.getroot()
-
-    def get_urdf_subtree(self):
+    def get_urdf_subtree(self, verbose=False):
         subtree_list = []
         for leave_linkname in self.leave_link_node:
             subtree = []
@@ -456,59 +437,20 @@ class Robot:
                 subtree.insert(0, parent_jointname)
                 leave_linkname = parent_linkname
             subtree_list.append(subtree)
-        # print("subtree_list=", subtree_list)
+        if verbose:
+            print("subtree_list=", subtree_list)
         return subtree_list
 
     def process_link(self, link):
         robotlink = Robotlink()
-        robotlink.linkname = link.get("name")
+        robotlink.linkname = link.name
         robotlink.mesh_fileName = osp.join(
-            osp.dirname(self.urdf_file),
-            link.find("visual")
-            .find("geometry")
-            .find("mesh")
-            .get("filename")
-            .replace("\\", r"/"),
+            osp.dirname(self.urdf_file), link.visuals[0].geometry.mesh.filename
         )
-
-        for child in link:
-            if child.tag == "inertial":
-                for item in child:
-                    if item.tag == "origin":
-                        robotlink.com = np.array(item.get("xyz").split(), dtype=float)
-                        robotlink.rpy = np.array(item.get("rpy").split(), dtype=float)
-                    elif item.tag == "mass":
-                        robotlink.mass = float(item.get("value"))
-                    elif item.tag == "inertia":
-                        robotlink.inertia = np.array(
-                            [
-                                [
-                                    float(item.get("ixx")),
-                                    float(item.get("ixy")),
-                                    float(item.get("ixz")),
-                                ],
-                                [
-                                    float(item.get("ixy")),
-                                    float(item.get("iyy")),
-                                    float(item.get("iyz")),
-                                ],
-                                [
-                                    float(item.get("ixz")),
-                                    float(item.get("iyz")),
-                                    float(item.get("izz")),
-                                ],
-                            ]
-                        )
-            if child.tag == "visual":
-                for item in child:
-                    if item.tag == "origin":
-                        robotlink.xyz_visual = np.array(
-                            item.get("xyz").split(), dtype=float
-                        )
-                        robotlink.rpy_visual = np.array(
-                            item.get("rpy").split(), dtype=float
-                        )
-                        break
+        robotlink.origin = link.inertial.origin
+        robotlink.mass = link.inertial.mass
+        robotlink.inertia = link.inertial.inertia
+        robotlink.visual_origin = link.visuals[0].origin
         self.robotlinks[robotlink.linkname] = robotlink
         # add link node to urdf tree
         node = AnyNode(id=robotlink.linkname, parent=None, children=None, type="link")
@@ -516,27 +458,33 @@ class Robot:
         return robotlink
 
     def process_joint(self, joint):
-        robotjoint = Robotjoint()
-        robotjoint.jointname = joint.get("name")
-        jointtype = joint.get("type")
-        if jointtype in ["revolute", "fixed"]:
-            robotjoint.jointtype = jointtype
+        jointtype = joint.joint_type
+        if jointtype == "revolute":
+            self.process_revolute_joint(joint)
+        elif jointtype == "fixed":
+            self.procoess_fixed_joint(joint)
         else:
             raise Exception(
                 'Can only deal with revolute or fixed joints now!!! The urdf contains {0} joints...".format(jointtype)'
             )
 
+    def procoess_fixed_joint(self, joint):
         for child in joint:
-            if child.tag == "axis":
-                assert robotjoint.jointtype == "revolute"
-                robotjoint.axis = np.array(child.get("xyz").split(), dtype=float)
-            elif child.tag == "origin":
-                robotjoint.xyz = np.array(child.get("xyz").split(), dtype=float)
-                robotjoint.rpy = np.array(child.get("rpy").split(), dtype=float)
+            if child.tag == "origin":
+                xyz = np.array(child.get("xyz").split(), dtype=float)
+                rpy = np.array(child.get("rpy").split(), dtype=float)
             elif child.tag == "parent":
-                robotjoint.parent_link = child.get("link")
+                parent_link = child.get("link")
             elif child.tag == "child":
-                robotjoint.child_link = child.get("link")
+                child_link = child.get("link")
+
+    def process_revolute_joint(self, joint):
+        robotjoint = Robotjoint()
+        robotjoint.jointname = joint.name
+        robotjoint.axis = joint.axis
+        robotjoint.origin = joint.origin
+        robotjoint.parent_link = joint.parent
+        robotjoint.child_link = joint.child
         self.robotjoints[robotjoint.jointname] = robotjoint
         jointnode = AnyNode(
             id=robotjoint.jointname, parent=None, children=None, type="joint"
@@ -552,54 +500,14 @@ class Robot:
         self.robotlinks[robotjoint.child_link].parent_jointname = robotjoint.jointname
         return robotjoint
 
-    def return_leave_link(self):
-        try:
-            assert len(self.leave_link_node) == 1
-        except:
-            print(
-                "The urdf file contains {0} leave links!!! Errors might happend...".format(
-                    len(self.leave_link_node)
-                )
-            )
-        return self.robotlinks[self.leave_link_node[0]]
-
-    def return_root_link(self):
-        return self.robotlinks[self.root_link_node.id]
-
-    def return_root_joint(self):
-        num = 0
-        root_joint = None
-        for node in self.urdf_tree_nodes:
-            # find root joints
-            if node.parent == self.root_link_node:
-                root_joint = node
-                num += 1
-        try:
-            assert num == 1
-        except:
-            print(
-                "The urdf file contains {0} root joints!!! Errors might happend...".format(
-                    num
-                )
-            )
-        return self.robotjoints[root_joint.id]
-
-    def return_links_in_order(self):
-        links_list_in_order = []
-        for node in LevelOrderIter(self.root_link_node):
-            if node.type == "link":
-                links_list_in_order.append(self.robotlinks[node.id])
-        return links_list_in_order
-
 
 if __name__ == "__main__":
     file_full_path = osp.dirname(osp.abspath(__file__))
     robot = Robot(
-        fileName=osp.join(file_full_path, "../../urdf_examples/estun/estun.urdf")
+        fileName=osp.join(file_full_path, "../../urdf_examples/GX11/GX11_single.urdf")
     )
-    # robot = Robot(fileName=osp.join(file_full_path, '../../urdf_examples/kuka iiwa/model.urdf'))
     robot.log_urdf_info()
-    robot.show_MDH_frame(log=True)
+    robot.show_MDH_frame(verbose=True)
     robotlinks = list(robot.robotlinks.values())
     print("absolute com=", robotlinks[-1].abs_com)
     robot.set_joint_angle(np.random.random(robot.num_robotjoints))

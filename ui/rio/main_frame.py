@@ -123,7 +123,7 @@ class MainFrame(wx.Frame):
         with wx.FileDialog(
             self,
             "Open URDF file",
-            defaultDir=osp.join(dir_abs_path, "../../urdf_examples/kuka iiwa"),
+            defaultDir=osp.join(dir_abs_path, "../../urdf_examples/GX11"),
             wildcard="URDF files (*.urdf)|*.urdf",
             style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST,
         ) as fileDialog:

@@ -1,5 +1,6 @@
 import sys
-sys.path.append(r'../')
+import os.path as osp
+sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), "../../core/"))
 from urdf_parser.robot_from_urdf import *
 from urdf_parser.utils import *
 import pybullet as p
@@ -33,7 +34,7 @@ def return_jointtorque(qs, dqs, ddqs, robot):
 def check_jointtorque(filename=''):
     # robot
     robot = Robot(filename)
-    robot.show_MDH_frame(log=True)
+    robot.show_MDH_frame(verbose=True)
     # randomly set joint angles
     qs =list(random(robot.num_robotjoints))
     robot.set_joint_angle(qs)

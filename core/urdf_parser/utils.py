@@ -61,7 +61,7 @@ def get_modified_dh_frame(dh_params):
     return modified_dh_frame
 
 
-def find_common_vertical_line(point_list, zaxis_list, epsilon=1e-5, log=False):
+def find_common_vertical_line(point_list, zaxis_list, epsilon=1e-5, verbose=False):
     # NOTE: under global coordinate
     num = len(point_list)
     xaxis_list = [np.zeros(3)] * num
@@ -71,12 +71,6 @@ def find_common_vertical_line(point_list, zaxis_list, epsilon=1e-5, log=False):
         point0, point1 = point_list[i], point_list[i + 1]
         xaxis0 = np.cross(zaxis0, zaxis1)
         if np.linalg.norm(xaxis0) < epsilon:
-            # if i==0:
-            #     xaxis_list[i] = np.array([1, 0, 0.])
-            # else:
-            #     xaxis_list[i] = xaxis_list[i-1] #NOTE: parallel case
-            # xaxis_list[i+1] = xaxis_list[i]
-
             a, b, c = (
                 np.inner(zaxis0, zaxis1),
                 np.inner(zaxis0, zaxis0),
@@ -98,21 +92,22 @@ def find_common_vertical_line(point_list, zaxis_list, epsilon=1e-5, log=False):
                 np.inner(zaxis1, zaxis1),
             )
             d, e = np.inner(point1 - point0, zaxis0), np.inner(point1 - point0, zaxis1)
-            t0 = (a * e - c * d) / (a * a - b * c)
-            t1 = b / a * t0 - d / a
-            # 垂直
-            # if np.abs(a) <= epsilon:
-            #     origin_list[i] = point1
-            #     origin_list[i+1] = point1
-            # else:
-            # 异面
+            # if a=0, then zaxis0 and zaxis1 are vertical
+            if np.abs(a) <= epsilon:
+                t0 = d / b
+                t1 = -e / c
+            # if a*a-b*c=0, then zaxis0 and zaxis1 are parallel
+            elif np.abs(a * a - b * c) <= epsilon:
+                t0 = 0
+                t1 = -d / a
+            # otherwise, skew lines
+            else:
+                t0 = (a * e - c * d) / (a * a - b * c)
+                t1 = b / a * t0 - d / a
             # 垂足: point0 + zaxis0 * t1; point1 + zaxis1 * t1
             origin_list[i] = point0 + zaxis0 * t0
             origin_list[i + 1] = point1 + zaxis1 * t1
-            # dist = origin_list[i+1] - origin_list[i]
-            # print("垂直1:{0}, 垂直2:{1}".format(np.inner(dist, zaxis0), np.inner(dist, zaxis1)))
-            # print("origin0={0}, origin1={1}".format(origin_list[i], origin_list[i+1]))
-    if log:
+    if verbose:
         print("origin_list=", origin_list)
         print("xaxis_list=", xaxis_list)
     # return modified_dh_params_list

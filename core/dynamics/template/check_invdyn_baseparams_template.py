@@ -5,7 +5,8 @@ import numpy as np
 from numpy import sin, cos, sign
 
 import sys
-sys.path.append(r'../')
+import os.path as osp
+sys.path.append(osp.join(osp.dirname(osp.abspath(__file__)), "../../core/"))
 from urdf_parser.robot_from_urdf import *
 from urdf_parser.utils import *
 
