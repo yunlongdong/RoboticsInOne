@@ -23,33 +23,61 @@ class JointController(wx.lib.scrolledpanel.ScrolledPanel):
         wx.ScrolledWindow.__init__(self, parent)
         # self.SetScrollbars(1, 1, 1, 1)
         self.SetupScrolling(scroll_x=False)
-        bSizer = wx.BoxSizer(wx.VERTICAL)
+        self.bSizer = wx.BoxSizer(wx.VERTICAL)
 
-        self.joint_controller_sliders = []
-        for j_n in joint_names:
-            bSizer_joint = wx.BoxSizer(wx.HORIZONTAL)
-            text = wx.StaticText(
-                self, wx.ID_ANY, j_n, wx.DefaultPosition, wx.DefaultSize, 0
-            )
-            slider = wx.Slider(
-                self,
-                wx.ID_ANY,
-                0,
-                -100,
-                100,
-                wx.DefaultPosition,
-                wx.DefaultSize,
-                wx.SL_HORIZONTAL,
-            )
+        self.joint_sliders = []
+        self.joint_texts = []
+        self.create_sliders(joint_names)
 
-            bSizer_joint.Add(text, 0, wx.ALL, 1)
-            bSizer_joint.Add(slider, 1, wx.ALL, 1)
-
-            self.joint_controller_sliders.append(slider)
-            bSizer.Add(bSizer_joint, 0, wx.EXPAND | wx.ALL, 2)
-
-        self.SetSizer(bSizer)
+        self.SetSizer(self.bSizer)
         self.Layout()
+
+    def create_sliders(self, joint_names):
+        for j_n in joint_names:
+            self.add_slider(j_n)
+
+    def add_slider(self, joint_name):
+        """向面板添加一个新的滑动条"""
+        bSizer_joint = wx.BoxSizer(wx.HORIZONTAL)
+        text = wx.StaticText(
+            self, wx.ID_ANY, joint_name, wx.DefaultPosition, wx.DefaultSize, 0
+        )
+        slider = wx.Slider(
+            self,
+            wx.ID_ANY,
+            0,
+            -100,
+            100,
+            wx.DefaultPosition,
+            wx.DefaultSize,
+            wx.SL_HORIZONTAL,
+        )
+
+        bSizer_joint.Add(text, 0, wx.ALL, 1)
+        bSizer_joint.Add(slider, 1, wx.ALL | wx.EXPAND, 1)
+
+        self.joint_sliders.append(slider)
+        self.joint_texts.append(text)
+        self.bSizer.Add(bSizer_joint, 0, wx.EXPAND | wx.ALL, 2)
+
+        self.Layout()
+        self.SetupScrolling(scroll_x=False)
+
+    def update_sliders(self, joint_names):
+        """更新滑动条列表以匹配新的关节名称列表"""
+        self.clear_sliders()  # 首先清除现有的滑动条
+        for j_n in joint_names:
+            self.add_slider(j_n)
+
+    def clear_sliders(self):
+        """移除所有滑动条"""
+        for slider in self.joint_sliders:
+            slider.Destroy()
+        for text in self.joint_texts:
+            text.Destroy()
+        self.joint_sliders = []
+        self.joint_texts = []
+        self.bSizer.Clear(True)  # 清除sizer并删除所有子窗口
 
 
 class MyPlot(wx.Panel):

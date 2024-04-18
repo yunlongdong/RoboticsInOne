@@ -2,6 +2,9 @@ wxPython==4.1.0
 moderngl==5.5.4
 matplotlib==3.3.4
 sympy>=1.1.1
+markdown
+tabulate
+urdfpy
 plyfile
 numpy
 scipy

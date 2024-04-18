@@ -20,8 +20,8 @@ class fk_CODEGEN:
             content = f.read()
 
         # 替换base link2world
-        root_joint = self.robot.return_root_joint()
-        leave_link = self.robot.return_leave_link()
+        root_joint = self.robot.chain.root_joint
+        leave_link = self.robot.chain.ee_link
         base2world_rpy_string = "base2world_rpy = {0}".format(
             np.array2string(root_joint.rpy_MDH, separator=",")
         )
@@ -32,7 +32,7 @@ class fk_CODEGEN:
         content = content.replace("base2world_xyz = []", base2world_xyz_string, 1)
         # 替换MDH参数
         MDHs_string = "MDHs = {0}".format(
-            np.array2string(self.robot.MDH_params, separator=",").replace(
+            np.array2string(self.robot.chain.MDH_params, separator=",").replace(
                 "\n", "\n\t\t\t"
             )
         )
@@ -57,8 +57,8 @@ class fk_CODEGEN:
             content = f.read()
 
         # 替换base link2world
-        root_joint = self.robot.return_root_joint()
-        leave_link = self.robot.return_leave_link()
+        root_joint = self.robot.chain.root_joint
+        leave_link = self.robot.chain.ee_link
         base2world_rpy_string = "base2world_rpy = {0}".format(
             np.array2string(root_joint.rpy_MDH, separator=",")
         )
@@ -69,7 +69,7 @@ class fk_CODEGEN:
         content = content.replace("base2world_xyz = []", base2world_xyz_string, 1)
         # 替换MDH参数
         MDHs_string = "MDHs = {0}".format(
-            np.array2string(self.robot.MDH_params, separator=",").replace(
+            np.array2string(self.robot.chain.MDH_params, separator=",").replace(
                 "\n", "\n\t\t\t"
             )
         )

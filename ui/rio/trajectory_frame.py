@@ -23,7 +23,7 @@ class TrajectoryFrame(wx.Frame):
         )
 
         self.robot = robot
-        self.joint_nums = robot.num_robotjoints
+        self.joint_nums = robot.chain.num_chain_joints
 
         self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
         self.SetBackgroundColour(wx.Colour(255, 255, 255))

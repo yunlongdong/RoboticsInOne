@@ -141,16 +141,17 @@ def check_jacobian(filename=""):
     robot.show_MDH_frame(verbose=False)
 
     # parameters
-    root_joint = robot.return_root_joint()
-    leave_link = robot.return_leave_link()
+    root_joint = robot.chain.root_joint
+    ee_link = robot.chain.ee_link
     base2world_rpy = root_joint.rpy_MDH
     base2world_xyz = root_joint.xyz_MDH
-    local_pos = leave_link.com_MDH
-    MDHs = robot.MDH_params
+    local_pos = ee_link.com_MDH
+    MDHs = robot.chain.MDH_params
     jac = JAC_SYM(base2world_rpy, base2world_xyz, MDHs)
 
     # randomly set joint angles
-    qs = list(random(jac.num_joints))  # [0.] * jac.num_joints#
+    joint_name_list = robot.chain.ordered_chain_joints_name
+    qs = list(random(jac.num_joints))
     print("set random joint angle=", qs)
 
     # calculated by jac
@@ -160,17 +161,33 @@ def check_jacobian(filename=""):
     # calculated with pybullet
     phy_Client = p.connect(p.DIRECT)
     p_robot = p.loadURDF(filename, useFixedBase=True)
+    joint_indices = []
+    ee_index = None
+    for i in range(p.getNumJoints(p_robot)):
+        joint_info = p.getJointInfo(p_robot, i)
+        if joint_info[1].decode("utf-8") in joint_name_list:
+            joint_indices.append(i)
+        if joint_info[12].decode("utf-8") == ee_link.linkname:
+            ee_index = i
+
+    p_qs = np.zeros(p.getNumJoints(p_robot))
+    for i, q in zip(joint_indices, qs):
+        p_qs[i] = q
     # pybullet simulation
     linearJacobian, angularJacobian = p.calculateJacobian(
         p_robot,
-        linkIndex=jac.num_joints - 1,
-        localPosition=list(robot.robotlinks.values())[-1].com,
-        objPositions=qs,
-        objVelocities=[0.0] * jac.num_joints,
-        objAccelerations=[0.0] * jac.num_joints,
+        linkIndex=ee_index,
+        localPosition=robot.chain.ee_link.com.tolist(),
+        objPositions=p_qs.tolist(),
+        objVelocities=np.zeros(p.getNumJoints(p_robot)).tolist(),
+        objAccelerations=np.zeros(p.getNumJoints(p_robot)).tolist(),
     )
     p_jacobian = np.concatenate(
-        (np.array(linearJacobian), np.array(angularJacobian)), axis=0
+        (
+            np.array(linearJacobian)[:, joint_indices],
+            np.array(angularJacobian)[:, joint_indices],
+        ),
+        axis=0,
     )
     print("pybullet jacobian=", p_jacobian)
     print("jacobian error=", np.sum(np.abs(p_jacobian - jacobian), axis=(1, 0)))

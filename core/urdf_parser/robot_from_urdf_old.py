@@ -93,7 +93,7 @@ class Robot:
         self.urdf_tree_nodes = []
         self.robotlinks = {}
         self.robotjoints = {}
-        self.num_robotjoints = 0
+        self.chain.num_chain_joints = 0
         self.num_robotlinks = 0
         self.MDH_params = None
         # load link and joint info from urdf file
@@ -114,7 +114,7 @@ class Robot:
 
     def set_joint_angle(self, jointangles):
         try:
-            assert len(jointangles) == self.num_robotjoints
+            assert len(jointangles) == self.chain.num_chain_joints
         except:
             print("Number of joints mismatched with joint angles...")
         for index, robotjoint in enumerate(self.robotjoints.values()):
@@ -189,7 +189,7 @@ class Robot:
 
     def show_MDH_frame(self, verbose=False):
         # TODO:注意可能需要先reset joint angle，避免abs_tf_link的影响
-        self.set_joint_angle(np.zeros(self.num_robotjoints))
+        self.set_joint_angle(np.zeros(self.chain.num_chain_joints))
         MDH_tf_list_total = []
         MDH_param_list_total = [np.array([0, 0, 0, 0.0])]
         jointname_list_subtree = self.get_urdf_subtree()
@@ -429,7 +429,7 @@ class Robot:
             )
 
         # num of joints and links
-        self.num_robotjoints = len(self.robotjoints)
+        self.chain.num_chain_joints = len(self.robotjoints)
         self.num_robotlinks = len(self.robotlinks)
 
     def get_urdf_root(self):
@@ -610,4 +610,4 @@ if __name__ == "__main__":
     robot.show_MDH_frame(verbose=True)
     robotlinks = list(robot.robotlinks.values())
     print("absolute com=", robotlinks[-1].abs_com)
-    robot.set_joint_angle(np.random.random(robot.num_robotjoints))
+    robot.set_joint_angle(np.random.random(robot.chain.num_chain_joints))

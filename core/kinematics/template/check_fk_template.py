@@ -131,14 +131,14 @@ def check_fk(filename=""):
     robot.show_MDH_frame(verbose=False)
 
     # parameters
-    root_joint = robot.return_root_joint()
-    leave_link = robot.return_leave_link()
+    root_joint = robot.chain.root_joint
+    ee_link = robot.chain.ee_link
     base2world_rpy = root_joint.rpy_MDH
     base2world_xyz = root_joint.xyz_MDH
-    local_pos = leave_link.com_MDH
-    local_rpy = leave_link.rpy_MDH
+    local_pos = ee_link.com_MDH
+    local_rpy = ee_link.rpy_MDH
 
-    MDHs = robot.MDH_params
+    MDHs = robot.chain.MDH_params
     fk = FK_SYM(base2world_rpy, base2world_xyz, MDHs)
     # print("base2world_rpy=", base2world_rpy)
     # print("base2world_xyz=", base2world_xyz)
@@ -147,6 +147,7 @@ def check_fk(filename=""):
     # print("local_rpy=", local_rpy)
 
     # randomly set joint angles
+    joint_name_list = robot.chain.ordered_chain_joints_name
     qs = list(random(fk.num_joints))  # [0.] * fk.num_joints
     print("set random joint angle=", qs)
     robot.set_joint_angle(qs)
@@ -158,19 +159,32 @@ def check_fk(filename=""):
     print("fk global_pos=", global_pos)
 
     # calculated by RIO
-    print("RIO global_pos=", robot.return_leave_link().abs_com)
+    print("RIO global_pos=", robot.chain.ee_link.abs_com)
 
     # calculated with pybullet
     phy_Client = p.connect(p.DIRECT)
     p_robot = p.loadURDF(filename, useFixedBase=True)
+    joint_indices = []
+    ee_index = None
+    for i in range(p.getNumJoints(p_robot)):
+        joint_info = p.getJointInfo(p_robot, i)
+        if joint_info[1].decode("utf-8") in joint_name_list:
+            joint_indices.append(i)
+        if joint_info[12].decode("utf-8") == ee_link.linkname:
+            ee_index = i
     # pybullet simulation
     for _ in range(100):
-        p.setJointMotorControlArray(
-            p_robot, range(fk.num_joints), p.POSITION_CONTROL, targetPositions=qs
-        )
+        for joint_index, target_position in zip(joint_indices, qs):
+            p.setJointMotorControl2(
+                bodyUniqueId=p_robot,
+                jointIndex=joint_index,
+                controlMode=p.POSITION_CONTROL,
+                targetPosition=target_position,
+            )
+
         p.stepSimulation()
     link_pos, link_orientation, _, _, _, _ = p.getLinkState(
-        p_robot, fk.num_joints - 1, computeForwardKinematics=True
+        p_robot, ee_index, computeForwardKinematics=True
     )
     print("pybullet global_pos=", np.array(link_pos))
     print("pos error=", np.sum(np.abs(np.array(link_pos) - global_pos)))

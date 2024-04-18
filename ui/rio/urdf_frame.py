@@ -56,12 +56,20 @@ class Window(BaseWindow):
             bSizer3 = wx.BoxSizer(wx.HORIZONTAL)
 
             self.robot = self._window.robot or []
+            ee_name_list = [chain.ee_link_name for chain in self.robot.chains]
+            print(f"ee_name_list: {ee_name_list}")
+            self.ee_selector = wx.ComboBox(
+                self, wx.ID_ANY, choices=ee_name_list, style=wx.CB_READONLY
+            )
+            self.ee_selector.SetValue(self.robot.chain.ee_link_name)
+            bSizer2_1.Add(self.ee_selector, 0, wx.EXPAND | wx.ALL, 5)
+
             self.m_checklist_link = wx.CheckListBox(
                 self,
                 wx.ID_ANY,
                 wx.DefaultPosition,
                 wx.DefaultSize,
-                list(self.robot.robotlinks.keys()),
+                self.robot.chain.ordered_chain_links_name,
                 0,
             )
             text = wx.StaticText(
@@ -75,7 +83,7 @@ class Window(BaseWindow):
             bSizer2_1.Add(text, -1, wx.ALL, 0)
             bSizer2_1.Add(self.m_checklist_link, 1, wx.EXPAND | wx.ALL, 0)
 
-            joint_names = [i for i in list(self.robot.robotjoints.keys())]
+            joint_names = self.robot.chain.ordered_chain_joints_name
             self.joint_names = joint_names
             self.joint_inv_prev = {j: 0 for j in self.joint_names}
             self.m_checklist_invert_j = wx.CheckListBox(
@@ -113,6 +121,7 @@ class Window(BaseWindow):
             self.menu_trajgen = wx.MenuItem(
                 menu, wx.ID_ANY, "Trajectory", wx.EmptyString
             )
+
             menu.Append(self.menu_kin)
             menu.Append(self.menu_dyn)
             menu.Append(self.menu_sysid)
@@ -201,6 +210,7 @@ class Window(BaseWindow):
 
             self.Centre(wx.BOTH)
 
+            self.ee_selector.Bind(wx.EVT_COMBOBOX, self.OnEESelect)
             self.Bind(wx.EVT_COLOURPICKER_CHANGED, self.OnColor, self.m_colourPicker2)
             self.Bind(wx.EVT_SCROLL, self.OnSlider, self.m_slider2)
             self.Bind(wx.EVT_CHECKBOX, self.OnCheckerCoM, self.m_checkBoxCoM)
@@ -213,12 +223,6 @@ class Window(BaseWindow):
             self.Bind(
                 wx.EVT_CHECKLISTBOX, self.OnCheckerInvJ, self.m_checklist_invert_j
             )
-            # self.Bind(wx.EVT_BUTTON, self.OnButtonSave, self.m_button_save)
-            # self.Bind(wx.EVT_BUTTON, self.OnButtonSaveMDH, self.m_button_mdh)
-            # self.Bind(wx.EVT_BUTTON, self.OnButtonKin, self.m_button_kine)
-            # self.Bind(wx.EVT_BUTTON, self.OnButtonDyn, self.m_button_dyn)
-            # self.Bind(wx.EVT_BUTTON, self.OnButtonSysid, self.m_button_sysid)
-            # self.Bind(wx.EVT_BUTTON, self.OnButtonTrajGen, self.m_button_traj_gen)
             #  menu event
             self.Bind(wx.EVT_MENU, self.OnButtonSave, self.save_urdf_item)
             self.Bind(wx.EVT_MENU, self.OnButtonSaveMDH, self.save_MDH_item)
@@ -227,14 +231,28 @@ class Window(BaseWindow):
             self.Bind(wx.EVT_MENU, self.OnButtonSysid, self.menu_sysid)
             self.Bind(wx.EVT_MENU, self.OnButtonTrajGen, self.menu_trajgen)
 
-            for i in self.joint_control.joint_controller_sliders:
+            for i in self.joint_control.joint_sliders:
                 self.Bind(wx.EVT_COMMAND_SCROLL_THUMBTRACK, self.OnSliderControl, i)
 
             self.show_all_link()
 
         def show_all_link(self):
-            for i in range(len(self.robot.robotlinks.keys())):
+            for i in range(len(self.robot.chain.chain_links.keys())):
                 self.m_checklist_link.Check(i)
+
+        def OnEESelect(self, e):
+            print("Selected EE:", self.ee_selector.GetValue())
+            self.robot.change_chain(ee_link_name=self.ee_selector.GetValue())
+            self.robot.set_joint_angle(np.zeros(self.robot.chain.num_chain_joints))
+            # update UI
+            self.m_checklist_link.Set(self.robot.chain.ordered_chain_links_name)
+            joint_names = self.robot.chain.ordered_chain_joints_name
+            self.joint_names = joint_names
+            self.joint_inv_prev = {j: 0 for j in self.joint_names}
+            self.m_checklist_invert_j.Set(joint_names)
+            self.joint_control.update_sliders(joint_names)
+            for i in self.joint_control.joint_sliders:
+                self.Bind(wx.EVT_COMMAND_SCROLL_THUMBTRACK, self.OnSliderControl, i)
 
         def OnButtonSave(self, e):
             dlg = wx.MessageDialog(
@@ -302,9 +320,7 @@ class Window(BaseWindow):
             return
 
         def OnSliderControl(self, e):
-            q = [
-                i.GetValue() / 20.0 for i in self.joint_control.joint_controller_sliders
-            ]
+            q = [i.GetValue() / 20.0 for i in self.joint_control.joint_sliders]
             robot = self._window.robot
             robot.set_joint_angle(q)
             self.updateAllRenders()
@@ -381,7 +397,7 @@ class Window(BaseWindow):
         def OnCheckerInvJ(self, e):
             robot = self._window.robot
             # reset robot
-            robot.set_joint_angle(np.zeros(robot.num_robotjoints))
+            robot.set_joint_angle(np.zeros(robot.chain.num_chain_joints))
             # reset slider
             for i in self.joint_control.joint_controller_sliders:
                 i.SetValue(0)
@@ -428,7 +444,9 @@ class Window(BaseWindow):
             robot = self._window.robot
             for render in self._window._scene._renderables:
                 if isinstance(render, Mesh):
-                    robotlink = robot.robotlinks[render.name]
+                    if render.name not in list(robot.chain.chain_links.keys()):
+                        continue
+                    robotlink = robot.chain.chain_links[render.name]
                     abs_tf_visual = robotlink.abs_tf_visual
                     m = np.eye(4)
                     m[:3, :3] = render.R.T
@@ -443,15 +461,21 @@ class Window(BaseWindow):
                     abs_tf_link = None
                     if "World_" in render.name:
                         linkname = render.name.replace("World_", "")
-                        robotlink = robot.robotlinks[linkname]
+                        if linkname not in list(robot.chain.chain_links.keys()):
+                            continue
+                        robotlink = robot.chain.chain_links[linkname]
                         abs_tf_link = robotlink.abs_tf_link
                     elif "MDH_" in render.name:
                         linkname = render.name.replace("MDH_", "")
-                        robotlink = robot.robotlinks[linkname]
+                        if linkname not in list(robot.chain.chain_links.keys()):
+                            continue
+                        robotlink = robot.chain.chain_links[linkname]
                         abs_tf_link = robotlink.abs_tf_link_MDH
                     else:
                         linkname = render.name
-                        robotlink = robot.robotlinks[linkname]
+                        if linkname not in list(robot.chain.chain_links.keys()):
+                            continue
+                        robotlink = robot.chain.chain_links[linkname]
                         abs_tf_link = robotlink.abs_tf_link
                     m = np.eye(4)
                     m[:3, :3] = render.R.T
@@ -462,7 +486,9 @@ class Window(BaseWindow):
                         R=abs_tf_link[:3, :3].T, t=abs_tf_link[:3, 3]
                     )
                 elif isinstance(render, Spherecloud):
-                    robotlink = robot.robotlinks[render.name]
+                    if linkname not in list(robot.chain.chain_links.keys()):
+                        continue
+                    robotlink = robot.chain.chain_links[render.name]
                     render.updatePos([robotlink.abs_com])
 
     class _Canvas(wx.glcanvas.GLCanvas):

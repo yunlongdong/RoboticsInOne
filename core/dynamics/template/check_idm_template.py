@@ -12,8 +12,8 @@ def return_elements(inertia_matrix):
     return inertia_matrix[0, 0], inertia_matrix[0, 1], inertia_matrix[0, 2], inertia_matrix[1, 1], inertia_matrix[1, 2], inertia_matrix[2, 2]
 
 def return_jointtorque(qs, dqs, ddqs, robot):
-    links_in_order = robot.return_links_in_order()
-    root_link = robot.return_root_link()
+    links_in_order = robot.chain.ordered_links
+    root_link = robot.chain.root_link
     _, $m_index = [robotlink.mass for robotlink in links_in_order]
     $q_index = qs
     $dq_index = dqs
@@ -35,11 +35,12 @@ def check_jointtorque(filename=''):
     # robot
     robot = Robot(filename)
     robot.show_MDH_frame(verbose=True)
+    robot.change_chain($ee_link_name)
     # randomly set joint angles
-    qs =list(random(robot.num_robotjoints))
+    qs =list(random(robot.chain.num_chain_joints))
     robot.set_joint_angle(qs)
-    dqs = list(random(robot.num_robotjoints))
-    ddqs = list(random(robot.num_robotjoints))
+    dqs = list(1000 * random(robot.chain.num_chain_joints))
+    ddqs = list(1000 * random(robot.chain.num_chain_joints))
     print("set random joint angle=", qs)
     print("set random joint velocity=", dqs)
     print("set random joint acceleration=", ddqs)
@@ -50,7 +51,21 @@ def check_jointtorque(filename=''):
     phy_Client = p.connect(p.DIRECT)
     p_robot = p.loadURDF(filename, useFixedBase=True, flags=p.URDF_USE_INERTIA_FROM_FILE) # pybullet problem: https://pybullet.org/Bullet/phpBB3/viewtopic.php?t=12936
     p.setGravity(0, 0, -9.81)
-    p_jointtorque = np.array(p.calculateInverseDynamics(p_robot, objPositions=qs, objVelocities=dqs, objAccelerations=ddqs))
+
+    joint_name_list = robot.chain.ordered_chain_joints_name
+    joint_indices = []
+    for i in range(p.getNumJoints(p_robot)):
+        joint_info = p.getJointInfo(p_robot, i)
+        if joint_info[1].decode("utf-8") in joint_name_list:
+            joint_indices.append(i)
+    p_qs = np.zeros(p.getNumJoints(p_robot))
+    p_dqs = np.zeros(p.getNumJoints(p_robot))
+    p_ddqs = np.zeros(p.getNumJoints(p_robot))
+    p_qs[joint_indices] = np.array(qs)
+    p_dqs[joint_indices] = np.array(dqs)
+    p_ddqs[joint_indices] = np.array(ddqs)
+    p_jointtorque = np.array(p.calculateInverseDynamics(p_robot, objPositions=p_qs.tolist(), objVelocities=p_dqs.tolist(), objAccelerations=p_ddqs.tolist()))
+    p_jointtorque = p_jointtorque[joint_indices]
     print("pybullet joint torque=", p_jointtorque)
     print("error=", np.sum(np.abs(p_jointtorque - symoro_jointtorque)))
     p.disconnect()

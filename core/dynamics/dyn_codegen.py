@@ -69,12 +69,11 @@ class dyn_CODEGEN:
             encoding="utf-8",
         ) as f:
             content = f.read()
-        index_list = [str(i + 1) for i in range(self.robot.num_robotjoints)]
+        index_list = [str(i + 1) for i in range(self.robot.chain.num_chain_joints)]
 
-        links_in_order = self.robot.return_links_in_order()
-        root_link = self.robot.return_root_link()
+        root_link = self.robot.chain.root_link
         mass_list_from_robot = np.array(
-            [robotlink.mass for robotlink in links_in_order]
+            [link.mass for link in self.robot.chain.ordered_links]
         )
         # 替换数值
         content = content.replace(
@@ -83,11 +82,11 @@ class dyn_CODEGEN:
         )
         inertia_list_from_robot = [
             "np.array("
-            + np.array2string(robotlink.inertia_MDH, separator=", ").replace(
+            + np.array2string(link.inertia_MDH, separator=", ").replace(
                 "\n", "\n" + " " * 8
             )
             + ")"
-            for robotlink in links_in_order
+            for link in self.robot.chain.ordered_links
         ]
         inertia_list_from_robot = "[" + ", ".join(inertia_list_from_robot) + "]"
         content = content.replace("$inertia_list_from_robot", inertia_list_from_robot)
@@ -102,9 +101,15 @@ class dyn_CODEGEN:
         )
 
         # 替换数值
-        content = content.replace("$qs", "[0.]*" + str(self.robot.num_robotjoints))
-        content = content.replace("$dqs", "[0.]*" + str(self.robot.num_robotjoints))
-        content = content.replace("$ddqs", "[0.]*" + str(self.robot.num_robotjoints))
+        content = content.replace(
+            "$qs", "[0.]*" + str(self.robot.chain.num_chain_joints)
+        )
+        content = content.replace(
+            "$dqs", "[0.]*" + str(self.robot.chain.num_chain_joints)
+        )
+        content = content.replace(
+            "$ddqs", "[0.]*" + str(self.robot.chain.num_chain_joints)
+        )
         # 符号
         content = content.replace(
             "$m_index", self.return_aggregated_list([["m"], index_list])
@@ -121,22 +126,29 @@ class dyn_CODEGEN:
         content = content.replace(
             "$set_Fs",
             " = ".join(
-                ["F" + str(i) + "s" for i in range(1, self.robot.num_robotjoints + 1)]
+                [
+                    "F" + str(i) + "s"
+                    for i in range(1, self.robot.chain.num_chain_joints + 1)
+                ]
             )
             + "= 0.",
         )
         content = content.replace(
             "$set_Fv",
             " = ".join(
-                ["F" + str(i) + "v" for i in range(1, self.robot.num_robotjoints + 1)]
+                [
+                    "F" + str(i) + "v"
+                    for i in range(1, self.robot.chain.num_chain_joints + 1)
+                ]
             )
             + "= 0.",
         )
         com_code = ""
         inertia_code = ""
-        for i in range(self.robot.num_robotjoints):
+        for i in range(self.robot.chain.num_chain_joints):
+            link = self.robot.chain.ordered_links[i]
             com_code += "c{0}x, c{0}y, c{0}z = {1}\n    ".format(
-                i + 1, np.array2string(links_in_order[i].com_MDH, separator=", ")
+                i + 1, np.array2string(link.com_MDH, separator=", ")
             )
             inertia_code += "I{0}xx, I{0}xy, I{0}xz, I{0}yy, I{0}yz, I{0}zz = return_elements(inertia_list[{0}])\n    ".format(
                 i + 1
@@ -147,7 +159,10 @@ class dyn_CODEGEN:
         content = content.replace(
             "$Matrix",
             self.return_matrix_string(
-                self.robot.num_robotjoints, 1, header="GAM", symoro_code=symoro_idm_code
+                self.robot.chain.num_chain_joints,
+                1,
+                header="GAM",
+                symoro_code=symoro_idm_code,
             ).replace("\n", "\n" + " " * 12),
         )
         check_code_path = osp.dirname(self.robot.urdf_file)
@@ -171,7 +186,7 @@ class dyn_CODEGEN:
             encoding="utf-8",
         ) as f:
             content = f.read()
-        index_list = [str(i + 1) for i in range(self.robot.num_robotjoints)]
+        index_list = [str(i + 1) for i in range(self.robot.chain.num_chain_joints)]
 
         urdf_parser_path = osp.dirname(
             osp.abspath(osp.join(osp.abspath(__file__), "../"))
@@ -181,6 +196,7 @@ class dyn_CODEGEN:
             "sys.path.append(r'{0}')".format(urdf_parser_path),
         )
         content = content.replace("$filename", self.robot.urdf_file)
+        content = content.replace("$ee_link_name", f"'{self.robot.chain.ee_link_name}'")
         content = content.replace(
             "$m_index", self.return_aggregated_list([["m"], index_list])
         )
@@ -196,20 +212,26 @@ class dyn_CODEGEN:
         content = content.replace(
             "$set_Fs",
             " = ".join(
-                ["F" + str(i) + "s" for i in range(1, self.robot.num_robotjoints + 1)]
+                [
+                    "F" + str(i) + "s"
+                    for i in range(1, self.robot.chain.num_chain_joints + 1)
+                ]
             )
             + "= 0.",
         )
         content = content.replace(
             "$set_Fv",
             " = ".join(
-                ["F" + str(i) + "v" for i in range(1, self.robot.num_robotjoints + 1)]
+                [
+                    "F" + str(i) + "v"
+                    for i in range(1, self.robot.chain.num_chain_joints + 1)
+                ]
             )
             + "= 0.",
         )
         com_code = ""
         inertia_code = ""
-        for i in range(self.robot.num_robotjoints):
+        for i in range(self.robot.chain.num_chain_joints):
             com_code += (
                 "c{0}x, c{0}y, c{0}z = links_in_order[{0}].com_MDH\n    ".format(i + 1)
             )
@@ -222,7 +244,10 @@ class dyn_CODEGEN:
         content = content.replace(
             "$Matrix",
             self.return_matrix_string(
-                self.robot.num_robotjoints, 1, header="GAM", symoro_code=symoro_idm_code
+                self.robot.chain.num_chain_joints,
+                1,
+                header="GAM",
+                symoro_code=symoro_idm_code,
             ).replace("\n", "\n" + " " * 12),
         )
         check_code_path = osp.dirname(self.robot.urdf_file)
@@ -244,12 +269,10 @@ class dyn_CODEGEN:
             encoding="utf-8",
         ) as f:
             content = f.read()
-        index_list = [str(i + 1) for i in range(self.robot.num_robotjoints)]
+        index_list = [str(i + 1) for i in range(self.robot.chain.num_chain_joints)]
 
-        links_in_order = self.robot.return_links_in_order()
-        root_joint = self.robot.return_root_joint()
         mass_list_from_robot = np.array(
-            [robotlink.mass for robotlink in links_in_order]
+            [link.mass for link in self.robot.chain.ordered_links]
         )
         content = content.replace(
             "$mass_list_from_robot",
@@ -257,16 +280,16 @@ class dyn_CODEGEN:
         )
         inertia_list_from_robot = [
             "np.array("
-            + np.array2string(robotlink.inertia_MDH, separator=", ").replace(
+            + np.array2string(link.inertia_MDH, separator=", ").replace(
                 "\n", "\n" + " " * 8
             )
             + ")"
-            for robotlink in links_in_order
+            for link in self.robot.chain.ordered_links
         ]
         inertia_list_from_robot = "[" + ", ".join(inertia_list_from_robot) + "]"
         content = content.replace("$inertia_list_from_robot", inertia_list_from_robot)
 
-        content = content.replace("$qs", str([0.0] * self.robot.num_robotjoints))
+        content = content.replace("$qs", str([0.0] * self.robot.chain.num_chain_joints))
         content = content.replace(
             "$m_index", self.return_aggregated_list([["m"], index_list])
         )
@@ -275,9 +298,12 @@ class dyn_CODEGEN:
         )
         com_code = ""
         inertia_code = ""
-        for i in range(self.robot.num_robotjoints):
+        for i in range(self.robot.chain.num_chain_joints):
             com_code += "c{0}x, c{0}y, c{0}z = {1}\n    ".format(
-                i + 1, np.array2string(links_in_order[i].com_MDH, separator=", ")
+                i + 1,
+                np.array2string(
+                    self.robot.chain.ordered_links[i].com_MDH, separator=", "
+                ),
             )
             inertia_code += "I{0}xx, I{0}xy, I{0}xz, I{0}yy, I{0}yz, I{0}zz = return_elements(inertia_list[{0}])\n    ".format(
                 i + 1
@@ -288,8 +314,8 @@ class dyn_CODEGEN:
         content = content.replace(
             "$Matrix",
             self.return_matrix_string(
-                self.robot.num_robotjoints,
-                self.robot.num_robotjoints,
+                self.robot.chain.num_chain_joints,
+                self.robot.chain.num_chain_joints,
                 header="A",
                 symoro_code=symoro_M_code,
             ).replace("\n", "\n" + " " * 12),
@@ -313,7 +339,7 @@ class dyn_CODEGEN:
             encoding="utf-8",
         ) as f:
             content = f.read()
-        index_list = [str(i + 1) for i in range(self.robot.num_robotjoints)]
+        index_list = [str(i + 1) for i in range(self.robot.chain.num_chain_joints)]
 
         urdf_parser_path = osp.dirname(
             osp.abspath(osp.join(osp.abspath(__file__), "../"))
@@ -323,6 +349,7 @@ class dyn_CODEGEN:
             "sys.path.append(r'{0}')".format(urdf_parser_path),
         )
         content = content.replace("$filename", self.robot.urdf_file)
+        content = content.replace("$ee_link_name", f"'{self.robot.chain.ee_link_name}'")
         content = content.replace(
             "$m_index", self.return_aggregated_list([["m"], index_list])
         )
@@ -332,7 +359,7 @@ class dyn_CODEGEN:
 
         com_code = ""
         inertia_code = ""
-        for i in range(self.robot.num_robotjoints):
+        for i in range(self.robot.chain.num_chain_joints):
             com_code += (
                 "c{0}x, c{0}y, c{0}z = links_in_order[{0}].com_MDH\n    ".format(i + 1)
             )
@@ -345,8 +372,8 @@ class dyn_CODEGEN:
         content = content.replace(
             "$Matrix",
             self.return_matrix_string(
-                self.robot.num_robotjoints,
-                self.robot.num_robotjoints,
+                self.robot.chain.num_chain_joints,
+                self.robot.chain.num_chain_joints,
                 header="A",
                 symoro_code=symoro_M_code,
             ).replace("\n", "\n" + " " * 12),
@@ -408,10 +435,10 @@ class dyn_CODEGEN:
             encoding="utf-8",
         ) as f:
             content = f.read()
-        index_list = [str(i + 1) for i in range(self.robot.num_robotjoints)]
+        index_list = [str(i + 1) for i in range(self.robot.chain.num_chain_joints)]
 
-        links_in_order = self.robot.return_links_in_order()
-        root_link = self.robot.return_root_link()
+        links_in_order = self.robot.chain.ordered_links
+        root_link = self.robot.chain.root_link
         mass_list_from_robot = np.array(
             [robotlink.mass for robotlink in links_in_order]
         )
@@ -454,21 +481,27 @@ class dyn_CODEGEN:
         content = content.replace(
             "$set_Fs",
             " = ".join(
-                ["F" + str(i) + "s" for i in range(1, self.robot.num_robotjoints + 1)]
+                [
+                    "F" + str(i) + "s"
+                    for i in range(1, self.robot.chain.num_chain_joints + 1)
+                ]
             )
             + "= 0.",
         )
         content = content.replace(
             "$set_Fv",
             " = ".join(
-                ["F" + str(i) + "v" for i in range(1, self.robot.num_robotjoints + 1)]
+                [
+                    "F" + str(i) + "v"
+                    for i in range(1, self.robot.chain.num_chain_joints + 1)
+                ]
             )
             + "= 0.",
         )
 
         com_code = ""
         inertia_code = ""
-        for i in range(self.robot.num_robotjoints):
+        for i in range(self.robot.chain.num_chain_joints):
             com_code += "c{0}x, c{0}y, c{0}z = {1}\n    ".format(
                 i + 1, np.array2string(links_in_order[i].com_MDH, separator=", ")
             )
@@ -488,7 +521,7 @@ class dyn_CODEGEN:
         content = content.replace(
             "$theta_name", "theta_name = [" + ", ".join(theta_name) + "]"
         )
-        content = content.replace("$num_joints", str(self.robot.num_robotjoints))
+        content = content.replace("$num_joints", str(self.robot.chain.num_chain_joints))
 
         check_path = osp.dirname(self.robot.urdf_file)
         if write:
@@ -518,8 +551,9 @@ class dyn_CODEGEN:
             encoding="utf-8",
         ) as f:
             content = f.read()
-        index_list = [str(i + 1) for i in range(self.robot.num_robotjoints)]
+        index_list = [str(i + 1) for i in range(self.robot.chain.num_chain_joints)]
 
+        content = content.replace("$ee_link_name", f"'{self.robot.chain.ee_link_name}'")
         content = content.replace(
             "$m_index", self.return_aggregated_list([["m"], index_list])
         )
@@ -535,21 +569,27 @@ class dyn_CODEGEN:
         content = content.replace(
             "$set_Fs",
             " = ".join(
-                ["F" + str(i) + "s" for i in range(1, self.robot.num_robotjoints + 1)]
+                [
+                    "F" + str(i) + "s"
+                    for i in range(1, self.robot.chain.num_chain_joints + 1)
+                ]
             )
             + "= 0.",
         )
         content = content.replace(
             "$set_Fv",
             " = ".join(
-                ["F" + str(i) + "v" for i in range(1, self.robot.num_robotjoints + 1)]
+                [
+                    "F" + str(i) + "v"
+                    for i in range(1, self.robot.chain.num_chain_joints + 1)
+                ]
             )
             + "= 0.",
         )
 
         com_code = ""
         inertia_code = ""
-        for i in range(self.robot.num_robotjoints):
+        for i in range(self.robot.chain.num_chain_joints):
             com_code += (
                 "c{0}x, c{0}y, c{0}z = links_in_order[{0}].com_MDH\n        ".format(
                     i + 1
@@ -580,7 +620,7 @@ class dyn_CODEGEN:
         content = content.replace(
             "$theta_name", "theta_name = [" + ", ".join(theta_name) + "]"
         )
-        content = content.replace("$num_joints", str(self.robot.num_robotjoints))
+        content = content.replace("$num_joints", str(self.robot.chain.num_chain_joints))
 
         check_path = osp.dirname(self.robot.urdf_file)
         if write:
@@ -611,10 +651,10 @@ class dyn_CODEGEN:
             encoding="utf-8",
         ) as f:
             content = f.read()
-        index_list = [str(i + 1) for i in range(self.robot.num_robotjoints)]
+        index_list = [str(i + 1) for i in range(self.robot.chain.num_chain_joints)]
 
-        links_in_order = self.robot.return_links_in_order()
-        root_link = self.robot.return_root_link()
+        links_in_order = self.robot.chain.ordered_links
+        root_link = self.robot.chain.root_link
         mass_list_from_robot = np.array(
             [robotlink.mass for robotlink in links_in_order]
         )
@@ -657,21 +697,27 @@ class dyn_CODEGEN:
         content = content.replace(
             "$set_Fs",
             " = ".join(
-                ["F" + str(i) + "s" for i in range(1, self.robot.num_robotjoints + 1)]
+                [
+                    "F" + str(i) + "s"
+                    for i in range(1, self.robot.chain.num_chain_joints + 1)
+                ]
             )
             + "= 0.",
         )
         content = content.replace(
             "$set_Fv",
             " = ".join(
-                ["F" + str(i) + "v" for i in range(1, self.robot.num_robotjoints + 1)]
+                [
+                    "F" + str(i) + "v"
+                    for i in range(1, self.robot.chain.num_chain_joints + 1)
+                ]
             )
             + "= 0.",
         )
 
         com_code = ""
         inertia_code = ""
-        for i in range(self.robot.num_robotjoints):
+        for i in range(self.robot.chain.num_chain_joints):
             com_code += "c{0}x, c{0}y, c{0}z = {1}\n    ".format(
                 i + 1, np.array2string(links_in_order[i].com_MDH, separator=", ")
             )
@@ -691,7 +737,7 @@ class dyn_CODEGEN:
         content = content.replace(
             "$theta_name", "theta_name = [" + ", ".join(theta_name) + "]"
         )
-        content = content.replace("$num_joints", str(self.robot.num_robotjoints))
+        content = content.replace("$num_joints", str(self.robot.chain.num_chain_joints))
 
         check_path = osp.dirname(self.robot.urdf_file)
         if write:
@@ -723,8 +769,9 @@ class dyn_CODEGEN:
             encoding="utf-8",
         ) as f:
             content = f.read()
-        index_list = [str(i + 1) for i in range(self.robot.num_robotjoints)]
+        index_list = [str(i + 1) for i in range(self.robot.chain.num_chain_joints)]
 
+        content = content.replace("$ee_link_name", f"'{self.robot.chain.ee_link_name}'")
         content = content.replace(
             "$m_index", self.return_aggregated_list([["m"], index_list])
         )
@@ -740,21 +787,27 @@ class dyn_CODEGEN:
         content = content.replace(
             "$set_Fs",
             " = ".join(
-                ["F" + str(i) + "s" for i in range(1, self.robot.num_robotjoints + 1)]
+                [
+                    "F" + str(i) + "s"
+                    for i in range(1, self.robot.chain.num_chain_joints + 1)
+                ]
             )
             + "= 0.",
         )
         content = content.replace(
             "$set_Fv",
             " = ".join(
-                ["F" + str(i) + "v" for i in range(1, self.robot.num_robotjoints + 1)]
+                [
+                    "F" + str(i) + "v"
+                    for i in range(1, self.robot.chain.num_chain_joints + 1)
+                ]
             )
             + "= 0.",
         )
 
         com_code = ""
         inertia_code = ""
-        for i in range(self.robot.num_robotjoints):
+        for i in range(self.robot.chain.num_chain_joints):
             com_code += (
                 "c{0}x, c{0}y, c{0}z = links_in_order[{0}].com_MDH\n        ".format(
                     i + 1
@@ -785,7 +838,7 @@ class dyn_CODEGEN:
         content = content.replace(
             "$theta_name", "theta_name = [" + ", ".join(theta_name) + "]"
         )
-        content = content.replace("$num_joints", str(self.robot.num_robotjoints))
+        content = content.replace("$num_joints", str(self.robot.chain.num_chain_joints))
 
         check_path = osp.dirname(self.robot.urdf_file)
         if write:
@@ -804,33 +857,35 @@ class dyn_CODEGEN:
         ) as f:
             content = f.read()
 
-        index_list = [str(i + 1) for i in range(self.robot.num_robotjoints)]
+        index_list = [str(i + 1) for i in range(self.robot.chain.num_chain_joints)]
         content = content.replace("$robotname", self.robotname)
-        content = content.replace("$num_joints", str(self.robot.num_robotjoints))
+        content = content.replace("$num_joints", str(self.robot.chain.num_chain_joints))
         content = content.replace(
-            "$zeros_nq", ",".join([str(0)] * self.robot.num_robotjoints)
+            "$zeros_nq", ",".join([str(0)] * self.robot.chain.num_chain_joints)
         )
         content = content.replace(
-            "$ones_nq", ",".join([str(1)] * self.robot.num_robotjoints)
+            "$ones_nq", ",".join([str(1)] * self.robot.chain.num_chain_joints)
+        )
+
+        content = content.replace(
+            "$ant", ",".join([str(i) for i in range(self.robot.chain.num_chain_joints)])
         )
 
         content = content.replace(
-            "$ant", ",".join([str(i) for i in range(self.robot.num_robotjoints)])
+            "$b", ",".join([str(0)] * self.robot.chain.num_chain_joints)
         )
-
-        content = content.replace("$b", ",".join([str(0)] * self.robot.num_robotjoints))
         # alpha, a, theta, d in wikipedia
         # alpha, d, theta, r in symoro
-        alpha = np.array2string(self.robot.MDH_params[:, 0], separator=",").replace(
+        alpha = np.array2string(
+            self.robot.chain.MDH_params[:, 0], separator=","
+        ).replace(" ", "")[1:-1]
+        d = np.array2string(self.robot.chain.MDH_params[:, 1], separator=",").replace(
             " ", ""
         )[1:-1]
-        d = np.array2string(self.robot.MDH_params[:, 1], separator=",").replace(
-            " ", ""
-        )[1:-1]
-        theta_value = self.robot.MDH_params[:, 2].tolist()
+        theta_value = self.robot.chain.MDH_params[:, 2].tolist()
         theta_value = list(map(str, theta_value))
         theta = self.return_aggregated_list([theta_value, ["+q"], index_list])
-        r = np.array2string(self.robot.MDH_params[:, 3], separator=",").replace(
+        r = np.array2string(self.robot.chain.MDH_params[:, 3], separator=",").replace(
             " ", ""
         )[1:-1]
         content = content.replace("$alpha", alpha)
@@ -942,7 +997,7 @@ class dyn_CODEGEN:
                 theta_list.remove("0")
         except ValueError:
             pass
-        for i in range(1, self.robot.num_robotjoints + 1):
+        for i in range(1, self.robot.chain.num_chain_joints + 1):
             theta_list += ["F{0}s".format(i), "F{0}v".format(i)]
         return theta_list
 
