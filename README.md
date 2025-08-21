@@ -1,6 +1,10 @@
 # RoboticsInOne
 Robotics In One (RIO) Studio
 
+# Important
+
+RIO has been fully upgraded to [URDFly](https://github.com/Democratizing-Dexterous/URDFly). Please consider using URDFly instead.
+
 [Chinese README](./README_CH.md)
 ## Introduction
 RIO is committed to providing a standard and complete tool chain and ecology with a graphical operation interface for the robot community. RIO implements 3D visualization of robot links, joints and center of mass (CoM) by specifying a URDF file, and generates kinematics/dynamics codes via URDF ->MDH ->Kinematics ->Jacobian ->Dynamics.
